@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -187,30 +188,6 @@
             transform: rotate(180deg);
         }
         
-        .copy-btn {
-            background: transparent;
-            border: none;
-            color: #999;
-            font-size: 0.85em;
-            cursor: pointer;
-            padding: 5px 10px;
-            border-radius: 5px;
-            transition: all 0.2s;
-            opacity: 0;
-            visibility: hidden;
-            margin-right: 10px;
-        }
-        
-        .copy-btn.visible {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .copy-btn:hover {
-            background: #f0f0f0;
-            color: #667eea;
-        }
-        
         .chart-content {
             max-height: 0;
             overflow: hidden;
@@ -259,7 +236,8 @@
         }
         
         .analysis-content strong {
-            color: #764ba2;
+            color: inherit;
+            font-weight: 700;
         }
         
         .analysis-content ul, 
@@ -309,29 +287,23 @@
         }
         
         .feedback-btn {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 0.95em;
-            font-weight: 600;
+            background: transparent;
+            color: #999;
+            border: none;
+            padding: 0;
+            font-size: 0.85em;
             cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 1000;
+            transition: all 0.2s;
+            display: block;
+            margin: 30px 0 0 auto;
+            width: auto;
         }
         
         .feedback-btn:hover {
-            background: #667eea;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            color: #667eea;
+            text-decoration: underline;
         }
-        
+                
         .modal-overlay {
             display: none;
             position: fixed;
@@ -457,13 +429,28 @@
             margin-bottom: 15px;
             display: none;
         }
+        .how-it-works {
+            text-align: center;
+            color: #999;
+            font-size: 0.85em;
+            margin-bottom: 25px;
+        }
+
+        .step {
+            color: #666;
+        }
+
+        .step-divider {
+            margin: 0 10px;
+            color: #ccc;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>📊 Plotliner</h1>
-        <p class="subtitle">Upload any chart. Learn what it’s actually saying.</p>
-
+        <p class="subtitle">Upload any chart. Learn what it’s actually saying.</p> 
+        
         <div class="how-it-works">
             <span class="step">1. Upload chart</span>
             <span class="step-divider">→</span>
@@ -471,7 +458,7 @@
             <span class="step-divider">→</span>
             <span class="step">3. Understand insights</span>
         </div>
-        
+
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📁</div>
             <div class="upload-text">Click to upload or drag and drop</div>
@@ -484,28 +471,26 @@
         
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p>Plotlining your chart...</p>
+            <p>Analyzing your chart...</p>
         </div>
         
         <div class="error" id="error"></div>
         
         <div class="history-section" id="historySection">
             <div class="history-title">
-                <span>Plotline History</span>
+                <span>Analysis History</span>
                 <button class="clear-history" id="clearHistoryBtn">Clear All</button>
             </div>
             <div id="historyContainer"></div>
         </div>
+        <button class="feedback-btn" id="feedbackBtn">Send feedback</button>
     </div>
-
-    <!-- Feedback Button -->
-    <button class="feedback-btn" id="feedbackBtn">💬 Send Feedback</button>
 
     <!-- Feedback Modal -->
     <div class="modal-overlay" id="feedbackModal">
         <div class="modal">
             <h2>Send Feedback</h2>
-            <p>Help us improve Chart Explainer! Share your thoughts, bug reports, or feature requests.</p>
+            <p>Help us improve Plotliner! Share your thoughts, bug reports, or feature requests.</p>
             
             <div class="feedback-success" id="feedbackSuccess">
                 Thanks for your feedback! We really appreciate it. 🙏
@@ -588,6 +573,9 @@
             // Show loading
             loading.style.display = 'block';
             errorDiv.style.display = 'none';
+
+            // Disable upload button while analyzing
+            uploadAnotherBtn.disabled = true;  // <-- Make sure this is here
             
             // Prepare form data
             const formData = new FormData();
@@ -617,6 +605,7 @@
                 showError('Network error: ' + error.message);
             } finally {
                 loading.style.display = 'none';
+                uploadAnotherBtn.disabled = false;  // <-- ADD THIS LINE
                 fileInput.value = ''; // Reset file input
             }
         }
@@ -643,67 +632,34 @@
             
             historyContainer.innerHTML = chartHistory.map(chart => `
                 <div class="chart-card" id="card-${chart.id}">
-                    <div class="chart-header">
-                        <img src="${chart.image}" class="chart-thumbnail" alt="Chart thumbnail" onclick="toggleCard(${chart.id})">
-                        <div class="chart-info" onclick="toggleCard(${chart.id})">
+                    <div class="chart-header" onclick="toggleCard(${chart.id})">
+                        <img src="${chart.image}" class="chart-thumbnail" alt="Chart thumbnail">
+                        <div class="chart-info">
                             <div class="chart-timestamp">Chart #${chart.id} - ${formatTime(chart.timestamp)}</div>
                             <div class="chart-status">${chart.filename}</div>
                         </div>
-                        <button class="copy-btn" id="copy-${chart.id}" onclick="event.stopPropagation(); copyAnalysis(${chart.id})" title="Copy analysis">📋 Copy</button>
-                        <div class="expand-icon" id="icon-${chart.id}" onclick="toggleCard(${chart.id})">▼</div>
+                        <div class="expand-icon" id="icon-${chart.id}">▼</div>
                     </div>
                     <div class="chart-content" id="content-${chart.id}">
                         <div class="chart-body">
                             <img src="${chart.image}" class="full-image" alt="Full chart">
-                            <div class="analysis-content" id="analysis-${chart.id}">${chart.explanation}</div>
+                            <div class="analysis-content">${chart.explanation}</div>
                         </div>
                     </div>
                 </div>
             `).join('');
         }
         
-        async function copyAnalysis(id) {
-            const analysisElement = document.getElementById(`analysis-${id}`);
-            const copyBtn = document.getElementById(`copy-${id}`);
-            
-            // Get the text content (strip HTML)
-            const textContent = analysisElement.innerText;
-            
-            try {
-                await navigator.clipboard.writeText(textContent);
-                
-                // Show "Copied!" feedback
-                const originalText = copyBtn.innerHTML;
-                copyBtn.innerHTML = '✓ Copied!';
-                copyBtn.style.color = '#28a745';
-                
-                // Reset after 2 seconds
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalText;
-                    copyBtn.style.color = '';
-                }, 2000);
-            } catch (err) {
-                console.error('Failed to copy:', err);
-                copyBtn.innerHTML = '✗ Failed';
-                setTimeout(() => {
-                    copyBtn.innerHTML = '📋 Copy';
-                }, 2000);
-            }
-        }
-        
         function toggleCard(id) {
             const content = document.getElementById(`content-${id}`);
             const icon = document.getElementById(`icon-${id}`);
-            const copyBtn = document.getElementById(`copy-${id}`);
             
             if (content.classList.contains('expanded')) {
                 content.classList.remove('expanded');
                 icon.classList.remove('expanded');
-                copyBtn.classList.remove('visible');
             } else {
                 content.classList.add('expanded');
                 icon.classList.add('expanded');
-                copyBtn.classList.add('visible');
             }
         }
         
