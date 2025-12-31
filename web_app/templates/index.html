@@ -97,11 +97,6 @@
             display: none;
             margin-bottom: 30px;
         }
-
-        .upload-another-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
         
         .upload-another-btn:hover {
             transform: translateY(-2px);
@@ -289,6 +284,150 @@
             padding: 40px;
             color: #999;
         }
+        
+        .feedback-btn {
+            background: transparent;
+            color: #999;
+            border: none;
+            padding: 0;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: block;
+            margin: 30px 0 0 auto;
+            width: auto;
+        }
+        
+        .feedback-btn:hover {
+            color: #667eea;
+            text-decoration: underline;
+        }
+                
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .modal h2 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+        
+        .modal p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .feedback-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 1em;
+            resize: vertical;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+        
+        .feedback-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .modal-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .modal-btn.cancel {
+            background: #f0f0f0;
+            color: #666;
+        }
+        
+        .modal-btn.cancel:hover {
+            background: #e0e0e0;
+        }
+        
+        .modal-btn.submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .modal-btn.submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .modal-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .feedback-success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .feedback-error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -299,13 +438,12 @@
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📁</div>
             <div class="upload-text">Click to upload or drag and drop</div>
-            <div class="upload-subtext">Accepts: PNG, JPG, JPEG, GIF, WebP</div>
-            <small style="color: #999; font-size: 0.85em;">PDF support coming soon!</small></div>
+            <div class="upload-subtext">PNG, JPG, or GIF</div>
         </div>
         
         <button class="upload-another-btn" id="uploadAnotherBtn">📤 Upload Another Chart</button>
         
-        <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp">
+        <input type="file" id="fileInput" accept="image/*">
         
         <div class="loading" id="loading">
             <div class="spinner"></div>
@@ -320,6 +458,38 @@
                 <button class="clear-history" id="clearHistoryBtn">Clear All</button>
             </div>
             <div id="historyContainer"></div>
+        </div>
+        <button class="feedback-btn" id="feedbackBtn">Send feedback</button>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div class="modal-overlay" id="feedbackModal">
+        <div class="modal">
+            <h2>Send Feedback</h2>
+            <p>Help us improve Chart Explainer! Share your thoughts, bug reports, or feature requests.</p>
+            
+            <div class="feedback-success" id="feedbackSuccess">
+                Thanks for your feedback! We really appreciate it. 🙏
+            </div>
+            
+            <div class="feedback-error" id="feedbackError">
+                Oops! Something went wrong. Please try again.
+            </div>
+            
+            <form id="feedbackForm">
+                <textarea 
+                    class="feedback-textarea" 
+                    id="feedbackText" 
+                    name="message"
+                    placeholder="What's on your mind?"
+                    required
+                ></textarea>
+                
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn cancel" id="cancelBtn">Cancel</button>
+                    <button type="submit" class="modal-btn submit" id="submitBtn">Send Feedback</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -368,7 +538,7 @@
         
         async function handleFile(file) {
             if (!file.type.startsWith('image/')) {
-                showError('Please upload an image file (PNG, JPG, JPEG, GIF, or WebP)');
+                showError('Please upload an image file');
                 return;
             }
             
@@ -381,7 +551,7 @@
             errorDiv.style.display = 'none';
 
             // Disable upload button while analyzing
-            uploadAnotherBtn.disabled = true;
+            uploadAnotherBtn.disabled = true;  // <-- Make sure this is here
             
             // Prepare form data
             const formData = new FormData();
@@ -411,7 +581,7 @@
                 showError('Network error: ' + error.message);
             } finally {
                 loading.style.display = 'none';
-                uploadAnotherBtn.disabled = false;  // Re-enable button
+                uploadAnotherBtn.disabled = false;  // <-- ADD THIS LINE
                 fileInput.value = ''; // Reset file input
             }
         }
@@ -501,6 +671,80 @@
         
         // Make toggleCard globally accessible
         window.toggleCard = toggleCard;
+        
+        // Feedback Modal Functionality
+        const feedbackBtn = document.getElementById('feedbackBtn');
+        const feedbackModal = document.getElementById('feedbackModal');
+        const feedbackForm = document.getElementById('feedbackForm');
+        const feedbackText = document.getElementById('feedbackText');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const feedbackSuccess = document.getElementById('feedbackSuccess');
+        const feedbackError = document.getElementById('feedbackError');
+        
+        // Open modal
+        feedbackBtn.addEventListener('click', () => {
+            feedbackModal.classList.add('active');
+            feedbackText.focus();
+        });
+        
+        // Close modal
+        cancelBtn.addEventListener('click', () => {
+            feedbackModal.classList.remove('active');
+            feedbackForm.reset();
+            feedbackSuccess.style.display = 'none';
+            feedbackError.style.display = 'none';
+        });
+        
+        // Close modal when clicking outside
+        feedbackModal.addEventListener('click', (e) => {
+            if (e.target === feedbackModal) {
+                feedbackModal.classList.remove('active');
+                feedbackForm.reset();
+                feedbackSuccess.style.display = 'none';
+                feedbackError.style.display = 'none';
+            }
+        });
+        
+        // Submit feedback
+        feedbackForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+            feedbackSuccess.style.display = 'none';
+            feedbackError.style.display = 'none';
+            
+            const formData = new FormData(feedbackForm);
+            
+            try {
+                const response = await fetch('https://formspree.io/f/xkogwewa', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    feedbackSuccess.style.display = 'block';
+                    feedbackForm.reset();
+                    
+                    // Close modal after 2 seconds
+                    setTimeout(() => {
+                        feedbackModal.classList.remove('active');
+                        feedbackSuccess.style.display = 'none';
+                    }, 2000);
+                } else {
+                    feedbackError.style.display = 'block';
+                }
+            } catch (error) {
+                feedbackError.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Feedback';
+            }
+        });
     </script>
 </body>
 </html>
