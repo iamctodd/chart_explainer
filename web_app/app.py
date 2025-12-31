@@ -31,9 +31,9 @@ def explain_chart(image_base64, media_type):
                         "text": """Analyze this chart/graph and provide:
 
 1. **What this shows**: Explain what data is being presented (2-3 sentences)
-2. **Key insights**: What are the main takeaways or patterns?
+2. **What this chart is really saying**: What are the main takeaways or patterns?
 3. **What this does NOT show**: Important limitations or what's missing
-4. **Potential misinterpretations**: Common ways people might misread this
+4. **What people often misread here**: Common ways people might misread this
 
 Be clear and helpful, not condescending. If the axes are misleading or there are visual tricks, point them out."""
                     }
