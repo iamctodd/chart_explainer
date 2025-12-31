@@ -1,0 +1,4 @@
+flask
+anthropic
+gunicorn
+markdown
