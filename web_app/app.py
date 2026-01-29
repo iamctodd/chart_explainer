@@ -34,6 +34,7 @@ def explain_chart(image_base64, media_type):
 2. **What this chart is really saying**: What are the main takeaways or patterns?
 3. **What this does NOT show**: Important limitations or what's missing
 4. **What people often misread here**: Common ways people might misread this
+5. **What could be improved**: How to make this chart easier to understand
 
 Be clear and helpful, not condescending. If the axes are misleading or there are visual tricks, point them out."""
                     }

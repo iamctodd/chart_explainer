@@ -1,8 +1,8 @@
-# 🗺️ Plotliner Roadmap
+# 🗺️ ChartHawk Roadmap
 
 ## Current Version: v0.1 (MVP)
 
-This roadmap outlines planned features and improvements for Plotliner. Items are organized by priority and complexity.
+This roadmap outlines planned features and improvements for ChartHawk. Items are organized by priority and complexity.
 
 ---
 

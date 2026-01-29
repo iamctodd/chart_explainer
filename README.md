@@ -1,18 +1,18 @@
-# 📊 Plotliner
+# 📊 ChartHawk
 
 **Stop pretending you understand every chart. Get clear explanations in seconds.**
 
-Plotliner is a web app that analyzes charts and visualizations using AI, providing plain-English explanations of what the data actually shows, what it doesn't show, and common misinterpretations.
+ChartHawk is a web app that analyzes charts and visualizations using AI, providing plain-English explanations of what the data actually shows, what it doesn't show, and common misinterpretations.
 
-🔗 **Live Demo:** [plotliner.up.railway.app](https://plotliner.up.railway.app)
+🔗 **Live Demo:** [ChartHawk.up.railway.app](https://charthawk.up.railway.app)
 
 ---
 
-## Why Plotliner?
+## Why ChartHawk?
 
 We've all been in meetings where someone presents a complex chart and everyone nods along. The data literacy gap is real, and it's embarrassing to admit when you don't understand a visualization.
 
-Plotliner gives you:
+ChartHawk gives you:
 - **What it shows**: Clear explanation of the data and trends
 - **Key insights**: Main takeaways you should notice
 - **What it doesn't show**: Important limitations and missing context
@@ -52,8 +52,8 @@ Plotliner gives you:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/iamctodd/plotliner.git
-   cd plotliner/web_app
+   git clone https://github.com/iamctodd/charthawk.git
+   cd charthawk/web_app
    ```
 
 2. **Create virtual environment**
@@ -102,7 +102,7 @@ Railway will automatically detect the Python app and use the provided `railway.j
 ## Project Structure
 
 ```
-plotliner/
+charthawk/
 ├── web_app/              # Web application
 │   ├── app.py           # Flask backend
 │   ├── templates/
@@ -127,7 +127,7 @@ plotliner/
 
 ## API Costs
 
-Plotliner uses the Anthropic Claude API. Approximate costs:
+ChartHawk uses the Anthropic Claude API. Approximate costs:
 - ~$0.015 per chart analysis (Sonnet 4.5)
 - Free tier credits available for new accounts
 - Monitor usage in [Anthropic Console](https://console.anthropic.com)
