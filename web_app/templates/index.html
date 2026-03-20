@@ -4,528 +4,690 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChartHawk — Upload any chart. Learn what it actually says.</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 900px;
-            width: 100%;
-            padding: 40px;
-            margin: 0 auto;
-        }
-        
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }
-        
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 1.1em;
-        }
-        
-        .upload-area {
-            border: 3px dashed #667eea;
-            border-radius: 10px;
-            padding: 60px 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 20px;
-        }
-        
-        .upload-area:hover {
-            border-color: #764ba2;
-            background: #f8f9ff;
-        }
-        
-        .upload-area.dragover {
-            background: #f0f4ff;
-            border-color: #764ba2;
-        }
-        
-        .upload-area.hidden {
-            display: none;
-        }
-        
-        .upload-icon {
-            font-size: 3em;
-            margin-bottom: 15px;
-        }
-        
-        .upload-text {
-            font-size: 1.2em;
-            color: #667eea;
-            font-weight: 600;
-        }
-        
-        .upload-subtext {
-            color: #999;
-            margin-top: 10px;
-        }
-        
-        input[type="file"] {
-            display: none;
-        }
-        
-        .upload-another-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 10px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-            display: none;
-            margin-bottom: 30px;
-        }
-        
-        .upload-another-btn:hover {
-            transform: translateY(-2px);
-        }
-        
-        .history-section {
-            margin-top: 30px;
-            display: none;
-        }
-        
-        .history-title {
-            color: #333;
-            font-size: 1.5em;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .clear-history {
-            background: #fee;
-            color: #c33;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 8px;
-            font-size: 0.9em;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .clear-history:hover {
-            background: #fdd;
-        }
-        
-        .chart-card {
-            background: #f8f9ff;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            overflow: hidden;
-            border: 1px solid #e0e0e0;
-            transition: all 0.3s;
-        }
-        
-        .chart-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .chart-header {
-            padding: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: white;
-        }
-        
-        .chart-thumbnail {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 2px solid #e0e0e0;
-        }
-        
-        .chart-info {
-            flex: 1;
-        }
-        
-        .chart-timestamp {
-            color: #667eea;
-            font-weight: 600;
-            font-size: 0.95em;
-            margin-bottom: 5px;
-        }
-        
-        .chart-status {
-            color: #666;
-            font-size: 0.9em;
-        }
-        
-        .expand-icon {
-            font-size: 1.5em;
-            color: #667eea;
-            transition: transform 0.3s;
-        }
-        
-        .expand-icon.expanded {
-            transform: rotate(180deg);
-        }
-        
-        .copy-btn {
-            background: transparent;
-            border: none;
-            color: #999;
-            font-size: 0.85em;
-            cursor: pointer;
-            padding: 5px 10px;
-            border-radius: 5px;
-            transition: all 0.2s;
-            opacity: 0;
-            visibility: hidden;
-            margin-right: 10px;
-        }
-        
-        .copy-btn.visible {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .copy-btn:hover {
-            background: #f0f0f0;
-            color: #667eea;
-        }
-        
-        .chart-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-        
-        .chart-content.expanded {
-            max-height: 5000px;
-        }
-        
-        .chart-body {
-            padding: 20px;
-            border-top: 1px solid #e0e0e0;
-        }
-        
-        .full-image {
-            width: 100%;
-            max-width: 500px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .analysis-content {
-            color: #333;
-            line-height: 1.8;
-        }
-        
-        .analysis-content h1,
-        .analysis-content h2 {
-            color: #667eea;
-            margin-top: 20px;
-            margin-bottom: 10px;
-        }
-        
-        .analysis-content h1 {
-            font-size: 1.5em;
-        }
-        
-        .analysis-content h2 {
-            font-size: 1.3em;
-        }
-        
-        .analysis-content p {
-            margin-bottom: 15px;
-        }
-        
-        .analysis-content strong {
-            color: #764ba2;
-        }
-        
-        .analysis-content ul, 
-        .analysis-content ol {
-            margin-left: 20px;
-            margin-bottom: 15px;
-        }
-        
-        .analysis-content li {
-            margin-bottom: 8px;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 20px;
-            display: none;
-        }
-        
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .error {
-            background: #fee;
-            color: #c33;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
-            display: none;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-        
-        .feedback-btn {
-            background: transparent;
-            color: #999;
-            border: none;
-            padding: 0;
-            font-size: 0.85em;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: block;
-            margin: 30px 0 0 auto;
-            width: auto;
-        }
-                
-        .feedback-btn:hover {
-            color: #667eea;
-            text-decoration: underline;
+        :root {
+            --bg-body:      #0B0D0F;
+            --bg-surface:   #161B22;
+            --bg-card:      #1C2128;
+            --bg-input:     #21262D;
+            --border:       #30363D;
+            --text-primary: #E6EDF3;
+            --text-muted:   #7D8590;
+            --accent:       #7C3AED;
+            --accent-hover: #6D28D9;
+            --accent-dim:   #2D1F5E;
+            --success:      #3FB950;
+            --danger:       #F85149;
         }
 
-        .how-it-works {
-            text-align: center;
-            color: #999;
-            font-size: 0.85em;
-            margin-bottom: 25px;  /* Add more space below */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-body);
+            color: var(--text-primary);
+            overflow: hidden;
         }
-        
+
+        /* ─────────────────────────────────────────
+           LANDING VIEW
+        ───────────────────────────────────────── */
+
+        .landing-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 24px;
+            position: relative;
+        }
+
+        .landing-brand {
+            position: absolute;
+            top: 24px;
+            left: 32px;
+            font-size: 1em;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: -0.01em;
+        }
+
+        .landing-headline {
+            font-size: clamp(2em, 5vw, 3.2em);
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            color: var(--text-primary);
+            margin-bottom: 32px;
+        }
+
+        .landing-upload-box {
+            width: 100%;
+            max-width: 620px;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 16px 18px 22px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .landing-upload-box:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+        }
+
+        .landing-upload-box.dragover {
+            border-color: var(--accent);
+            background: rgba(124, 58, 237, 0.06);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+        }
+
+        .upload-placeholder {
+            flex: 1;
+            color: var(--text-muted);
+            font-size: 1em;
+            user-select: none;
+        }
+
+        .upload-placeholder span { color: var(--accent); font-weight: 500; }
+
+        .landing-upload-icon {
+            font-size: 1.4em;
+            flex-shrink: 0;
+            opacity: 0.6;
+        }
+
+        .landing-send-btn {
+            width: 36px;
+            height: 36px;
+            background: var(--accent);
+            border: none;
+            border-radius: 9px;
+            color: white;
+            font-size: 1.1em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+
+        .landing-send-btn:hover { background: var(--accent-hover); }
+
+        .landing-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            max-width: 620px;
+        }
+
+        .chip {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.82em;
+            color: var(--text-muted);
+            user-select: none;
+            transition: border-color 0.15s, color 0.15s;
+        }
+
+        .chip:hover { border-color: var(--accent); color: var(--text-primary); }
+
+        .landing-loading {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            font-size: 0.95em;
+            margin-top: 20px;
+        }
+
+        .landing-loading.visible { display: flex; }
+
+        .spinner {
+            border: 2.5px solid var(--border);
+            border-top: 2.5px solid var(--accent);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 0.75s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .landing-error {
+            display: none;
+            margin-top: 16px;
+            color: var(--danger);
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        /* ─────────────────────────────────────────
+           CHAT VIEW
+        ───────────────────────────────────────── */
+
+        .chat-view {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            flex-shrink: 0;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 16px 12px;
+            overflow-y: auto;
+        }
+
+        .new-chart-btn {
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 9px 14px;
+            font-size: 0.88em;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.15s, border-color 0.15s;
+            margin-bottom: 16px;
+        }
+
+        .new-chart-btn:hover { background: var(--bg-card); border-color: var(--accent); }
+
+        .sidebar-section-label {
+            font-size: 0.72em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-muted);
+            padding: 0 4px;
+            margin-bottom: 6px;
+        }
+
+        .sidebar-history {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+            border-left: 2px solid transparent;
+        }
+
+        .sidebar-item:hover { background: var(--bg-card); }
+
+        .sidebar-item.active {
+            background: var(--accent-dim);
+            border-left-color: var(--accent);
+        }
+
+        .sidebar-thumb {
+            width: 38px;
+            height: 38px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .sidebar-info { flex: 1; min-width: 0; }
+
+        .sidebar-name {
+            font-size: 0.82em;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar-time {
+            font-size: 0.73em;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+
+        .sidebar-footer {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .sidebar-footer-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 7px 6px;
+            font-size: 0.82em;
+            cursor: pointer;
+            text-align: left;
+            border-radius: 6px;
+            transition: color 0.15s, background 0.15s;
+        }
+
+        .sidebar-footer-btn:hover { color: var(--text-primary); background: var(--bg-card); }
+        .sidebar-footer-btn.danger:hover { color: var(--danger); }
+
+        /* Main panel */
+        .main-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg-body);
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px 48px;
+            scroll-behavior: smooth;
+        }
+
+        .main-inner { max-width: 700px; margin: 0 auto; }
+
+        .main-chart-img {
+            width: 100%;
+            max-width: 560px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .main-chart-meta {
+            font-size: 0.8em;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .copy-btn-inline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            border-radius: 5px;
+            padding: 3px 10px;
+            font-size: 0.85em;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: color 0.15s, border-color 0.15s;
+        }
+
+        .copy-btn-inline:hover { color: var(--text-primary); border-color: var(--accent); }
+
+        /* Analysis content */
+        .analysis-content { color: var(--text-primary); line-height: 1.8; }
+        .analysis-content h1, .analysis-content h2 { color: var(--accent); margin-top: 22px; margin-bottom: 8px; }
+        .analysis-content h1 { font-size: 1.25em; }
+        .analysis-content h2 { font-size: 1.1em; }
+        .analysis-content p { margin-bottom: 14px; }
+        .analysis-content p:last-child { margin-bottom: 0; }
+        .analysis-content strong { color: #c9b1f5; }
+        .analysis-content ul, .analysis-content ol { margin-left: 20px; margin-bottom: 14px; }
+        .analysis-content li { margin-bottom: 6px; }
+
+        /* Streaming plain-text state */
+        .analysis-content.streaming {
+            white-space: pre-wrap;
+            color: var(--text-muted);
+            font-size: 0.93em;
+        }
+
+        /* Chat thread */
+        .chat-divider { border: none; border-top: 1px solid var(--border); margin: 28px 0 20px; }
+
+        .chat-label {
+            font-size: 0.75em;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            margin-bottom: 14px;
+        }
+
+        .chat-thread { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+
+        .chat-bubble {
+            max-width: 88%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.93em;
+            line-height: 1.65;
+        }
+
+        .chat-bubble.user {
+            align-self: flex-end;
+            background: var(--accent-dim);
+            color: #d4bbff;
+            border: 1px solid rgba(124, 58, 237, 0.35);
+            border-bottom-right-radius: 3px;
+        }
+
+        .chat-bubble.assistant {
+            align-self: flex-start;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 3px;
+        }
+
+        /* streaming state for assistant bubble */
+        .chat-bubble.assistant.streaming {
+            white-space: pre-wrap;
+            color: var(--text-muted);
+        }
+
+        .chat-bubble.assistant h1,
+        .chat-bubble.assistant h2,
+        .chat-bubble.assistant h3 { color: var(--accent); margin: 10px 0 6px; font-size: 1em; }
+        .chat-bubble.assistant p { margin-bottom: 8px; }
+        .chat-bubble.assistant p:last-child { margin-bottom: 0; }
+        .chat-bubble.assistant ul, .chat-bubble.assistant ol { margin-left: 16px; margin-bottom: 8px; }
+        .chat-bubble.assistant li { margin-bottom: 4px; }
+        .chat-bubble.assistant strong { color: #c9b1f5; }
+
+        .chat-typing {
+            align-self: flex-start;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            border-bottom-left-radius: 3px;
+            padding: 12px 16px;
+        }
+
+        .typing-dots span {
+            display: inline-block;
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            margin: 0 2px;
+            animation: bounce 1.2s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+
+        /* Main input bar */
+        .main-input-bar { padding: 12px 48px 20px; background: var(--bg-body); }
+        .main-input-inner { max-width: 700px; margin: 0 auto; }
+
+        .chat-input-area {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 10px 10px 14px;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input-area:focus-within { border-color: var(--accent); }
+
+        .attach-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.1em;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 6px;
+            flex-shrink: 0;
+            transition: color 0.15s;
+            line-height: 1;
+        }
+
+        .attach-btn:hover { color: var(--text-primary); }
+
+        .chat-textarea {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.93em;
+            line-height: 1.5;
+            resize: none;
+            max-height: 140px;
+            overflow-y: auto;
+        }
+
+        .chat-textarea::placeholder { color: var(--text-muted); }
+
+        .chat-send-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-size: 1em;
+            transition: background 0.15s;
+        }
+
+        .chat-send-btn:hover { background: var(--accent-hover); }
+        .chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .chat-error {
+            color: var(--danger);
+            font-size: 0.82em;
+            margin-top: 6px;
+            padding: 0 4px;
+        }
+
+        /* ─────────────────────────────────────────
+           MODAL
+        ───────────────────────────────────────── */
+
         .modal-overlay {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.6);
+            inset: 0;
+            background: rgba(0,0,0,0.7);
             z-index: 2000;
             align-items: center;
             justify-content: center;
             padding: 20px;
         }
-        
-        .modal-overlay.active {
-            display: flex;
-        }
-        
+
+        .modal-overlay.active { display: flex; }
+
         .modal {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            max-width: 500px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px;
+            max-width: 480px;
             width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            animation: slideIn 0.3s ease;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            animation: slideIn 0.22s ease;
         }
-        
-        @keyframes slideIn {
-            from {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
-        .modal h2 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 1.8em;
-        }
-        
-        .modal p {
-            color: #666;
-            margin-bottom: 20px;
-        }
-        
+
+        @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .modal h2 { color: var(--text-primary); margin-bottom: 8px; font-size: 1.5em; }
+        .modal p  { color: var(--text-muted); margin-bottom: 18px; font-size: 0.93em; }
+
         .feedback-textarea {
             width: 100%;
-            min-height: 120px;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-family: inherit;
-            font-size: 1em;
-            resize: vertical;
-            margin-bottom: 15px;
-            transition: border-color 0.3s;
-        }
-        
-        .feedback-textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-        
-        .modal-btn {
-            padding: 12px 25px;
-            border: none;
+            min-height: 108px;
+            padding: 12px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
             border-radius: 8px;
-            font-size: 1em;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.93em;
+            resize: vertical;
+            margin-bottom: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .feedback-textarea:focus { outline: none; border-color: var(--accent); }
+        .feedback-textarea::placeholder { color: var(--text-muted); }
+
+        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+
+        .modal-btn {
+            padding: 9px 20px;
+            border: none;
+            border-radius: 7px;
+            font-size: 0.93em;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.15s;
         }
-        
-        .modal-btn.cancel {
-            background: #f0f0f0;
-            color: #666;
-        }
-        
-        .modal-btn.cancel:hover {
-            background: #e0e0e0;
-        }
-        
-        .modal-btn.submit {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .modal-btn.submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-        
-        .modal-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
+
+        .modal-btn.cancel { background: var(--bg-input); color: var(--text-muted); border: 1px solid var(--border); }
+        .modal-btn.cancel:hover { background: var(--border); color: var(--text-primary); }
+        .modal-btn.submit { background: var(--accent); color: white; }
+        .modal-btn.submit:hover { background: var(--accent-hover); }
+        .modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
         .feedback-success {
-            background: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            display: none;
+            background: rgba(63, 185, 80, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(63, 185, 80, 0.3);
+            padding: 11px 14px; border-radius: 8px; margin-bottom: 14px;
+            display: none; font-size: 0.9em;
         }
-        
+
         .feedback-error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            display: none;
+            background: rgba(248, 81, 73, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(248, 81, 73, 0.3);
+            padding: 11px 14px; border-radius: 8px; margin-bottom: 14px;
+            display: none; font-size: 0.9em;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .sidebar { display: none; }
+            .main-content { padding: 24px 20px; }
+            .main-input-bar { padding: 8px 16px 16px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📊 ChartHawk</h1>
-        <p class="subtitle">Upload any chart. Learn what it’s actually saying.</p>
 
-        <div class="how-it-works">
-            <span class="step">1. Upload a chart</span>
-            <span class="step-divider">→</span>
-            <span class="step">2. Get an explanation</span>
-            <span class="step-divider">→</span>
-            <span class="step">3. Go beyond the visual</span>
+    <!-- ── LANDING VIEW ─────────────────────────── -->
+    <div id="landingView" class="landing-view">
+        <div class="landing-brand">📊 ChartHawk</div>
+
+        <h1 class="landing-headline">What chart do you<br>want to understand?</h1>
+
+        <div class="landing-upload-box" id="uploadArea">
+            <span class="landing-upload-icon">📁</span>
+            <span class="upload-placeholder">Drop a chart or <span>click to upload</span> — PNG, JPG, GIF</span>
+            <button class="landing-send-btn" tabindex="-1" aria-label="Upload">↑</button>
         </div>
-        
-        <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📁</div>
-            <div class="upload-text">Click to upload or drag and drop</div>
-            <div class="upload-subtext">PNG, JPG, or GIF</div>
+
+        <div class="landing-chips">
+            <span class="chip">📊 Bar chart</span>
+            <span class="chip">📈 Line chart</span>
+            <span class="chip">🔵 Scatter plot</span>
+            <span class="chip">🟦 Heatmap</span>
+            <span class="chip">🥧 Pie chart</span>
+            <span class="chip">📉 Histogram</span>
         </div>
-        
-        <button class="upload-another-btn" id="uploadAnotherBtn">📤 Plotline a Chart</button>
-        
-        <input type="file" id="fileInput" accept="image/*">
-        
-        <div class="loading" id="loading">
+
+        <div class="landing-loading" id="loading">
             <div class="spinner"></div>
-            <p>Plotlining your chart...</p>
+            <span>Analyzing your chart…</span>
         </div>
-        
-        <div class="error" id="error"></div>
-        
-        <div class="history-section" id="historySection">
-            <div class="history-title">
-                <span>Plotline History</span>
-                <button class="clear-history" id="clearHistoryBtn">Clear All</button>
-            </div>
-            <div id="historyContainer"></div>
-        </div>
-        <!-- Feedback Button -->
-        <button class="feedback-btn" id="feedbackBtn">Send Feedback</button>    
+
+        <div class="landing-error" id="error"></div>
+
+        <input type="file" id="fileInput" accept="image/*">
     </div>
 
-    
+    <!-- ── CHAT VIEW ─────────────────────────────── -->
+    <div id="chatView" class="chat-view" style="display:none;">
 
-    <!-- Feedback Modal -->
+        <aside class="sidebar">
+            <button class="new-chart-btn" id="newChartBtn">＋ New Chart</button>
+            <div class="sidebar-section-label">History</div>
+            <div class="sidebar-history" id="sidebarHistory"></div>
+            <div class="sidebar-footer">
+                <button class="sidebar-footer-btn danger" id="clearHistoryBtn">🗑 Clear history</button>
+                <button class="sidebar-footer-btn" id="feedbackBtn">💬 Send feedback</button>
+            </div>
+        </aside>
+
+        <main class="main-panel">
+            <div class="main-content" id="mainContent">
+                <div class="main-inner" id="mainInner"></div>
+            </div>
+            <div class="main-input-bar">
+                <div class="main-input-inner">
+                    <div class="chat-input-area">
+                        <button class="attach-btn" id="attachBtn" title="Analyze another chart">📎</button>
+                        <textarea
+                            class="chat-textarea"
+                            id="mainChatInput"
+                            placeholder="Ask a follow-up question about this chart…"
+                            rows="1"
+                        ></textarea>
+                        <button class="chat-send-btn" id="mainSendBtn" title="Send">↑</button>
+                    </div>
+                    <div class="chat-error" id="chatError" style="display:none;"></div>
+                </div>
+            </div>
+            <input type="file" id="fileInputChat" accept="image/*" style="display:none;">
+        </main>
+
+    </div>
+
+    <!-- ── FEEDBACK MODAL ────────────────────────── -->
     <div class="modal-overlay" id="feedbackModal">
         <div class="modal">
             <h2>Send Feedback</h2>
-            <p>Help us improve ChartHawk! Share your thoughts, bug reports, or feature requests.</p>
-            
-            <div class="feedback-success" id="feedbackSuccess">
-                Thanks for your feedback! We really appreciate it. 🙏
-            </div>
-            
-            <div class="feedback-error" id="feedbackError">
-                Oops! Something went wrong. Please try again.
-            </div>
-            
+            <p>Help us improve ChartHawk — bug reports, ideas, or anything on your mind.</p>
+            <div class="feedback-success" id="feedbackSuccess">Thanks for your feedback! 🙏</div>
+            <div class="feedback-error"   id="feedbackError">Oops! Something went wrong.</div>
             <form id="feedbackForm">
-                <textarea 
-                    class="feedback-textarea" 
-                    id="feedbackText" 
-                    name="message"
-                    placeholder="What's on your mind?"
-                    required
-                ></textarea>
-                
+                <textarea class="feedback-textarea" id="feedbackText" name="message" placeholder="What's on your mind?" required></textarea>
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn cancel" id="cancelBtn">Cancel</button>
                     <button type="submit" class="modal-btn submit" id="submitBtn">Send Feedback</button>
@@ -535,286 +697,532 @@
     </div>
 
     <script>
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-        const uploadAnotherBtn = document.getElementById('uploadAnotherBtn');
-        const loading = document.getElementById('loading');
-        const errorDiv = document.getElementById('error');
-        const historySection = document.getElementById('historySection');
-        const historyContainer = document.getElementById('historyContainer');
-        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
-        
-        let chartHistory = [];
+        // ── marked.js config ───────────────────────────────────
+        marked.setOptions({ breaks: true, gfm: true });
+
+        // ── Constants ──────────────────────────────────────────
+        const STORAGE_KEY  = 'charthawk_v1';
+        const MAX_CHARTS   = 10;
+
+        // ── State ──────────────────────────────────────────────
+        let chartHistory  = [];
         let analysisCount = 0;
-        
-        // Click to upload
+        let activeChartId = null;
+        let appState      = 'landing'; // 'landing' | 'chat'
+
+        // ── Element refs ───────────────────────────────────────
+        const landingView    = document.getElementById('landingView');
+        const chatView       = document.getElementById('chatView');
+        const uploadArea     = document.getElementById('uploadArea');
+        const fileInput      = document.getElementById('fileInput');
+        const fileInputChat  = document.getElementById('fileInputChat');
+        const loadingEl      = document.getElementById('loading');
+        const errorEl        = document.getElementById('error');
+        const mainContent    = document.getElementById('mainContent');
+        const mainInner      = document.getElementById('mainInner');
+        const sidebarHistory = document.getElementById('sidebarHistory');
+        const mainChatInput  = document.getElementById('mainChatInput');
+        const mainSendBtn    = document.getElementById('mainSendBtn');
+        const chatErrorEl    = document.getElementById('chatError');
+        const newChartBtn    = document.getElementById('newChartBtn');
+        const clearHistoryBtn= document.getElementById('clearHistoryBtn');
+        const attachBtn      = document.getElementById('attachBtn');
+
+        // ── localStorage ───────────────────────────────────────
+
+        function saveHistory() {
+            try {
+                // Trim to cap before saving (oldest are at end of array)
+                const toSave = chartHistory.slice(0, MAX_CHARTS);
+                _writeStorage(toSave);
+            } catch (e) { /* storage unavailable */ }
+        }
+
+        function _writeStorage(arr) {
+            if (!arr.length) {
+                try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+                return;
+            }
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+            } catch (e) {
+                if (e.name === 'QuotaExceededError' && arr.length > 1) {
+                    // Drop oldest chart and retry
+                    _writeStorage(arr.slice(0, arr.length - 1));
+                }
+                // If still failing with one entry, silently give up
+            }
+        }
+
+        function loadHistory() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+
+                const parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed) || parsed.length === 0) return;
+
+                // Revive Date objects and filter incomplete entries
+                const revived = parsed
+                    .filter(c => c && c.explanation)  // drop mid-stream crashes
+                    .map(c => ({ ...c, timestamp: new Date(c.timestamp) }));
+
+                if (!revived.length) return;
+
+                chartHistory  = revived;
+                analysisCount = Math.max(...revived.map(c => c.id));
+                switchToChatView(revived[0].id);
+            } catch (e) {
+                // Corrupted storage — clear it and start fresh
+                try { localStorage.removeItem(STORAGE_KEY); } catch(_) {}
+            }
+        }
+
+        // ── SSE stream reader ──────────────────────────────────
+
+        async function* readSSE(response) {
+            const reader  = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+
+                    // SSE blocks are separated by double newline
+                    const parts = buffer.split('\n\n');
+                    buffer = parts.pop(); // keep incomplete trailing chunk
+
+                    for (const part of parts) {
+                        if (!part.trim()) continue;
+                        const eventMatch = part.match(/^event: (.+)$/m);
+                        const dataMatch  = part.match(/^data: (.+)$/m);
+                        if (dataMatch) {
+                            yield {
+                                event: eventMatch ? eventMatch[1].trim() : 'message',
+                                data:  JSON.parse(dataMatch[1]),
+                            };
+                        }
+                    }
+                }
+            } finally {
+                reader.releaseLock();
+            }
+        }
+
+        // ── Upload events ──────────────────────────────────────
+
         uploadArea.addEventListener('click', () => fileInput.click());
-        uploadAnotherBtn.addEventListener('click', () => fileInput.click());
-        
-        // Drag and drop
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
-        
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-        
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
-            }
+            if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
         });
-        
-        // File input change
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFile(e.target.files[0]);
-            }
+        fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
+
+        attachBtn.addEventListener('click', () => fileInputChat.click());
+        fileInputChat.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
+
+        // ── New / clear ────────────────────────────────────────
+
+        newChartBtn.addEventListener('click', goToLanding);
+
+        clearHistoryBtn.addEventListener('click', () => {
+            if (!confirm('Clear all chart history?')) return;
+            chartHistory  = [];
+            analysisCount = 0;
+            activeChartId = null;
+            saveHistory();
+            goToLanding();
         });
-        
+
+        function goToLanding() {
+            appState = 'landing';
+            chatView.style.display    = 'none';
+            landingView.style.display = 'flex';
+            loadingEl.classList.remove('visible');
+            errorEl.style.display = 'none';
+        }
+
+        // ── Handle file upload (streaming) ─────────────────────
+
         async function handleFile(file) {
             if (!file.type.startsWith('image/')) {
                 showError('Please upload an image file');
                 return;
             }
-            
-            // Hide upload area, show upload another button
-            uploadArea.classList.add('hidden');
-            uploadAnotherBtn.style.display = 'block';
-            
-            // Show loading
-            loading.style.display = 'block';
-            errorDiv.style.display = 'none';
-            
-            // Prepare form data
+
+            // Show spinner on landing; disable send btn in chat
+            if (appState === 'landing') {
+                loadingEl.classList.add('visible');
+                errorEl.style.display = 'none';
+            }
+            mainSendBtn.disabled = true;
+
             const formData = new FormData();
             formData.append('chart', file);
-            
+
+            let chartData = null;
+            let accumulatedText = '';
+
             try {
-                const response = await fetch('/analyze', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    analysisCount++;
-                    addToHistory({
-                        id: analysisCount,
-                        timestamp: new Date(),
-                        image: data.image,
-                        explanation: data.explanation,
-                        filename: file.name
-                    });
-                } else {
-                    showError(data.error || 'Failed to analyze chart');
+                const response = await fetch('/analyze_stream', { method: 'POST', body: formData });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({ error: 'Upload failed' }));
+                    showError(err.error || 'Failed to analyze chart');
+                    return;
                 }
-            } catch (error) {
-                showError('Network error: ' + error.message);
+
+                for await (const { event, data } of readSSE(response)) {
+
+                    if (event === 'image') {
+                        // Create chart entry and switch to chat immediately
+                        analysisCount++;
+                        chartData = {
+                            id:           analysisCount,
+                            timestamp:    new Date(),
+                            image:        data.image,
+                            explanation:  '',           // filled on 'done'
+                            filename:     file.name,
+                            conversation: [],
+                        };
+                        chartHistory.unshift(chartData);
+                        loadingEl.classList.remove('visible');
+                        switchToChatView(chartData.id);
+
+                    } else if (event === 'text' && chartData) {
+                        accumulatedText += data.chunk;
+                        const el = document.getElementById(`analysis-${chartData.id}`);
+                        if (el) el.textContent = accumulatedText; // raw text during stream
+                        mainContent.scrollTop = mainContent.scrollHeight;
+
+                    } else if (event === 'done' && chartData) {
+                        const html = marked.parse(accumulatedText);
+                        chartData.explanation = html;
+                        const el = document.getElementById(`analysis-${chartData.id}`);
+                        if (el) {
+                            el.innerHTML  = html;
+                            el.className  = 'analysis-content';
+                        }
+                        saveHistory(); // persist only after explanation is complete
+
+                    } else if (event === 'error') {
+                        showError(data.error || 'Analysis failed');
+                        // Remove incomplete chart from history if it was added
+                        if (chartData) {
+                            chartHistory = chartHistory.filter(c => c.id !== chartData.id);
+                            renderSidebar();
+                        }
+                    }
+                }
+
+            } catch (err) {
+                showError('Network error: ' + err.message);
+                if (chartData) {
+                    chartHistory = chartHistory.filter(c => c.id !== chartData.id);
+                    renderSidebar();
+                }
             } finally {
-                loading.style.display = 'none';
-                fileInput.value = ''; // Reset file input
+                loadingEl.classList.remove('visible');
+                mainSendBtn.disabled = false;
+                fileInput.value      = '';
+                fileInputChat.value  = '';
             }
         }
-        
-        function addToHistory(chartData) {
-            chartHistory.unshift(chartData); // Add to beginning
-            renderHistory();
-            historySection.style.display = 'block';
-            
-            // Auto-expand the newest item
-            setTimeout(() => {
-                const firstCard = document.querySelector('.chart-card');
-                if (firstCard) {
-                    toggleCard(chartData.id);
-                }
-            }, 100);
+
+        // ── Switch to chat view ────────────────────────────────
+
+        function switchToChatView(id) {
+            appState = 'chat';
+            landingView.style.display = 'none';
+            chatView.style.display    = 'flex';
+            activeChartId             = id;
+            renderSidebar();
+            renderMainPanel(id);
         }
-        
-        function renderHistory() {
-            if (chartHistory.length === 0) {
-                historyContainer.innerHTML = '<div class="empty-state">No charts analyzed yet</div>';
-                return;
-            }
-            
-            historyContainer.innerHTML = chartHistory.map(chart => `
-                <div class="chart-card" id="card-${chart.id}">
-                    <div class="chart-header">
-                        <img src="${chart.image}" class="chart-thumbnail" alt="Chart thumbnail" onclick="toggleCard(${chart.id})">
-                        <div class="chart-info" onclick="toggleCard(${chart.id})">
-                            <div class="chart-timestamp">Chart #${chart.id} - ${formatTime(chart.timestamp)}</div>
-                            <div class="chart-status">${chart.filename}</div>
-                        </div>
-                        <button class="copy-btn" id="copy-${chart.id}" onclick="event.stopPropagation(); copyAnalysis(${chart.id})" title="Copy analysis">📋 Copy</button>
-                        <div class="expand-icon" id="icon-${chart.id}" onclick="toggleCard(${chart.id})">▼</div>
-                    </div>
-                    <div class="chart-content" id="content-${chart.id}">
-                        <div class="chart-body">
-                            <img src="${chart.image}" class="full-image" alt="Full chart">
-                            <div class="analysis-content" id="analysis-${chart.id}">${chart.explanation}</div>
-                        </div>
+
+        // ── Sidebar ────────────────────────────────────────────
+
+        function renderSidebar() {
+            sidebarHistory.innerHTML = chartHistory.map(chart => `
+                <div class="sidebar-item ${chart.id === activeChartId ? 'active' : ''}"
+                     onclick="selectChart(${chart.id})">
+                    <img src="${chart.image}" class="sidebar-thumb" alt="chart">
+                    <div class="sidebar-info">
+                        <div class="sidebar-name">${escapeHtml(chart.filename)}</div>
+                        <div class="sidebar-time">${formatTime(chart.timestamp)}</div>
                     </div>
                 </div>
             `).join('');
         }
-        
+
+        function selectChart(id) {
+            activeChartId             = id;
+            mainChatInput.value       = '';
+            mainChatInput.style.height= 'auto';
+            chatErrorEl.style.display = 'none';
+            renderSidebar();
+            renderMainPanel(id);
+        }
+
+        // ── Main panel ─────────────────────────────────────────
+
+        function renderMainPanel(id) {
+            const chart = chartHistory.find(c => c.id === id);
+            if (!chart) return;
+
+            // Determine analysis display state
+            const analysisClass = chart.explanation ? 'analysis-content' : 'analysis-content streaming';
+            const analysisBody  = chart.explanation || '';
+
+            mainInner.innerHTML = `
+                <img src="${chart.image}" class="main-chart-img" alt="Chart">
+                <div class="main-chart-meta">
+                    ${escapeHtml(chart.filename)} · ${formatTime(chart.timestamp)}
+                    <button class="copy-btn-inline" id="copy-${chart.id}" onclick="copyAnalysis(${chart.id})">📋 Copy</button>
+                </div>
+                <div class="${analysisClass}" id="analysis-${chart.id}">${analysisBody}</div>
+                <hr class="chat-divider">
+                <div class="chat-label">Follow-up</div>
+                <div class="chat-thread" id="thread-${chart.id}"></div>
+            `;
+
+            // Re-render saved conversation bubbles
+            chart.conversation.forEach(msg => {
+                appendMessageEl(id, msg.role, msg.html || escapeHtml(msg.content));
+            });
+
+            mainContent.scrollTop = mainContent.scrollHeight;
+        }
+
+        // ── Copy analysis ──────────────────────────────────────
+
         async function copyAnalysis(id) {
-            const analysisElement = document.getElementById(`analysis-${id}`);
-            const copyBtn = document.getElementById(`copy-${id}`);
-            
-            // Get the text content (strip HTML)
-            const textContent = analysisElement.innerText;
-            
+            const el  = document.getElementById(`analysis-${id}`);
+            const btn = document.getElementById(`copy-${id}`);
             try {
-                await navigator.clipboard.writeText(textContent);
-                
-                // Show "Copied!" feedback
-                const originalText = copyBtn.innerHTML;
-                copyBtn.innerHTML = '✓ Copied!';
-                copyBtn.style.color = '#28a745';
-                
-                // Reset after 2 seconds
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalText;
-                    copyBtn.style.color = '';
-                }, 2000);
+                await navigator.clipboard.writeText(el ? el.innerText : '');
+                btn.textContent = '✓ Copied!';
+                btn.style.color = 'var(--success)';
+                setTimeout(() => { btn.textContent = '📋 Copy'; btn.style.color = ''; }, 2000);
+            } catch {
+                btn.textContent = '✗ Failed';
+                setTimeout(() => { btn.textContent = '📋 Copy'; }, 2000);
+            }
+        }
+
+        // ── Chat ───────────────────────────────────────────────
+
+        mainChatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFollowUp(activeChartId); }
+        });
+
+        mainChatInput.addEventListener('input', () => autoResize(mainChatInput));
+        mainSendBtn.addEventListener('click', () => sendFollowUp(activeChartId));
+
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
+        }
+
+        function appendMessageEl(id, role, htmlContent) {
+            const thread = document.getElementById(`thread-${id}`);
+            if (!thread) return null;
+            const div = document.createElement('div');
+            div.className = `chat-bubble ${role}`;
+            div.innerHTML = htmlContent;
+            thread.appendChild(div);
+            mainContent.scrollTop = mainContent.scrollHeight;
+            return div;
+        }
+
+        async function sendFollowUp(id) {
+            if (!id) return;
+            const question = mainChatInput.value.trim();
+            if (!question) return;
+
+            const chart = chartHistory.find(c => c.id === id);
+            if (!chart) return;
+
+            // User bubble
+            appendMessageEl(id, 'user', escapeHtml(question));
+            mainChatInput.value        = '';
+            mainChatInput.style.height = 'auto';
+            mainSendBtn.disabled       = true;
+            chatErrorEl.style.display  = 'none';
+
+            const thread = document.getElementById(`thread-${id}`);
+
+            // Typing indicator
+            const typingEl = document.createElement('div');
+            typingEl.className = 'chat-typing';
+            typingEl.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
+            thread.appendChild(typingEl);
+            mainContent.scrollTop = mainContent.scrollHeight;
+
+            // Assistant bubble (created now, filled as stream arrives)
+            const assistantBubble = document.createElement('div');
+            assistantBubble.className = 'chat-bubble assistant streaming';
+
+            let accumulatedText = '';
+            let streamStarted   = false;
+
+            try {
+                const response = await fetch('/followup_stream', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({
+                        question,
+                        image:                chart.image,
+                        conversation_history: chart.conversation.map(m => ({ role: m.role, content: m.content })),
+                    }),
+                });
+
+                if (!response.ok) {
+                    typingEl.remove();
+                    const err = await response.json().catch(() => ({ error: 'Request failed' }));
+                    chatErrorEl.textContent   = err.error || 'Failed to get a response.';
+                    chatErrorEl.style.display = 'block';
+                    return;
+                }
+
+                for await (const { event, data } of readSSE(response)) {
+
+                    if (event === 'text') {
+                        if (!streamStarted) {
+                            // Replace typing indicator with live bubble on first chunk
+                            typingEl.replaceWith(assistantBubble);
+                            streamStarted = true;
+                        }
+                        accumulatedText += data.chunk;
+                        assistantBubble.textContent = accumulatedText; // plain text while streaming
+                        mainContent.scrollTop = mainContent.scrollHeight;
+
+                    } else if (event === 'done') {
+                        const html = marked.parse(accumulatedText);
+                        assistantBubble.innerHTML  = html;
+                        assistantBubble.className  = 'chat-bubble assistant'; // remove streaming class
+
+                        chart.conversation.push({ role: 'user',      content: question,        html: escapeHtml(question) });
+                        chart.conversation.push({ role: 'assistant', content: accumulatedText,  html: html });
+                        saveHistory();
+                        mainContent.scrollTop = mainContent.scrollHeight;
+
+                    } else if (event === 'error') {
+                        if (streamStarted) assistantBubble.remove();
+                        else typingEl.remove();
+                        chatErrorEl.textContent   = data.error || 'Failed to get a response.';
+                        chatErrorEl.style.display = 'block';
+                    }
+                }
+
+                // If stream ended without any text (empty response), clean up
+                if (!streamStarted) typingEl.remove();
+
             } catch (err) {
-                console.error('Failed to copy:', err);
-                copyBtn.innerHTML = '✗ Failed';
-                setTimeout(() => {
-                    copyBtn.innerHTML = '📋 Copy';
-                }, 2000);
+                if (streamStarted) assistantBubble.remove();
+                else typingEl.remove();
+                chatErrorEl.textContent   = 'Network error: ' + err.message;
+                chatErrorEl.style.display = 'block';
+            } finally {
+                mainSendBtn.disabled = false;
+                mainChatInput.focus();
             }
         }
-        
-        function toggleCard(id) {
-            const content = document.getElementById(`content-${id}`);
-            const icon = document.getElementById(`icon-${id}`);
-            const copyBtn = document.getElementById(`copy-${id}`);
-            
-            if (content.classList.contains('expanded')) {
-                content.classList.remove('expanded');
-                icon.classList.remove('expanded');
-                copyBtn.classList.remove('visible');
-            } else {
-                content.classList.add('expanded');
-                icon.classList.add('expanded');
-                copyBtn.classList.add('visible');
-            }
-        }
-        
+
+        // ── Utilities ──────────────────────────────────────────
+
         function formatTime(date) {
-            const now = new Date();
-            const diff = Math.floor((now - date) / 1000); // seconds
-            
-            if (diff < 60) return 'Just now';
-            if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-            if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
-            
-            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            if (!(date instanceof Date) || isNaN(date)) return '';
+            const diff = Math.floor((Date.now() - date) / 1000);
+            if (diff < 60)    return 'Just now';
+            if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+            return date.toLocaleDateString();
         }
-        
-        clearHistoryBtn.addEventListener('click', () => {
-            if (confirm('Clear all analysis history?')) {
-                chartHistory = [];
-                analysisCount = 0;
-                renderHistory();
-                historySection.style.display = 'none';
-                uploadArea.classList.remove('hidden');
-                uploadAnotherBtn.style.display = 'none';
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g,  '&amp;')
+                .replace(/</g,  '&lt;')
+                .replace(/>/g,  '&gt;')
+                .replace(/"/g,  '&quot;')
+                .replace(/\n/g, '<br>');
+        }
+
+        function showError(msg) {
+            if (appState === 'landing') {
+                errorEl.textContent    = msg;
+                errorEl.style.display  = 'block';
+                setTimeout(() => { errorEl.style.display = 'none'; }, 5000);
+            } else {
+                chatErrorEl.textContent   = msg;
+                chatErrorEl.style.display = 'block';
+                setTimeout(() => { chatErrorEl.style.display = 'none'; }, 5000);
             }
-        });
-        
-        function showError(message) {
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 5000);
         }
-        
-        // Make toggleCard globally accessible
-        window.toggleCard = toggleCard;
-        
-        // Feedback Modal Functionality
-        const feedbackBtn = document.getElementById('feedbackBtn');
-        const feedbackModal = document.getElementById('feedbackModal');
-        const feedbackForm = document.getElementById('feedbackForm');
-        const feedbackText = document.getElementById('feedbackText');
-        const cancelBtn = document.getElementById('cancelBtn');
-        const submitBtn = document.getElementById('submitBtn');
+
+        // Expose for inline onclick handlers
+        window.selectChart  = selectChart;
+        window.copyAnalysis = copyAnalysis;
+
+        // ── Feedback modal ─────────────────────────────────────
+
+        const feedbackBtn     = document.getElementById('feedbackBtn');
+        const feedbackModal   = document.getElementById('feedbackModal');
+        const feedbackForm    = document.getElementById('feedbackForm');
+        const feedbackText    = document.getElementById('feedbackText');
+        const cancelBtn       = document.getElementById('cancelBtn');
+        const submitBtn       = document.getElementById('submitBtn');
         const feedbackSuccess = document.getElementById('feedbackSuccess');
-        const feedbackError = document.getElementById('feedbackError');
-        
-        // Open modal
-        feedbackBtn.addEventListener('click', () => {
-            feedbackModal.classList.add('active');
-            feedbackText.focus();
-        });
-        
-        // Close modal
-        cancelBtn.addEventListener('click', () => {
+        const feedbackError   = document.getElementById('feedbackError');
+
+        feedbackBtn.addEventListener('click', () => { feedbackModal.classList.add('active'); feedbackText.focus(); });
+        cancelBtn.addEventListener('click', closeModal);
+        feedbackModal.addEventListener('click', (e) => { if (e.target === feedbackModal) closeModal(); });
+
+        function closeModal() {
             feedbackModal.classList.remove('active');
             feedbackForm.reset();
             feedbackSuccess.style.display = 'none';
-            feedbackError.style.display = 'none';
-        });
-        
-        // Close modal when clicking outside
-        feedbackModal.addEventListener('click', (e) => {
-            if (e.target === feedbackModal) {
-                feedbackModal.classList.remove('active');
-                feedbackForm.reset();
-                feedbackSuccess.style.display = 'none';
-                feedbackError.style.display = 'none';
-            }
-        });
-        
-        // Submit feedback
+            feedbackError.style.display   = 'none';
+        }
+
         feedbackForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Sending...';
+            submitBtn.disabled    = true;
+            submitBtn.textContent = 'Sending…';
             feedbackSuccess.style.display = 'none';
-            feedbackError.style.display = 'none';
-            
-            const formData = new FormData(feedbackForm);
-            
+            feedbackError.style.display   = 'none';
+
             try {
-                const response = await fetch('https://formspree.io/f/xkogwewa', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'Accept': 'application/json'
-                    }
+                const res = await fetch('https://formspree.io/f/xkogwewa', {
+                    method: 'POST', body: new FormData(feedbackForm),
+                    headers: { 'Accept': 'application/json' },
                 });
-                
-                if (response.ok) {
+                if (res.ok) {
                     feedbackSuccess.style.display = 'block';
                     feedbackForm.reset();
-                    
-                    // Close modal after 2 seconds
-                    setTimeout(() => {
-                        feedbackModal.classList.remove('active');
-                        feedbackSuccess.style.display = 'none';
-                    }, 2000);
+                    setTimeout(() => closeModal(), 2000);
                 } else {
                     feedbackError.style.display = 'block';
                 }
-            } catch (error) {
+            } catch {
                 feedbackError.style.display = 'block';
             } finally {
-                submitBtn.disabled = false;
+                submitBtn.disabled    = false;
                 submitBtn.textContent = 'Send Feedback';
             }
         });
+
+        // ── Boot: restore from localStorage ───────────────────
+        loadHistory();
     </script>
 </body>
 </html>
