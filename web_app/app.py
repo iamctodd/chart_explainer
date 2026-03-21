@@ -89,8 +89,9 @@ def analyze():
             model="claude-sonnet-4-20250514", max_tokens=1500,
             messages=[make_image_message(image_data, media_type)],
         )
-        explanation_html = markdown.markdown(message.content[0].text, extensions=['extra', 'nl2br'])
-        return jsonify({'explanation': explanation_html, 'image': f"data:{media_type};base64,{image_data}"})
+        raw_text = message.content[0].text
+        explanation_html = markdown.markdown(raw_text, extensions=['extra', 'nl2br'])
+        return jsonify({'explanation': explanation_html, 'analysis_raw': raw_text, 'image': f"data:{media_type};base64,{image_data}"})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

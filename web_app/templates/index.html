@@ -86,6 +86,16 @@
         }
         .landing-send-btn:hover { background: var(--accent-hover); }
         .landing-hint { font-size: 0.82em; color: var(--text-muted); text-align: center; margin-top: 4px; }
+        .sign-in-nudge { margin-top: 20px; }
+        .google-signin-btn-small {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: transparent; color: var(--text-muted);
+            border: 1px solid var(--border); border-radius: 8px;
+            padding: 8px 18px; font-size: 0.82em; font-weight: 500;
+            cursor: pointer; font-family: inherit;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .google-signin-btn-small:hover { color: var(--text-primary); border-color: var(--text-muted); }
         .landing-loading {
             display: none; align-items: center; gap: 12px;
             color: var(--text-muted); font-size: 0.95em; margin-top: 20px;
@@ -286,34 +296,23 @@
 <!-- ── LANDING VIEW ──────────────────────────────────────────────────────── -->
 <div id="landingView" class="landing-view">
     <div class="landing-brand">📊 ChartHawk</div>
-
-    <!-- Signed-out: Google sign-in -->
-    <div id="signInPanel" class="sign-in-panel" style="display:none;">
-        <h1 class="landing-headline">What chart do you<br>want to understand?</h1>
-        <button id="googleSignInBtn" class="google-signin-btn">
-            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z"/></svg>
-            Sign in with Google
+    <h1 class="landing-headline">What chart do you<br>want to understand?</h1>
+    <div class="landing-upload-box" id="uploadArea">
+        <span class="landing-upload-icon">📁</span>
+        <span class="upload-placeholder">Drop a chart or <span>click to upload</span> — PNG, JPG, GIF</span>
+        <button class="landing-send-btn" tabindex="-1" aria-label="Upload">↑</button>
+    </div>
+    <p class="landing-hint">Works with bar, line, scatter, heatmap, pie, histogram — any chart image</p>
+    <div class="landing-loading" id="loading"><div class="spinner"></div><span>Analyzing your chart…</span></div>
+    <div class="landing-error" id="error"></div>
+    <!-- Optional sign-in nudge — hidden when already signed in -->
+    <div id="signInNudge" class="sign-in-nudge">
+        <button id="googleSignInBtn" class="google-signin-btn-small">
+            <svg width="15" height="15" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z"/></svg>
+            Sign in to save history
         </button>
-        <p class="sign-in-hint">
-            Your charts are sent to <a href="https://www.anthropic.com" target="_blank" rel="noopener">Anthropic's API</a> for analysis
-            and stored in your account. By signing in you agree to our
-            <a href="#" id="tosLinkLanding">Terms of Service</a>.
-        </p>
     </div>
-
-    <!-- Signed-in: upload box -->
-    <div id="uploadPanel" style="display:none; width:100%; max-width:620px; display:none; flex-direction:column; align-items:center;">
-        <h1 class="landing-headline">What chart do you<br>want to understand?</h1>
-        <div class="landing-upload-box" id="uploadArea">
-            <span class="landing-upload-icon">📁</span>
-            <span class="upload-placeholder">Drop a chart or <span>click to upload</span> — PNG, JPG, GIF</span>
-            <button class="landing-send-btn" tabindex="-1" aria-label="Upload">↑</button>
-        </div>
-        <p class="landing-hint">Works with bar, line, scatter, heatmap, pie, histogram — any chart image</p>
-        <div class="landing-loading" id="loading"><div class="spinner"></div><span>Analyzing your chart…</span></div>
-        <div class="landing-error" id="error"></div>
-        <input type="file" id="fileInput" accept="image/*" style="display:none;">
-    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none;">
 </div>
 
 <!-- ── CHAT VIEW ─────────────────────────────────────────────────────────── -->
@@ -432,8 +431,6 @@
     // ── Element refs ───────────────────────────────────────────
     const landingView    = document.getElementById('landingView');
     const chatView       = document.getElementById('chatView');
-    const signInPanel    = document.getElementById('signInPanel');
-    const uploadPanel    = document.getElementById('uploadPanel');
     const uploadArea     = document.getElementById('uploadArea');
     const fileInput      = document.getElementById('fileInput');
     const fileInputChat  = document.getElementById('fileInputChat');
@@ -464,17 +461,16 @@
     }
 
     function updateAuthUI() {
+        const nudge = document.getElementById('signInNudge');
         if (authState === 'signed-in' && currentUser) {
-            signInPanel.style.display  = 'none';
-            uploadPanel.style.display  = 'flex';
             userProfile.style.display  = 'flex';
-            userAvatar.src    = currentUser.user_metadata?.avatar_url || '';
+            userAvatar.src = currentUser.user_metadata?.avatar_url || '';
             userNameEl.textContent = currentUser.user_metadata?.full_name || currentUser.email || '';
+            if (nudge) nudge.style.display = 'none';
         } else {
-            signInPanel.style.display  = 'flex';
-            uploadPanel.style.display  = 'none';
             userProfile.style.display  = 'none';
-            if (appState === 'chat') goToLanding();
+            if (nudge) nudge.style.display = '';
+            if (authState === 'signed-out' && appState === 'chat') goToLanding();
         }
     }
 
@@ -508,10 +504,6 @@
             await loadHistory();
         } else {
             authState = 'tos-pending';
-            // Don't call updateAuthUI() here — it would show the sign-in panel.
-            // Just show the ToS modal directly.
-            signInPanel.style.display  = 'none';
-            uploadPanel.style.display  = 'none';
             document.getElementById('tosModal').classList.add('active');
         }
     }
@@ -726,7 +718,9 @@
         errorEl.style.display = 'none';
     }
 
-    // ── Handle file upload (streaming) ─────────────────────────
+    // ── Handle file upload ─────────────────────────────────────
+    // Signed-in  → /analyze_stream (streaming SSE + Supabase save)
+    // Anonymous  → /analyze        (non-streaming JSON, in-memory)
 
     async function handleFile(file) {
         if (!file.type.startsWith('image/')) { showError('Please upload an image file'); return; }
@@ -742,58 +736,53 @@
 
         try {
             const token = await getAuthToken();
-            const response = await fetch('/analyze_stream', {
-                method: 'POST',
-                headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-                body: formData,
-            });
 
-            if (response.status === 401) {
-                showError('Session expired. Please sign in again.');
-                await signOut(); return;
-            }
-            if (!response.ok) {
-                const err = await response.json().catch(() => ({ error: 'Upload failed' }));
-                showError(err.error || 'Failed to analyze chart'); return;
-            }
+            if (token) {
+                // ── Streaming path (signed-in) ──────────────────────────
+                const response = await fetch('/analyze_stream', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData,
+                });
+                if (response.status === 401) { showError('Session expired. Please sign in again.'); await signOut(); return; }
+                if (!response.ok) { const err = await response.json().catch(() => ({ error: 'Upload failed' })); showError(err.error || 'Failed to analyze chart'); return; }
 
-            for await (const { event, data } of readSSE(response)) {
-                if (event === 'image') {
-                    analysisCount++;
-                    chartData = {
-                        id: analysisCount,   // temp integer — swapped to UUID after INSERT
-                        timestamp:    new Date(),
-                        image:        data.image,
-                        explanation:  '',
-                        analysisRaw:  '',
-                        filename:     file.name,
-                        displayName:  null,
-                        starred:      false,
-                        conversation: [],
-                    };
-                    chartHistory.unshift(chartData);
-                    loadingEl.classList.remove('visible');
-                    switchToChatView(chartData.id);
-
-                } else if (event === 'text' && chartData) {
-                    accumulatedText += data.chunk;
-                    const el = document.getElementById(`analysis-${chartData.id}`);
-                    if (el) el.textContent = accumulatedText;
-                    mainContent.scrollTop = mainContent.scrollHeight;
-
-                } else if (event === 'done' && chartData) {
-                    const html = marked.parse(accumulatedText);
-                    chartData.explanation = html;
-                    chartData.analysisRaw = accumulatedText;
-                    const el = document.getElementById(`analysis-${chartData.id}`);
-                    if (el) { el.innerHTML = html; el.className = 'analysis-content'; }
-                    await saveChartToSupabase(chartData); // swaps temp ID → UUID
-
-                } else if (event === 'error') {
-                    showError(data.error || 'Analysis failed');
-                    if (chartData) { chartHistory = chartHistory.filter(c => c.id !== chartData.id); renderSidebar(); }
+                for await (const { event, data } of readSSE(response)) {
+                    if (event === 'image') {
+                        analysisCount++;
+                        chartData = { id: analysisCount, timestamp: new Date(), image: data.image, explanation: '', analysisRaw: '', filename: file.name, displayName: null, starred: false, conversation: [] };
+                        chartHistory.unshift(chartData);
+                        loadingEl.classList.remove('visible');
+                        switchToChatView(chartData.id);
+                    } else if (event === 'text' && chartData) {
+                        accumulatedText += data.chunk;
+                        const el = document.getElementById(`analysis-${chartData.id}`);
+                        if (el) el.textContent = accumulatedText;
+                        mainContent.scrollTop = mainContent.scrollHeight;
+                    } else if (event === 'done' && chartData) {
+                        const html = marked.parse(accumulatedText);
+                        chartData.explanation = html; chartData.analysisRaw = accumulatedText;
+                        const el = document.getElementById(`analysis-${chartData.id}`);
+                        if (el) { el.innerHTML = html; el.className = 'analysis-content'; }
+                        await saveChartToSupabase(chartData); // swaps temp ID → UUID
+                    } else if (event === 'error') {
+                        showError(data.error || 'Analysis failed');
+                        if (chartData) { chartHistory = chartHistory.filter(c => c.id !== chartData.id); renderSidebar(); }
+                    }
                 }
+
+            } else {
+                // ── Non-streaming path (anonymous) ──────────────────────
+                const response = await fetch('/analyze', { method: 'POST', body: formData });
+                if (!response.ok) { const err = await response.json().catch(() => ({ error: 'Upload failed' })); showError(err.error || 'Failed to analyze chart'); return; }
+                const result = await response.json();
+                analysisCount++;
+                chartData = { id: analysisCount, timestamp: new Date(), image: result.image, explanation: result.explanation, analysisRaw: result.analysis_raw || '', filename: file.name, displayName: null, starred: false, conversation: [] };
+                chartHistory.unshift(chartData);
+                loadingEl.classList.remove('visible');
+                switchToChatView(chartData.id);
             }
+
         } catch (err) {
             showError('Network error: ' + err.message);
             if (chartData) { chartHistory = chartHistory.filter(c => c.id !== chartData.id); renderSidebar(); }
@@ -924,61 +913,64 @@
         let accumulatedText = '';
         let streamStarted   = false;
 
+        const payload = {
+            question,
+            image:                chart.image,
+            analysis_raw:         chart.analysisRaw || '',
+            conversation_history: chart.conversation.map(m => ({ role: m.role, content: m.content })),
+        };
+
         try {
             const token = await getAuthToken();
-            const response = await fetch('/followup_stream', {
-                method:  'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                },
-                body: JSON.stringify({
-                    question,
-                    image:                chart.image,
-                    analysis_raw:         chart.analysisRaw || '',
-                    conversation_history: chart.conversation.map(m => ({ role: m.role, content: m.content })),
-                }),
-            });
 
-            if (response.status === 401) {
-                typingEl.remove();
-                chatErrorEl.textContent = 'Session expired. Please sign in again.';
-                chatErrorEl.style.display = 'block';
-                await signOut(); return;
-            }
-            if (!response.ok) {
-                typingEl.remove();
-                const err = await response.json().catch(() => ({ error: 'Request failed' }));
-                chatErrorEl.textContent = err.error || 'Failed to get a response.';
-                chatErrorEl.style.display = 'block'; return;
-            }
+            if (token) {
+                // ── Streaming path (signed-in) ──────────────────────────
+                const response = await fetch('/followup_stream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload),
+                });
+                if (response.status === 401) { typingEl.remove(); chatErrorEl.textContent = 'Session expired. Please sign in again.'; chatErrorEl.style.display = 'block'; await signOut(); return; }
+                if (!response.ok) { typingEl.remove(); const err = await response.json().catch(() => ({ error: 'Request failed' })); chatErrorEl.textContent = err.error || 'Failed to get a response.'; chatErrorEl.style.display = 'block'; return; }
 
-            for await (const { event, data } of readSSE(response)) {
-                if (event === 'text') {
-                    if (!streamStarted) { typingEl.replaceWith(assistantBubble); streamStarted = true; }
-                    accumulatedText += data.chunk;
-                    assistantBubble.textContent = accumulatedText;
-                    mainContent.scrollTop = mainContent.scrollHeight;
-
-                } else if (event === 'done') {
-                    const html = marked.parse(accumulatedText);
-                    assistantBubble.innerHTML = html;
-                    assistantBubble.className = 'chat-bubble assistant';
-
-                    chart.conversation.push({ role: 'user',      content: question,       html: escapeHtml(question) });
-                    chart.conversation.push({ role: 'assistant', content: accumulatedText, html });
-
-                    await saveMessageToSupabase(id, 'user',      question,       escapeHtml(question));
-                    await saveMessageToSupabase(id, 'assistant', accumulatedText, html);
-                    mainContent.scrollTop = mainContent.scrollHeight;
-
-                } else if (event === 'error') {
-                    if (streamStarted) assistantBubble.remove(); else typingEl.remove();
-                    chatErrorEl.textContent = data.error || 'Failed to get a response.';
-                    chatErrorEl.style.display = 'block';
+                for await (const { event, data } of readSSE(response)) {
+                    if (event === 'text') {
+                        if (!streamStarted) { typingEl.replaceWith(assistantBubble); streamStarted = true; }
+                        accumulatedText += data.chunk;
+                        assistantBubble.textContent = accumulatedText;
+                        mainContent.scrollTop = mainContent.scrollHeight;
+                    } else if (event === 'done') {
+                        const html = marked.parse(accumulatedText);
+                        assistantBubble.innerHTML = html; assistantBubble.className = 'chat-bubble assistant';
+                        chart.conversation.push({ role: 'user', content: question, html: escapeHtml(question) });
+                        chart.conversation.push({ role: 'assistant', content: accumulatedText, html });
+                        await saveMessageToSupabase(id, 'user', question, escapeHtml(question));
+                        await saveMessageToSupabase(id, 'assistant', accumulatedText, html);
+                        mainContent.scrollTop = mainContent.scrollHeight;
+                    } else if (event === 'error') {
+                        if (streamStarted) assistantBubble.remove(); else typingEl.remove();
+                        chatErrorEl.textContent = data.error || 'Failed to get a response.'; chatErrorEl.style.display = 'block';
+                    }
                 }
+                if (!streamStarted) typingEl.remove();
+
+            } else {
+                // ── Non-streaming path (anonymous) ──────────────────────
+                const response = await fetch('/followup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                typingEl.remove();
+                if (!response.ok) { const err = await response.json().catch(() => ({ error: 'Request failed' })); chatErrorEl.textContent = err.error || 'Failed to get a response.'; chatErrorEl.style.display = 'block'; return; }
+                const result = await response.json();
+                const html = result.answer; const raw = result.answer_raw;
+                assistantBubble.innerHTML = html; assistantBubble.className = 'chat-bubble assistant';
+                thread.appendChild(assistantBubble);
+                chart.conversation.push({ role: 'user', content: question, html: escapeHtml(question) });
+                chart.conversation.push({ role: 'assistant', content: raw, html });
+                mainContent.scrollTop = mainContent.scrollHeight;
             }
-            if (!streamStarted) typingEl.remove();
 
         } catch (err) {
             if (streamStarted) assistantBubble.remove(); else typingEl.remove();
