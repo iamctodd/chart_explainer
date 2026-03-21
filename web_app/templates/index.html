@@ -616,7 +616,6 @@
     async function checkTosAndProceed(user) {
         currentUser = user;
         const accepted = user.user_metadata?.tos_accepted_version;
-        console.log('[ChartHawk auth] checkTosAndProceed, tos_accepted_version=', accepted);
         if (accepted === TOS_VERSION) {
             if (authInitialized) return;
             authInitialized = true;
@@ -665,7 +664,6 @@
     // ── Supabase auth state machine ────────────────────────────
 
     sb.auth.onAuthStateChange(async (event, session) => {
-        console.log('[ChartHawk auth]', event, session?.user?.email ?? 'no user');
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
             if (session?.user) {
                 await checkTosAndProceed(session.user);
