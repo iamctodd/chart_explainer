@@ -412,6 +412,10 @@
     <div id="signInNudge" class="sign-in-nudge">
         <button id="openAuthModalBtn" class="google-signin-btn-small">Sign in to save history</button>
     </div>
+    <!-- View history button — shown when signed in -->
+    <div id="viewHistoryNudge" style="display:none; margin-top:12px; text-align:center;">
+        <button id="viewHistoryBtn" class="google-signin-btn-small" style="background:var(--bg-card); border:1px solid var(--border); color:var(--text-primary);">📂 View my history</button>
+    </div>
     <input type="file" id="fileInput" accept="image/*" style="display:none;">
 </div>
 
@@ -662,15 +666,21 @@
             if (landingStatus) {
                 const name = currentUser.user_metadata?.full_name || currentUser.email || '';
                 const avatar = currentUser.user_metadata?.avatar_url || '';
-                landingStatus.innerHTML = `<div class="landing-user-chip">
+                landingStatus.innerHTML = `<div class="landing-user-chip" id="landingUserChip" title="Edit profile">
                     ${avatar ? `<img src="${avatar}" alt="">` : ''}
                     <span>${escapeHtml(name)}</span>
                 </div>`;
+                document.getElementById('landingUserChip')?.addEventListener('click', openProfileModal);
             }
+            // Show "View History" button
+            const vh = document.getElementById('viewHistoryNudge');
+            if (vh) vh.style.display = '';
         } else {
             userProfile.style.display = 'none';
             if (sidebarSignIn) sidebarSignIn.style.display = '';
             if (nudge) nudge.style.display = '';
+            const vhEl = document.getElementById('viewHistoryNudge');
+            if (vhEl) vhEl.style.display = 'none';
             // Landing top-right: restore sign-in button
             if (landingStatus) {
                 landingStatus.innerHTML = `<button class="landing-signin-link" id="landingSignInBtn">Sign in</button>`;
@@ -705,6 +715,17 @@
     document.getElementById('openAuthModalBtn')?.addEventListener('click', openAuthModal);
     document.getElementById('landingSignInBtn')?.addEventListener('click', openAuthModal);
     document.getElementById('sidebarSignInBtn')?.addEventListener('click', openAuthModal);
+    document.getElementById('viewHistoryBtn')?.addEventListener('click', () => {
+        if (chartHistory.length > 0) {
+            switchToChatView(chartHistory[0].id);
+        } else {
+            // Switch to chat view anyway — sidebar will show empty state
+            appState = 'chat';
+            landingView.style.display = 'none';
+            chatView.style.display = 'flex';
+            renderSidebar();
+        }
+    });
 
     // ── Sidebar collapse (desktop) ─────────────────────────────
     let sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
@@ -1040,7 +1061,11 @@
                 .order('created_at', { ascending: false })
                 .limit(MAX_HISTORY);
             if (ce) throw ce;
-            if (!charts || charts.length === 0) return;
+            if (!charts || charts.length === 0) {
+                // Still switch to chat view so sidebar is visible; history will be empty
+                renderSidebar();
+                return;
+            }
 
             const chartIds = charts.map(c => c.id);
             const { data: messages, error: me } = await sb
