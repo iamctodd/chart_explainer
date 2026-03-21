@@ -60,10 +60,13 @@ def explain_chart(image_base64, media_type):
         return f"Error: {str(e)}"
 
 
-def follow_up_chart(image_base64, media_type, question, conversation_history):
+def follow_up_chart(image_base64, media_type, question, conversation_history, analysis_raw=''):
     """Send a follow-up question to Claude with full chart context and conversation history"""
     try:
         messages = [make_image_message(image_base64, media_type)]
+        # Insert the initial analysis as an assistant turn so Claude doesn't repeat it
+        if analysis_raw:
+            messages.append({"role": "assistant", "content": analysis_raw})
         for turn in conversation_history:
             messages.append({"role": turn["role"], "content": turn["content"]})
         messages.append({"role": "user", "content": question})
@@ -129,7 +132,8 @@ def followup():
         image_base64 = image_data_url
         media_type = 'image/png'
 
-    answer_markdown = follow_up_chart(image_base64, media_type, question, conversation_history)
+    analysis_raw = data.get('analysis_raw', '')
+    answer_markdown = follow_up_chart(image_base64, media_type, question, conversation_history, analysis_raw)
     answer_html = markdown.markdown(answer_markdown, extensions=['extra', 'nl2br'])
 
     return jsonify({'answer': answer_html, 'answer_raw': answer_markdown})
@@ -201,7 +205,11 @@ def followup_stream():
         image_base64 = image_data_url
         media_type = 'image/png'
 
+    analysis_raw = data.get('analysis_raw', '')
     messages = [make_image_message(image_base64, media_type)]
+    # Insert the initial analysis as an assistant turn so Claude doesn't repeat it
+    if analysis_raw:
+        messages.append({"role": "assistant", "content": analysis_raw})
     for turn in conversation_history:
         messages.append({"role": turn["role"], "content": turn["content"]})
     messages.append({"role": "user", "content": question})
