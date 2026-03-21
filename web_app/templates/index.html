@@ -206,6 +206,39 @@
         }
         .sign-out-btn:hover { color: var(--danger); }
 
+        /* Profile modal */
+        .profile-modal-inner { max-width: 420px; }
+        .profile-avatar-section { display: flex; justify-content: center; margin-bottom: 20px; }
+        .profile-avatar-wrap {
+            position: relative; width: 80px; height: 80px; cursor: pointer; border-radius: 50%;
+            overflow: hidden; border: 2px solid var(--border); flex-shrink: 0;
+            transition: border-color 0.2s;
+        }
+        .profile-avatar-wrap:hover { border-color: var(--accent); }
+        .profile-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .profile-avatar-placeholder {
+            width: 100%; height: 100%; background: var(--bg-input);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2em; color: var(--text-muted);
+        }
+        .profile-avatar-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.55);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.2s; font-size: 0.72em;
+            color: white; font-weight: 600; letter-spacing: 0.03em;
+        }
+        .profile-avatar-wrap:hover .profile-avatar-overlay { opacity: 1; }
+        .profile-section-title {
+            font-size: 0.78em; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.07em; color: var(--text-muted); margin: 18px 0 10px;
+            padding-top: 14px; border-top: 1px solid var(--border);
+        }
+        .profile-error  { color: var(--danger); font-size: 0.85em; margin-bottom: 10px; display: none; }
+        .profile-success { color: var(--success); font-size: 0.85em; margin-bottom: 10px; display: none; }
+        /* Make user-profile strip look clickable */
+        .user-profile { cursor: pointer; border-radius: 8px; transition: background 0.15s; }
+        .user-profile:hover { background: var(--bg-card); }
+
         /* Main panel */
         .main-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-body); }
         .main-content { flex: 1; overflow-y: auto; padding: 40px 48px; scroll-behavior: smooth; }
@@ -423,6 +456,54 @@
         </div>
         <input type="file" id="fileInputChat" accept="image/*" style="display:none;">
     </main>
+</div>
+
+<!-- ── PROFILE MODAL ─────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="profileModal">
+    <div class="modal profile-modal-inner">
+        <h2>Edit Profile</h2>
+        <p>Update your name, avatar, or password.</p>
+
+        <!-- Avatar -->
+        <div class="profile-avatar-section">
+            <div class="profile-avatar-wrap" id="profileAvatarWrap" title="Click to change photo">
+                <div id="profileAvatarInner"></div>
+                <div class="profile-avatar-overlay">Change photo</div>
+            </div>
+            <input type="file" id="profileAvatarInput" accept="image/*" style="display:none;">
+        </div>
+
+        <!-- Name -->
+        <div class="auth-field">
+            <label for="profileName">Display name</label>
+            <input type="text" id="profileName" placeholder="Your name" autocomplete="name">
+        </div>
+
+        <!-- Password (email users only) -->
+        <div id="profilePasswordSection" style="display:none;">
+            <div class="profile-section-title">Change password</div>
+            <div class="auth-field">
+                <label for="profileCurrentPw">Current password</label>
+                <input type="password" id="profileCurrentPw" placeholder="Enter current password" autocomplete="current-password">
+            </div>
+            <div class="auth-field">
+                <label for="profileNewPw">New password</label>
+                <input type="password" id="profileNewPw" placeholder="At least 6 characters" autocomplete="new-password">
+            </div>
+            <div class="auth-field">
+                <label for="profileConfirmPw">Confirm new password</label>
+                <input type="password" id="profileConfirmPw" placeholder="Repeat new password" autocomplete="new-password">
+            </div>
+        </div>
+
+        <div class="profile-error"   id="profileError"></div>
+        <div class="profile-success" id="profileSuccess"></div>
+
+        <div class="modal-buttons">
+            <button type="button" class="modal-btn cancel" id="profileCancelBtn">Cancel</button>
+            <button type="button" class="modal-btn submit" id="profileSaveBtn">Save changes</button>
+        </div>
+    </div>
 </div>
 
 <!-- ── AUTH MODAL ─────────────────────────────────────────────────────────── -->
@@ -652,6 +733,160 @@
         localStorage.setItem('sidebarCollapsed', 'false');
         applySidebarCollapse();
     });
+
+    // ── Profile modal ───────────────────────────────────────────
+
+    function openProfileModal() {
+        if (!currentUser) return;
+        const errEl = document.getElementById('profileError');
+        const okEl  = document.getElementById('profileSuccess');
+        errEl.style.display = 'none'; okEl.style.display = 'none';
+
+        // Populate name
+        document.getElementById('profileName').value =
+            currentUser.user_metadata?.full_name || '';
+
+        // Populate avatar preview
+        renderProfileAvatar(currentUser.user_metadata?.avatar_url || '');
+
+        // Show password section only for email/password users
+        const provider = currentUser.app_metadata?.provider || '';
+        document.getElementById('profilePasswordSection').style.display =
+            provider === 'email' ? '' : 'none';
+
+        // Clear password fields
+        ['profileCurrentPw','profileNewPw','profileConfirmPw'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+
+        document.getElementById('profileModal').classList.add('active');
+        setTimeout(() => document.getElementById('profileName').focus(), 80);
+    }
+
+    function renderProfileAvatar(url) {
+        const wrap = document.getElementById('profileAvatarInner');
+        if (url) {
+            wrap.innerHTML = `<img src="${url}" alt="Avatar">`;
+        } else {
+            wrap.innerHTML = `<div class="profile-avatar-placeholder">👤</div>`;
+        }
+    }
+
+    document.getElementById('profileCancelBtn').addEventListener('click', () => {
+        document.getElementById('profileModal').classList.remove('active');
+    });
+
+    // Clicking avatar opens file picker
+    document.getElementById('profileAvatarWrap').addEventListener('click', () => {
+        document.getElementById('profileAvatarInput').click();
+    });
+
+    // Avatar file selected → resize to 64×64 JPEG on canvas
+    document.getElementById('profileAvatarInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const dataUrl = await resizeAvatar(file);
+        renderProfileAvatar(dataUrl);
+        document.getElementById('profileAvatarInput').dataset.pendingUrl = dataUrl;
+        e.target.value = '';
+    });
+
+    async function resizeAvatar(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 64; canvas.height = 64;
+                    const ctx = canvas.getContext('2d');
+                    const size = Math.min(img.width, img.height);
+                    const sx   = (img.width  - size) / 2;
+                    const sy   = (img.height - size) / 2;
+                    ctx.drawImage(img, sx, sy, size, size, 0, 0, 64, 64);
+                    resolve(canvas.toDataURL('image/jpeg', 0.85));
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    document.getElementById('profileSaveBtn').addEventListener('click', async () => {
+        const errEl  = document.getElementById('profileError');
+        const okEl   = document.getElementById('profileSuccess');
+        const saveBtn = document.getElementById('profileSaveBtn');
+        errEl.style.display = 'none'; okEl.style.display = 'none';
+
+        const newName    = document.getElementById('profileName').value.trim();
+        const avatarInput = document.getElementById('profileAvatarInput');
+        const pendingAvatar = avatarInput.dataset.pendingUrl || null;
+        const currentPw  = document.getElementById('profileCurrentPw').value;
+        const newPw      = document.getElementById('profileNewPw').value;
+        const confirmPw  = document.getElementById('profileConfirmPw').value;
+        const isEmailUser = (currentUser.app_metadata?.provider || '') === 'email';
+
+        // Validate password fields if any are filled
+        if (isEmailUser && (currentPw || newPw || confirmPw)) {
+            if (!currentPw) { errEl.textContent = 'Enter your current password.'; errEl.style.display = 'block'; return; }
+            if (newPw.length < 6) { errEl.textContent = 'New password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
+            if (newPw !== confirmPw) { errEl.textContent = 'New passwords do not match.'; errEl.style.display = 'block'; return; }
+        }
+
+        saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+
+        try {
+            // 1. Verify current password if changing password
+            if (isEmailUser && currentPw && newPw) {
+                const { error: authErr } = await sb.auth.signInWithPassword({
+                    email: currentUser.email, password: currentPw,
+                });
+                if (authErr) { errEl.textContent = 'Current password is incorrect.'; errEl.style.display = 'block'; return; }
+            }
+
+            // 2. Build metadata update
+            const metaUpdate = {};
+            if (newName) metaUpdate.full_name = newName;
+            if (pendingAvatar) metaUpdate.avatar_url = pendingAvatar;
+
+            const updatePayload = {};
+            if (Object.keys(metaUpdate).length > 0) updatePayload.data = metaUpdate;
+            if (isEmailUser && newPw) updatePayload.password = newPw;
+
+            if (Object.keys(updatePayload).length === 0) {
+                okEl.textContent = 'No changes to save.'; okEl.style.display = 'block'; return;
+            }
+
+            const { data, error } = await sb.auth.updateUser(updatePayload);
+            if (error) throw error;
+
+            // 3. Update local state + UI
+            currentUser = data.user;
+            delete avatarInput.dataset.pendingUrl;
+
+            if (newPw) {
+                ['profileCurrentPw','profileNewPw','profileConfirmPw'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+            }
+
+            updateAuthUI();
+            okEl.textContent = 'Profile updated!'; okEl.style.display = 'block';
+            setTimeout(() => { okEl.style.display = 'none'; }, 3000);
+
+        } catch (err) {
+            errEl.textContent = err.message || 'Could not save changes.';
+            errEl.style.display = 'block';
+        } finally {
+            saveBtn.disabled = false; saveBtn.textContent = 'Save changes';
+        }
+    });
+
+    // Open profile modal when clicking user profile strip in sidebar
+    userProfile.addEventListener('click', openProfileModal);
+
     document.getElementById('authCloseBtn').addEventListener('click', (e) => { e.preventDefault(); closeAuthModal(); });
 
     document.getElementById('authToggleLink').addEventListener('click', () => {
