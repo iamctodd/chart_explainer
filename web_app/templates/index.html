@@ -655,9 +655,48 @@
             display: none; font-size: 0.9em;
         }
 
-        /* Responsive */
+        /* ─── Hamburger button (mobile only) ─── */
+        .hamburger-btn {
+            display: none;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.35em;
+            cursor: pointer;
+            padding: 8px 10px;
+            border-radius: 8px;
+            line-height: 1;
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            z-index: 10;
+            transition: color 0.15s, background 0.15s;
+        }
+        .hamburger-btn:hover { color: var(--text-primary); background: var(--bg-input); }
+
+        /* ─── Drawer backdrop ─── */
+        .drawer-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 499;
+        }
+        .drawer-backdrop.visible { display: block; }
+
+        /* ─── Mobile responsive ─── */
         @media (max-width: 640px) {
-            .sidebar { display: none; }
+            .hamburger-btn { display: block; }
+            .main-panel { position: relative; }
+            .sidebar {
+                position: fixed;
+                top: 0; left: 0;
+                height: 100%;
+                z-index: 500;
+                transform: translateX(-100%);
+                transition: transform 0.26s ease;
+            }
+            .sidebar.drawer-open { transform: translateX(0); }
             .main-content { padding: 24px 20px; }
             .main-input-bar { padding: 8px 16px 16px; }
         }
@@ -692,7 +731,9 @@
     <!-- ── CHAT VIEW ─────────────────────────────── -->
     <div id="chatView" class="chat-view" style="display:none;">
 
-        <aside class="sidebar">
+        <div class="drawer-backdrop" id="drawerBackdrop"></div>
+
+        <aside class="sidebar" id="sidebar">
             <button class="new-chart-btn" id="newChartBtn">＋ New Chart</button>
             <div class="sidebar-section-label">History</div>
             <div class="sidebar-history" id="sidebarHistory"></div>
@@ -703,6 +744,7 @@
         </aside>
 
         <main class="main-panel">
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open navigation">☰</button>
             <div class="main-content" id="mainContent">
                 <div class="main-inner" id="mainInner"></div>
             </div>
@@ -781,6 +823,9 @@
         const newChartBtn    = document.getElementById('newChartBtn');
         const clearHistoryBtn= document.getElementById('clearHistoryBtn');
         const attachBtn      = document.getElementById('attachBtn');
+        const sidebar        = document.getElementById('sidebar');
+        const hamburgerBtn   = document.getElementById('hamburgerBtn');
+        const drawerBackdrop = document.getElementById('drawerBackdrop');
 
         // ── localStorage ───────────────────────────────────────
 
@@ -882,9 +927,26 @@
         attachBtn.addEventListener('click', () => fileInputChat.click());
         fileInputChat.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
 
+        // ── Mobile drawer ──────────────────────────────────────
+
+        function openDrawer() {
+            sidebar.classList.add('drawer-open');
+            drawerBackdrop.classList.add('visible');
+            document.body.style.overflow = 'hidden'; // prevent scroll bleed on iOS
+        }
+
+        function closeDrawer() {
+            sidebar.classList.remove('drawer-open');
+            drawerBackdrop.classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+
+        hamburgerBtn.addEventListener('click', openDrawer);
+        drawerBackdrop.addEventListener('click', closeDrawer);
+
         // ── New / clear ────────────────────────────────────────
 
-        newChartBtn.addEventListener('click', goToLanding);
+        newChartBtn.addEventListener('click', () => { closeDrawer(); goToLanding(); });
 
         clearHistoryBtn.addEventListener('click', () => {
             if (!confirm('Clear all chart history?')) return;
@@ -1029,6 +1091,7 @@
         }
 
         function selectChart(id) {
+            closeDrawer();
             activeChartId             = id;
             mainChatInput.value       = '';
             mainChatInput.style.height= 'auto';
