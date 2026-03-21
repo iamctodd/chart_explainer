@@ -4,7 +4,7 @@
 
 ChartHawk is a web app that analyzes charts and visualizations using AI, providing plain-English explanations of what the data actually shows, what it doesn't show, and common misinterpretations.
 
-🔗 **Live Demo:** [ChartHawk.up.railway.app](https://charthawk.up.railway.app)
+🔗 **Live Demo:** [ChartHawk.info](https://charthawk.info)
 
 ---
 
