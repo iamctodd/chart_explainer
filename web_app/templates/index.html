@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChartHawk — Upload any chart. Learn what it actually says.</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-body:      #0B0D0F;
@@ -31,671 +32,249 @@
             overflow: hidden;
         }
 
-        /* ─────────────────────────────────────────
-           LANDING VIEW
-        ───────────────────────────────────────── */
-
+        /* ── LANDING ── */
         .landing-view {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 24px;
-            position: relative;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            min-height: 100vh; padding: 24px; position: relative;
         }
-
         .landing-brand {
-            position: absolute;
-            top: 24px;
-            left: 32px;
-            font-size: 1em;
-            font-weight: 700;
-            color: var(--text-muted);
-            letter-spacing: -0.01em;
+            position: absolute; top: 24px; left: 32px;
+            font-size: 1em; font-weight: 700; color: var(--text-muted); letter-spacing: -0.01em;
         }
-
         .landing-headline {
-            font-size: clamp(2em, 5vw, 3.2em);
-            font-weight: 700;
-            text-align: center;
-            line-height: 1.15;
-            letter-spacing: -0.03em;
-            color: var(--text-primary);
-            margin-bottom: 32px;
+            font-size: clamp(2em, 5vw, 3.2em); font-weight: 700; text-align: center;
+            line-height: 1.15; letter-spacing: -0.03em; color: var(--text-primary); margin-bottom: 32px;
         }
 
+        /* Sign-in panel */
+        .sign-in-panel { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .google-signin-btn {
+            display: flex; align-items: center; gap: 10px;
+            background: white; color: #3c4043;
+            border: 1px solid #dadce0; border-radius: 8px;
+            padding: 12px 28px; font-size: 0.95em; font-weight: 500;
+            cursor: pointer; font-family: inherit;
+            transition: background 0.15s, box-shadow 0.15s;
+        }
+        .google-signin-btn:hover { background: #f8f9fa; box-shadow: 0 1px 4px rgba(0,0,0,0.25); }
+        .google-signin-btn svg { flex-shrink: 0; }
+        .sign-in-hint {
+            font-size: 0.78em; color: var(--text-muted); text-align: center;
+            max-width: 360px; line-height: 1.6;
+        }
+        .sign-in-hint a { color: var(--accent); text-decoration: none; }
+        .sign-in-hint a:hover { text-decoration: underline; }
+
+        /* Upload panel */
         .landing-upload-box {
-            width: 100%;
-            max-width: 620px;
-            background: var(--bg-input);
-            border: 1.5px solid var(--border);
-            border-radius: 14px;
+            width: 100%; max-width: 620px;
+            background: var(--bg-input); border: 1.5px solid var(--border); border-radius: 14px;
             padding: 18px 16px 18px 22px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            margin-bottom: 20px;
+            display: flex; align-items: center; gap: 12px;
+            cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; margin-bottom: 12px;
         }
-
-        .landing-upload-box:hover {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
-        }
-
-        .landing-upload-box.dragover {
-            border-color: var(--accent);
-            background: rgba(124, 58, 237, 0.06);
-            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
-        }
-
-        .upload-placeholder {
-            flex: 1;
-            color: var(--text-muted);
-            font-size: 1em;
-            user-select: none;
-        }
-
+        .landing-upload-box:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
+        .landing-upload-box.dragover { border-color: var(--accent); background: rgba(124,58,237,0.06); box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
+        .upload-placeholder { flex: 1; color: var(--text-muted); font-size: 1em; user-select: none; }
         .upload-placeholder span { color: var(--accent); font-weight: 500; }
-
-        .landing-upload-icon {
-            font-size: 1.4em;
-            flex-shrink: 0;
-            opacity: 0.6;
-        }
-
+        .landing-upload-icon { font-size: 1.4em; flex-shrink: 0; opacity: 0.6; }
         .landing-send-btn {
-            width: 36px;
-            height: 36px;
-            background: var(--accent);
-            border: none;
-            border-radius: 9px;
-            color: white;
-            font-size: 1.1em;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            transition: background 0.2s;
+            width: 36px; height: 36px; background: var(--accent); border: none;
+            border-radius: 9px; color: white; font-size: 1.1em; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s;
         }
-
         .landing-send-btn:hover { background: var(--accent-hover); }
-
-        .landing-hint {
-            font-size: 0.82em;
-            color: var(--text-muted);
-            text-align: center;
-            margin-top: 4px;
-        }
-
+        .landing-hint { font-size: 0.82em; color: var(--text-muted); text-align: center; margin-top: 4px; }
         .landing-loading {
-            display: none;
-            align-items: center;
-            gap: 12px;
-            color: var(--text-muted);
-            font-size: 0.95em;
-            margin-top: 20px;
+            display: none; align-items: center; gap: 12px;
+            color: var(--text-muted); font-size: 0.95em; margin-top: 20px;
         }
-
         .landing-loading.visible { display: flex; }
-
         .spinner {
-            border: 2.5px solid var(--border);
-            border-top: 2.5px solid var(--accent);
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 0.75s linear infinite;
-            flex-shrink: 0;
+            border: 2.5px solid var(--border); border-top: 2.5px solid var(--accent);
+            border-radius: 50%; width: 20px; height: 20px;
+            animation: spin 0.75s linear infinite; flex-shrink: 0;
         }
-
         @keyframes spin { to { transform: rotate(360deg); } }
+        .landing-error { display: none; margin-top: 16px; color: var(--danger); font-size: 0.9em; text-align: center; }
 
-        .landing-error {
-            display: none;
-            margin-top: 16px;
-            color: var(--danger);
-            font-size: 0.9em;
-            text-align: center;
-        }
+        /* ── CHAT VIEW ── */
+        .chat-view { display: flex; height: 100vh; overflow: hidden; }
 
-        /* ─────────────────────────────────────────
-           CHAT VIEW
-        ───────────────────────────────────────── */
-
-        .chat-view {
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Sidebar */
         .sidebar {
-            width: 240px;
-            flex-shrink: 0;
-            background: var(--bg-surface);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 16px 12px;
-            overflow-y: auto;
+            width: 240px; flex-shrink: 0; background: var(--bg-surface);
+            border-right: 1px solid var(--border); display: flex; flex-direction: column;
+            padding: 16px 12px; overflow-y: auto;
         }
-
         .new-chart-btn {
-            background: var(--bg-input);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 9px 14px;
-            font-size: 0.88em;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: left;
-            transition: background 0.15s, border-color 0.15s;
-            margin-bottom: 16px;
+            background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border);
+            border-radius: 8px; padding: 9px 14px; font-size: 0.88em; font-weight: 600;
+            cursor: pointer; text-align: left; transition: background 0.15s, border-color 0.15s; margin-bottom: 16px;
         }
-
         .new-chart-btn:hover { background: var(--bg-card); border-color: var(--accent); }
-
         .sidebar-section-label {
-            font-size: 0.72em;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            color: var(--text-muted);
-            padding: 0 4px;
-            margin-bottom: 6px;
+            font-size: 0.72em; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.07em; color: var(--text-muted); padding: 0 4px; margin-bottom: 6px;
         }
-
-        .sidebar-history {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
+        .sidebar-history { flex: 1; display: flex; flex-direction: column; gap: 2px; }
         .sidebar-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.15s;
-            border-left: 2px solid transparent;
+            display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+            border-radius: 8px; cursor: pointer; transition: background 0.15s; border-left: 2px solid transparent;
         }
-
         .sidebar-item:hover { background: var(--bg-card); }
-
-        .sidebar-item.active {
-            background: var(--accent-dim);
-            border-left-color: var(--accent);
-        }
-
+        .sidebar-item.active { background: var(--accent-dim); border-left-color: var(--accent); }
         .sidebar-item-menu-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 3px 6px;
-            border-radius: 5px;
-            font-size: 1.1em;
-            line-height: 1;
-            opacity: 0;
-            flex-shrink: 0;
-            transition: opacity 0.15s, color 0.15s, background 0.15s;
+            background: transparent; border: none; color: var(--text-muted);
+            cursor: pointer; padding: 3px 6px; border-radius: 5px; font-size: 1.1em;
+            line-height: 1; opacity: 0; flex-shrink: 0; transition: opacity 0.15s, color 0.15s, background 0.15s;
         }
-
         .sidebar-item:hover .sidebar-item-menu-btn,
         .sidebar-item.active .sidebar-item-menu-btn { opacity: 1; }
         .sidebar-item-menu-btn:hover { background: var(--border); color: var(--text-primary); }
-
-        /* Context menu dropdown */
         .chart-menu {
-            position: fixed;
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            border-radius: 9px;
-            padding: 4px;
-            z-index: 1000;
-            min-width: 164px;
-            box-shadow: 0 8px 28px rgba(0,0,0,0.55);
-            display: none;
+            position: fixed; background: var(--bg-surface); border: 1px solid var(--border);
+            border-radius: 9px; padding: 4px; z-index: 1000; min-width: 164px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.55); display: none;
         }
-
         .chart-menu.visible { display: block; }
-
         .chart-menu-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.88em;
-            color: var(--text-primary);
-            background: transparent;
-            border: none;
-            width: 100%;
-            text-align: left;
-            transition: background 0.12s;
+            display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+            border-radius: 6px; cursor: pointer; font-size: 0.88em; color: var(--text-primary);
+            background: transparent; border: none; width: 100%; text-align: left; transition: background 0.12s;
         }
-
         .chart-menu-item:hover { background: var(--bg-card); }
         .chart-menu-item.danger { color: var(--danger); }
         .chart-menu-item.danger:hover { background: rgba(248,81,73,0.1); }
-
-        /* Inline rename input inside sidebar */
         .sidebar-rename-input {
-            background: var(--bg-input);
-            border: 1.5px solid var(--accent);
-            border-radius: 5px;
-            color: var(--text-primary);
-            font-size: 0.82em;
-            padding: 2px 6px;
-            width: 100%;
-            outline: none;
-            font-family: inherit;
+            background: var(--bg-input); border: 1.5px solid var(--accent); border-radius: 5px;
+            color: var(--text-primary); font-size: 0.82em; padding: 2px 6px; width: 100%;
+            outline: none; font-family: inherit;
         }
-
         .sidebar-rename-input.error { border-color: var(--danger); }
-
-        .sidebar-thumb {
-            width: 38px;
-            height: 38px;
-            object-fit: cover;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            flex-shrink: 0;
-        }
-
+        .sidebar-thumb { width: 38px; height: 38px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; }
         .sidebar-info { flex: 1; min-width: 0; }
-
-        .sidebar-name {
-            font-size: 0.82em;
-            color: var(--text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .sidebar-time {
-            font-size: 0.73em;
-            color: var(--text-muted);
-            margin-top: 1px;
-        }
-
-        .sidebar-footer {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
+        .sidebar-name { font-size: 0.82em; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sidebar-time { font-size: 0.73em; color: var(--text-muted); margin-top: 1px; }
+        .sidebar-footer { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
         .sidebar-footer-btn {
-            background: transparent;
-            color: var(--text-muted);
-            border: none;
-            padding: 7px 6px;
-            font-size: 0.82em;
-            cursor: pointer;
-            text-align: left;
-            border-radius: 6px;
-            transition: color 0.15s, background 0.15s;
+            background: transparent; color: var(--text-muted); border: none; padding: 7px 6px;
+            font-size: 0.82em; cursor: pointer; text-align: left; border-radius: 6px; transition: color 0.15s, background 0.15s;
         }
-
         .sidebar-footer-btn:hover { color: var(--text-primary); background: var(--bg-card); }
         .sidebar-footer-btn.danger:hover { color: var(--danger); }
 
+        /* User profile strip */
+        .user-profile {
+            display: none; align-items: center; gap: 8px;
+            padding: 8px 6px 10px; border-bottom: 1px solid var(--border); margin-bottom: 8px;
+        }
+        .user-avatar { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; border: 1px solid var(--border); }
+        .user-name { flex: 1; font-size: 0.78em; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sign-out-btn {
+            background: transparent; border: none; color: var(--text-muted);
+            font-size: 0.72em; cursor: pointer; padding: 3px 6px; border-radius: 4px;
+            white-space: nowrap; transition: color 0.15s;
+        }
+        .sign-out-btn:hover { color: var(--danger); }
+
         /* Main panel */
-        .main-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: var(--bg-body);
-        }
-
-        .main-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 40px 48px;
-            scroll-behavior: smooth;
-        }
-
+        .main-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-body); }
+        .main-content { flex: 1; overflow-y: auto; padding: 40px 48px; scroll-behavior: smooth; }
         .main-inner { max-width: 700px; margin: 0 auto; }
-
-        .main-chart-img {
-            width: 100%;
-            max-width: 560px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            margin-bottom: 20px;
-            display: block;
-        }
-
-        .main-chart-meta {
-            font-size: 0.8em;
-            color: var(--text-muted);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
+        .main-chart-img { width: 100%; max-width: 560px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 20px; display: block; }
+        .main-chart-meta { font-size: 0.8em; color: var(--text-muted); margin-bottom: 20px; display: flex; align-items: center; gap: 4px; }
         .copy-btn-inline {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            border-radius: 5px;
-            padding: 3px 10px;
-            font-size: 0.85em;
-            cursor: pointer;
-            margin-left: 8px;
-            transition: color 0.15s, border-color 0.15s;
+            background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+            border-radius: 5px; padding: 3px 10px; font-size: 0.85em; cursor: pointer;
+            margin-left: 8px; transition: color 0.15s, border-color 0.15s;
         }
-
         .copy-btn-inline:hover { color: var(--text-primary); border-color: var(--accent); }
 
         /* Analysis content */
         .analysis-content { color: var(--text-primary); line-height: 1.8; }
         .analysis-content h1, .analysis-content h2 { color: var(--accent); margin-top: 22px; margin-bottom: 8px; }
-        .analysis-content h1 { font-size: 1.25em; }
-        .analysis-content h2 { font-size: 1.1em; }
-        .analysis-content p { margin-bottom: 14px; }
-        .analysis-content p:last-child { margin-bottom: 0; }
+        .analysis-content h1 { font-size: 1.25em; } .analysis-content h2 { font-size: 1.1em; }
+        .analysis-content p { margin-bottom: 14px; } .analysis-content p:last-child { margin-bottom: 0; }
         .analysis-content strong { color: #c9b1f5; }
         .analysis-content ul, .analysis-content ol { margin-left: 20px; margin-bottom: 14px; }
         .analysis-content li { margin-bottom: 6px; }
-
-        /* Streaming plain-text state */
-        .analysis-content.streaming {
-            white-space: pre-wrap;
-            color: var(--text-muted);
-            font-size: 0.93em;
-        }
+        .analysis-content.streaming { white-space: pre-wrap; color: var(--text-muted); font-size: 0.93em; }
 
         /* Chat thread */
         .chat-divider { border: none; border-top: 1px solid var(--border); margin: 28px 0 20px; }
-
-        .chat-label {
-            font-size: 0.75em;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            margin-bottom: 14px;
-        }
-
+        .chat-label { font-size: 0.75em; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 14px; }
         .chat-thread { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
-
-        .chat-bubble {
-            max-width: 88%;
-            padding: 10px 14px;
-            border-radius: 10px;
-            font-size: 0.93em;
-            line-height: 1.65;
-        }
-
-        .chat-bubble.user {
-            align-self: flex-end;
-            background: var(--accent-dim);
-            color: #d4bbff;
-            border: 1px solid rgba(124, 58, 237, 0.35);
-            border-bottom-right-radius: 3px;
-        }
-
-        .chat-bubble.assistant {
-            align-self: flex-start;
-            background: var(--bg-card);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-            border-bottom-left-radius: 3px;
-        }
-
-        /* streaming state for assistant bubble */
-        .chat-bubble.assistant.streaming {
-            white-space: pre-wrap;
-            color: var(--text-muted);
-        }
-
-        .chat-bubble.assistant h1,
-        .chat-bubble.assistant h2,
-        .chat-bubble.assistant h3 { color: var(--accent); margin: 10px 0 6px; font-size: 1em; }
-        .chat-bubble.assistant p { margin-bottom: 8px; }
-        .chat-bubble.assistant p:last-child { margin-bottom: 0; }
+        .chat-bubble { max-width: 88%; padding: 10px 14px; border-radius: 10px; font-size: 0.93em; line-height: 1.65; }
+        .chat-bubble.user { align-self: flex-end; background: var(--accent-dim); color: #d4bbff; border: 1px solid rgba(124,58,237,0.35); border-bottom-right-radius: 3px; }
+        .chat-bubble.assistant { align-self: flex-start; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-bottom-left-radius: 3px; }
+        .chat-bubble.assistant.streaming { white-space: pre-wrap; color: var(--text-muted); }
+        .chat-bubble.assistant h1, .chat-bubble.assistant h2, .chat-bubble.assistant h3 { color: var(--accent); margin: 10px 0 6px; font-size: 1em; }
+        .chat-bubble.assistant p { margin-bottom: 8px; } .chat-bubble.assistant p:last-child { margin-bottom: 0; }
         .chat-bubble.assistant ul, .chat-bubble.assistant ol { margin-left: 16px; margin-bottom: 8px; }
         .chat-bubble.assistant li { margin-bottom: 4px; }
         .chat-bubble.assistant strong { color: #c9b1f5; }
-
-        .chat-typing {
-            align-self: flex-start;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            border-bottom-left-radius: 3px;
-            padding: 12px 16px;
-        }
-
-        .typing-dots span {
-            display: inline-block;
-            width: 5px; height: 5px;
-            border-radius: 50%;
-            background: var(--text-muted);
-            margin: 0 2px;
-            animation: bounce 1.2s infinite ease-in-out;
-        }
-
+        .chat-typing { align-self: flex-start; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; border-bottom-left-radius: 3px; padding: 12px 16px; }
+        .typing-dots span { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--text-muted); margin: 0 2px; animation: bounce 1.2s infinite ease-in-out; }
         .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
         .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-
         @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
 
         /* Main input bar */
         .main-input-bar { padding: 12px 48px 20px; background: var(--bg-body); }
         .main-input-inner { max-width: 700px; margin: 0 auto; }
-
         .chat-input-area {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--bg-input);
-            border: 1.5px solid var(--border);
-            border-radius: 12px;
-            padding: 10px 10px 10px 14px;
-            transition: border-color 0.2s;
+            display: flex; align-items: center; gap: 8px;
+            background: var(--bg-input); border: 1.5px solid var(--border);
+            border-radius: 12px; padding: 10px 10px 10px 14px; transition: border-color 0.2s;
         }
-
         .chat-input-area:focus-within { border-color: var(--accent); }
-
-        .attach-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.1em;
-            cursor: pointer;
-            padding: 2px 4px;
-            border-radius: 6px;
-            flex-shrink: 0;
-            transition: color 0.15s;
-            line-height: 1;
-        }
-
+        .attach-btn { background: transparent; border: none; color: var(--text-muted); font-size: 1.1em; cursor: pointer; padding: 2px 4px; border-radius: 6px; flex-shrink: 0; transition: color 0.15s; line-height: 1; }
         .attach-btn:hover { color: var(--text-primary); }
-
-        .chat-textarea {
-            flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 0.93em;
-            line-height: 1.5;
-            resize: none;
-            max-height: 140px;
-            overflow-y: auto;
-        }
-
+        .chat-textarea { flex: 1; background: transparent; border: none; outline: none; color: var(--text-primary); font-family: inherit; font-size: 0.93em; line-height: 1.5; resize: none; max-height: 140px; overflow-y: auto; }
         .chat-textarea::placeholder { color: var(--text-muted); }
-
-        .chat-send-btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            width: 34px;
-            height: 34px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            flex-shrink: 0;
-            font-size: 1em;
-            transition: background 0.15s;
-        }
-
+        .chat-send-btn { background: var(--accent); color: white; border: none; border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 1em; transition: background 0.15s; }
         .chat-send-btn:hover { background: var(--accent-hover); }
         .chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .chat-error { color: var(--danger); font-size: 0.82em; margin-top: 6px; padding: 0 4px; }
 
-        .chat-error {
-            color: var(--danger);
-            font-size: 0.82em;
-            margin-top: 6px;
-            padding: 0 4px;
-        }
-
-        /* ─────────────────────────────────────────
-           MODAL
-        ───────────────────────────────────────── */
-
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.7);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
+        /* ── MODALS ── */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
         .modal-overlay.active { display: flex; }
-
-        .modal {
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 28px;
-            max-width: 480px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-            animation: slideIn 0.22s ease;
-        }
-
+        .modal { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.6); animation: slideIn 0.22s ease; }
         @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
         .modal h2 { color: var(--text-primary); margin-bottom: 8px; font-size: 1.5em; }
         .modal p  { color: var(--text-muted); margin-bottom: 18px; font-size: 0.93em; }
-
-        .feedback-textarea {
-            width: 100%;
-            min-height: 108px;
-            padding: 12px 14px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 0.93em;
-            resize: vertical;
-            margin-bottom: 14px;
-            transition: border-color 0.2s;
-        }
-
+        .feedback-textarea { width: 100%; min-height: 108px; padding: 12px 14px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-family: inherit; font-size: 0.93em; resize: vertical; margin-bottom: 14px; transition: border-color 0.2s; }
         .feedback-textarea:focus { outline: none; border-color: var(--accent); }
         .feedback-textarea::placeholder { color: var(--text-muted); }
-
         .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
-
-        .modal-btn {
-            padding: 9px 20px;
-            border: none;
-            border-radius: 7px;
-            font-size: 0.93em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-
+        .modal-btn { padding: 9px 20px; border: none; border-radius: 7px; font-size: 0.93em; font-weight: 600; cursor: pointer; transition: all 0.15s; }
         .modal-btn.cancel { background: var(--bg-input); color: var(--text-muted); border: 1px solid var(--border); }
         .modal-btn.cancel:hover { background: var(--border); color: var(--text-primary); }
         .modal-btn.submit { background: var(--accent); color: white; }
         .modal-btn.submit:hover { background: var(--accent-hover); }
         .modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .feedback-success { background: rgba(63,185,80,0.1); color: var(--success); border: 1px solid rgba(63,185,80,0.3); padding: 11px 14px; border-radius: 8px; margin-bottom: 14px; display: none; font-size: 0.9em; }
+        .feedback-error   { background: rgba(248,81,73,0.1); color: var(--danger); border: 1px solid rgba(248,81,73,0.3); padding: 11px 14px; border-radius: 8px; margin-bottom: 14px; display: none; font-size: 0.9em; }
 
-        .feedback-success {
-            background: rgba(63, 185, 80, 0.1);
-            color: var(--success);
-            border: 1px solid rgba(63, 185, 80, 0.3);
-            padding: 11px 14px; border-radius: 8px; margin-bottom: 14px;
-            display: none; font-size: 0.9em;
-        }
+        /* ToS modal scroll area */
+        .tos-scroll { max-height: 260px; overflow-y: auto; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; font-size: 0.86em; line-height: 1.7; color: var(--text-muted); margin-bottom: 16px; }
+        .tos-scroll strong { color: var(--text-primary); }
+        .tos-scroll a { color: var(--accent); text-decoration: none; }
+        .tos-scroll a:hover { text-decoration: underline; }
+        .tos-check-row { display: flex; align-items: flex-start; gap: 10px; font-size: 0.88em; color: var(--text-muted); margin-bottom: 20px; cursor: pointer; }
+        .tos-check-row input { margin-top: 2px; flex-shrink: 0; accent-color: var(--accent); }
 
-        .feedback-error {
-            background: rgba(248, 81, 73, 0.1);
-            color: var(--danger);
-            border: 1px solid rgba(248, 81, 73, 0.3);
-            padding: 11px 14px; border-radius: 8px; margin-bottom: 14px;
-            display: none; font-size: 0.9em;
-        }
-
-        /* ─── Hamburger button (mobile only) ─── */
-        .hamburger-btn {
-            display: none;
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 1.35em;
-            cursor: pointer;
-            padding: 8px 10px;
-            border-radius: 8px;
-            line-height: 1;
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            z-index: 10;
-            transition: color 0.15s, background 0.15s;
-        }
+        /* ── MOBILE ── */
+        .hamburger-btn { display: none; background: transparent; border: none; color: var(--text-muted); font-size: 1.35em; cursor: pointer; padding: 8px 10px; border-radius: 8px; line-height: 1; position: absolute; top: 12px; left: 12px; z-index: 10; transition: color 0.15s, background 0.15s; }
         .hamburger-btn:hover { color: var(--text-primary); background: var(--bg-input); }
-
-        /* ─── Drawer backdrop ─── */
-        .drawer-backdrop {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
-            z-index: 499;
-        }
+        .drawer-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 499; }
         .drawer-backdrop.visible { display: block; }
-
-        /* ─── Mobile responsive ─── */
         @media (max-width: 640px) {
             .hamburger-btn { display: block; }
             .main-panel { position: relative; }
-            .sidebar {
-                position: fixed;
-                top: 0; left: 0;
-                height: 100%;
-                z-index: 500;
-                transform: translateX(-100%);
-                transition: transform 0.26s ease;
-            }
+            .sidebar { position: fixed; top: 0; left: 0; height: 100%; z-index: 500; transform: translateX(-100%); transition: transform 0.26s ease; }
             .sidebar.drawer-open { transform: translateX(0); }
             .main-content { padding: 24px 20px; }
             .main-input-bar { padding: 8px 16px 16px; }
@@ -704,774 +283,855 @@
 </head>
 <body>
 
-    <!-- ── LANDING VIEW ─────────────────────────── -->
-    <div id="landingView" class="landing-view">
-        <div class="landing-brand">📊 ChartHawk</div>
+<!-- ── LANDING VIEW ──────────────────────────────────────────────────────── -->
+<div id="landingView" class="landing-view">
+    <div class="landing-brand">📊 ChartHawk</div>
 
+    <!-- Signed-out: Google sign-in -->
+    <div id="signInPanel" class="sign-in-panel" style="display:none;">
         <h1 class="landing-headline">What chart do you<br>want to understand?</h1>
+        <button id="googleSignInBtn" class="google-signin-btn">
+            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z"/></svg>
+            Sign in with Google
+        </button>
+        <p class="sign-in-hint">
+            Your charts are sent to <a href="https://www.anthropic.com" target="_blank" rel="noopener">Anthropic's API</a> for analysis
+            and stored in your account. By signing in you agree to our
+            <a href="#" id="tosLinkLanding">Terms of Service</a>.
+        </p>
+    </div>
 
+    <!-- Signed-in: upload box -->
+    <div id="uploadPanel" style="display:none; width:100%; max-width:620px; display:none; flex-direction:column; align-items:center;">
+        <h1 class="landing-headline">What chart do you<br>want to understand?</h1>
         <div class="landing-upload-box" id="uploadArea">
             <span class="landing-upload-icon">📁</span>
             <span class="upload-placeholder">Drop a chart or <span>click to upload</span> — PNG, JPG, GIF</span>
             <button class="landing-send-btn" tabindex="-1" aria-label="Upload">↑</button>
         </div>
-
         <p class="landing-hint">Works with bar, line, scatter, heatmap, pie, histogram — any chart image</p>
-
-        <div class="landing-loading" id="loading">
-            <div class="spinner"></div>
-            <span>Analyzing your chart…</span>
-        </div>
-
+        <div class="landing-loading" id="loading"><div class="spinner"></div><span>Analyzing your chart…</span></div>
         <div class="landing-error" id="error"></div>
-
         <input type="file" id="fileInput" accept="image/*" style="display:none;">
     </div>
+</div>
 
-    <!-- ── CHAT VIEW ─────────────────────────────── -->
-    <div id="chatView" class="chat-view" style="display:none;">
+<!-- ── CHAT VIEW ─────────────────────────────────────────────────────────── -->
+<div id="chatView" class="chat-view" style="display:none;">
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
 
-        <div class="drawer-backdrop" id="drawerBackdrop"></div>
-
-        <aside class="sidebar" id="sidebar">
-            <button class="new-chart-btn" id="newChartBtn">＋ New Chart</button>
-            <div class="sidebar-section-label">History</div>
-            <div class="sidebar-history" id="sidebarHistory"></div>
-            <div class="sidebar-footer">
-                <button class="sidebar-footer-btn danger" id="clearHistoryBtn">🗑 Clear history</button>
-                <button class="sidebar-footer-btn" id="feedbackBtn">💬 Send feedback</button>
+    <aside class="sidebar" id="sidebar">
+        <button class="new-chart-btn" id="newChartBtn">＋ New Chart</button>
+        <div class="sidebar-section-label">History</div>
+        <div class="sidebar-history" id="sidebarHistory"></div>
+        <div class="sidebar-footer">
+            <div class="user-profile" id="userProfile">
+                <img class="user-avatar" id="userAvatar" src="" alt="">
+                <span class="user-name" id="userName"></span>
+                <button class="sign-out-btn" id="signOutBtn">Sign out</button>
             </div>
-        </aside>
+            <button class="sidebar-footer-btn danger" id="clearHistoryBtn">🗑 Clear history</button>
+            <button class="sidebar-footer-btn" id="feedbackBtn">💬 Send feedback</button>
+        </div>
+    </aside>
 
-        <main class="main-panel">
-            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open navigation">☰</button>
-            <div class="main-content" id="mainContent">
-                <div class="main-inner" id="mainInner"></div>
-            </div>
-            <div class="main-input-bar">
-                <div class="main-input-inner">
-                    <div class="chat-input-area">
-                        <button class="attach-btn" id="attachBtn" title="Analyze another chart">📎</button>
-                        <textarea
-                            class="chat-textarea"
-                            id="mainChatInput"
-                            placeholder="Ask a follow-up question about this chart…"
-                            rows="1"
-                        ></textarea>
-                        <button class="chat-send-btn" id="mainSendBtn" title="Send">↑</button>
-                    </div>
-                    <div class="chat-error" id="chatError" style="display:none;"></div>
+    <main class="main-panel">
+        <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open navigation">☰</button>
+        <div class="main-content" id="mainContent">
+            <div class="main-inner" id="mainInner"></div>
+        </div>
+        <div class="main-input-bar">
+            <div class="main-input-inner">
+                <div class="chat-input-area">
+                    <button class="attach-btn" id="attachBtn" title="Analyze another chart">📎</button>
+                    <textarea class="chat-textarea" id="mainChatInput" placeholder="Ask a follow-up question about this chart…" rows="1"></textarea>
+                    <button class="chat-send-btn" id="mainSendBtn" title="Send">↑</button>
                 </div>
+                <div class="chat-error" id="chatError" style="display:none;"></div>
             </div>
-            <input type="file" id="fileInputChat" accept="image/*" style="display:none;">
-        </main>
+        </div>
+        <input type="file" id="fileInputChat" accept="image/*" style="display:none;">
+    </main>
+</div>
 
+<!-- ── FEEDBACK MODAL ──────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="feedbackModal">
+    <div class="modal">
+        <h2>Send Feedback</h2>
+        <p>Help us improve ChartHawk — bug reports, ideas, or anything on your mind.</p>
+        <div class="feedback-success" id="feedbackSuccess">Thanks for your feedback! 🙏</div>
+        <div class="feedback-error"   id="feedbackError">Oops! Something went wrong.</div>
+        <form id="feedbackForm">
+            <textarea class="feedback-textarea" id="feedbackText" name="message" placeholder="What's on your mind?" required></textarea>
+            <div class="modal-buttons">
+                <button type="button" class="modal-btn cancel" id="cancelBtn">Cancel</button>
+                <button type="submit" class="modal-btn submit" id="submitBtn">Send Feedback</button>
+            </div>
+        </form>
     </div>
+</div>
 
-    <!-- ── FEEDBACK MODAL ────────────────────────── -->
-    <div class="modal-overlay" id="feedbackModal">
-        <div class="modal">
-            <h2>Send Feedback</h2>
-            <p>Help us improve ChartHawk — bug reports, ideas, or anything on your mind.</p>
-            <div class="feedback-success" id="feedbackSuccess">Thanks for your feedback! 🙏</div>
-            <div class="feedback-error"   id="feedbackError">Oops! Something went wrong.</div>
-            <form id="feedbackForm">
-                <textarea class="feedback-textarea" id="feedbackText" name="message" placeholder="What's on your mind?" required></textarea>
-                <div class="modal-buttons">
-                    <button type="button" class="modal-btn cancel" id="cancelBtn">Cancel</button>
-                    <button type="submit" class="modal-btn submit" id="submitBtn">Send Feedback</button>
-                </div>
-            </form>
+<!-- ── TERMS OF SERVICE MODAL ─────────────────────────────────────────────── -->
+<div class="modal-overlay" id="tosModal">
+    <div class="modal" style="max-width:540px;">
+        <h2>Welcome to ChartHawk</h2>
+        <p>Please read and accept these terms before continuing.</p>
+        <div class="tos-scroll">
+            <strong>What ChartHawk does</strong><br>
+            ChartHawk lets you upload chart images and receive an AI-powered explanation of what the chart shows, its limitations, and common misreadings.<br><br>
+            <strong>What happens to your uploaded images</strong><br>
+            Images you upload are sent to <a href="https://www.anthropic.com" target="_blank" rel="noopener">Anthropic's Claude API</a> for analysis. They are also stored in your ChartHawk account so you can revisit previous analyses. By using ChartHawk you agree to <a href="https://www.anthropic.com/legal/usage-policy" target="_blank" rel="noopener">Anthropic's usage policies</a>.<br><br>
+            <strong>Data storage</strong><br>
+            Your charts and conversation history are stored in a database linked to your Google account. Only you can access your data. We use <a href="https://supabase.com/privacy" target="_blank" rel="noopener">Supabase</a> for data storage.<br><br>
+            <strong>Deleting your data</strong><br>
+            You can delete individual charts at any time using the Delete option in the sidebar. To delete your account and all data, use the feedback button and request account deletion. We will remove your data within 30 days.<br><br>
+            <strong>No warranties</strong><br>
+            ChartHawk is provided as-is. AI analysis may contain errors. Do not rely solely on ChartHawk for important decisions.
+        </div>
+        <label class="tos-check-row">
+            <input type="checkbox" id="tosCheckbox">
+            I have read and agree to these terms.
+        </label>
+        <div class="modal-buttons">
+            <button type="button" class="modal-btn cancel" id="tosDeclineBtn">Decline &amp; Sign Out</button>
+            <button type="button" class="modal-btn submit" id="tosAcceptBtn" disabled>Accept &amp; Continue</button>
         </div>
     </div>
+</div>
 
-    <!-- Shared sidebar context menu -->
-    <div class="chart-menu" id="chartMenu">
-        <button class="chart-menu-item" id="menuStar">⭐ Star</button>
-        <button class="chart-menu-item" id="menuRename">✏️ Rename</button>
-        <button class="chart-menu-item danger" id="menuDelete">🗑 Delete</button>
-    </div>
+<!-- ── SHARED CONTEXT MENU ─────────────────────────────────────────────────── -->
+<div class="chart-menu" id="chartMenu">
+    <button class="chart-menu-item" id="menuStar">⭐ Star</button>
+    <button class="chart-menu-item" id="menuRename">✏️ Rename</button>
+    <button class="chart-menu-item danger" id="menuDelete">🗑 Delete</button>
+</div>
 
-    <script>
-        // ── marked.js config ───────────────────────────────────
-        marked.setOptions({ breaks: true, gfm: true });
+<script>
+    // ── Supabase + marked config ───────────────────────────────
+    marked.setOptions({ breaks: true, gfm: true });
 
-        // ── Constants ──────────────────────────────────────────
-        const STORAGE_KEY  = 'charthawk_v1';
-        const MAX_CHARTS   = 10;
+    const SUPABASE_URL      = 'https://csjiymeycevxqmlmqcwc.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_SFgQ0S4DZ0CPe9Rv6cyLpQ_imrEpD1P';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ── State ──────────────────────────────────────────────
-        let chartHistory  = [];
-        let analysisCount = 0;
-        let activeChartId = null;
-        let appState      = 'landing'; // 'landing' | 'chat'
+    // ── Constants ──────────────────────────────────────────────
+    const TOS_VERSION = 'v1';
+    const MAX_HISTORY = 20;
 
-        // ── Element refs ───────────────────────────────────────
-        const landingView    = document.getElementById('landingView');
-        const chatView       = document.getElementById('chatView');
-        const uploadArea     = document.getElementById('uploadArea');
-        const fileInput      = document.getElementById('fileInput');
-        const fileInputChat  = document.getElementById('fileInputChat');
-        const loadingEl      = document.getElementById('loading');
-        const errorEl        = document.getElementById('error');
-        const mainContent    = document.getElementById('mainContent');
-        const mainInner      = document.getElementById('mainInner');
-        const sidebarHistory = document.getElementById('sidebarHistory');
-        const mainChatInput  = document.getElementById('mainChatInput');
-        const mainSendBtn    = document.getElementById('mainSendBtn');
-        const chatErrorEl    = document.getElementById('chatError');
-        const newChartBtn    = document.getElementById('newChartBtn');
-        const clearHistoryBtn= document.getElementById('clearHistoryBtn');
-        const attachBtn      = document.getElementById('attachBtn');
-        const sidebar        = document.getElementById('sidebar');
-        const hamburgerBtn   = document.getElementById('hamburgerBtn');
-        const drawerBackdrop = document.getElementById('drawerBackdrop');
+    // ── State ──────────────────────────────────────────────────
+    let chartHistory   = [];
+    let analysisCount  = 0;   // temp integer IDs during streaming only
+    let activeChartId  = null;
+    let appState       = 'landing';       // 'landing' | 'chat'
+    let authState      = 'signed-out';    // 'signed-out' | 'tos-pending' | 'signed-in'
+    let currentUser    = null;
+    let authInitialized = false;
 
-        // ── localStorage ───────────────────────────────────────
+    // ── Element refs ───────────────────────────────────────────
+    const landingView    = document.getElementById('landingView');
+    const chatView       = document.getElementById('chatView');
+    const signInPanel    = document.getElementById('signInPanel');
+    const uploadPanel    = document.getElementById('uploadPanel');
+    const uploadArea     = document.getElementById('uploadArea');
+    const fileInput      = document.getElementById('fileInput');
+    const fileInputChat  = document.getElementById('fileInputChat');
+    const loadingEl      = document.getElementById('loading');
+    const errorEl        = document.getElementById('error');
+    const mainContent    = document.getElementById('mainContent');
+    const mainInner      = document.getElementById('mainInner');
+    const sidebarHistory = document.getElementById('sidebarHistory');
+    const mainChatInput  = document.getElementById('mainChatInput');
+    const mainSendBtn    = document.getElementById('mainSendBtn');
+    const chatErrorEl    = document.getElementById('chatError');
+    const newChartBtn    = document.getElementById('newChartBtn');
+    const clearHistoryBtn= document.getElementById('clearHistoryBtn');
+    const attachBtn      = document.getElementById('attachBtn');
+    const sidebar        = document.getElementById('sidebar');
+    const hamburgerBtn   = document.getElementById('hamburgerBtn');
+    const drawerBackdrop = document.getElementById('drawerBackdrop');
+    const userProfile    = document.getElementById('userProfile');
+    const userAvatar     = document.getElementById('userAvatar');
+    const userNameEl     = document.getElementById('userName');
+    const signOutBtn     = document.getElementById('signOutBtn');
 
-        function saveHistory() {
-            try {
-                // Trim to cap before saving (oldest are at end of array)
-                const toSave = chartHistory.slice(0, MAX_CHARTS);
-                _writeStorage(toSave);
-            } catch (e) { /* storage unavailable */ }
+    // ── Auth helpers ───────────────────────────────────────────
+
+    async function getAuthToken() {
+        const { data } = await sb.auth.getSession();
+        return data?.session?.access_token || null;
+    }
+
+    function updateAuthUI() {
+        if (authState === 'signed-in' && currentUser) {
+            signInPanel.style.display  = 'none';
+            uploadPanel.style.display  = 'flex';
+            userProfile.style.display  = 'flex';
+            userAvatar.src    = currentUser.user_metadata?.avatar_url || '';
+            userNameEl.textContent = currentUser.user_metadata?.full_name || currentUser.email || '';
+        } else {
+            signInPanel.style.display  = 'flex';
+            uploadPanel.style.display  = 'none';
+            userProfile.style.display  = 'none';
+            if (appState === 'chat') goToLanding();
         }
+    }
 
-        function _writeStorage(arr) {
-            if (!arr.length) {
-                try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
-                return;
-            }
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-            } catch (e) {
-                if (e.name === 'QuotaExceededError' && arr.length > 1) {
-                    // Drop oldest chart and retry
-                    _writeStorage(arr.slice(0, arr.length - 1));
-                }
-                // If still failing with one entry, silently give up
-            }
-        }
-
-        function loadHistory() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (!raw) return;
-
-                const parsed = JSON.parse(raw);
-                if (!Array.isArray(parsed) || parsed.length === 0) return;
-
-                // Revive Date objects and filter incomplete entries
-                const revived = parsed
-                    .filter(c => c && c.explanation)  // drop mid-stream crashes
-                    .map(c => ({ ...c, timestamp: new Date(c.timestamp) }));
-
-                if (!revived.length) return;
-
-                chartHistory  = revived;
-                analysisCount = Math.max(...revived.map(c => c.id));
-                switchToChatView(revived[0].id);
-            } catch (e) {
-                // Corrupted storage — clear it and start fresh
-                try { localStorage.removeItem(STORAGE_KEY); } catch(_) {}
-            }
-        }
-
-        // ── SSE stream reader ──────────────────────────────────
-
-        async function* readSSE(response) {
-            const reader  = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
-
-            try {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    buffer += decoder.decode(value, { stream: true });
-
-                    // SSE blocks are separated by double newline
-                    const parts = buffer.split('\n\n');
-                    buffer = parts.pop(); // keep incomplete trailing chunk
-
-                    for (const part of parts) {
-                        if (!part.trim()) continue;
-                        const eventMatch = part.match(/^event: (.+)$/m);
-                        const dataMatch  = part.match(/^data: (.+)$/m);
-                        if (dataMatch) {
-                            yield {
-                                event: eventMatch ? eventMatch[1].trim() : 'message',
-                                data:  JSON.parse(dataMatch[1]),
-                            };
-                        }
-                    }
-                }
-            } finally {
-                reader.releaseLock();
-            }
-        }
-
-        // ── Upload events ──────────────────────────────────────
-
-        uploadArea.addEventListener('click', () => fileInput.click());
-        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
-        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+    async function signInWithGoogle() {
+        await sb.auth.signInWithOAuth({
+            provider: 'google',
+            options: { redirectTo: window.location.origin },
         });
-        fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
+    }
 
-        attachBtn.addEventListener('click', () => fileInputChat.click());
-        fileInputChat.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
+    async function signOut() {
+        await sb.auth.signOut();
+        currentUser    = null;
+        authState      = 'signed-out';
+        authInitialized = false;
+        chartHistory   = [];
+        activeChartId  = null;
+        updateAuthUI();
+        goToLanding();
+    }
 
-        // ── Mobile drawer ──────────────────────────────────────
-
-        function openDrawer() {
-            sidebar.classList.add('drawer-open');
-            drawerBackdrop.classList.add('visible');
-            document.body.style.overflow = 'hidden'; // prevent scroll bleed on iOS
+    async function checkTosAndProceed(user) {
+        currentUser = user;
+        const accepted = user.user_metadata?.tos_accepted_version;
+        if (accepted === TOS_VERSION) {
+            if (authInitialized) return;
+            authInitialized = true;
+            authState = 'signed-in';
+            updateAuthUI();
+            await loadHistory();
+        } else {
+            authState = 'tos-pending';
+            updateAuthUI();
+            document.getElementById('tosModal').classList.add('active');
         }
+    }
 
-        function closeDrawer() {
-            sidebar.classList.remove('drawer-open');
-            drawerBackdrop.classList.remove('visible');
-            document.body.style.overflow = '';
-        }
+    // ── ToS modal ──────────────────────────────────────────────
 
-        hamburgerBtn.addEventListener('click', openDrawer);
-        drawerBackdrop.addEventListener('click', closeDrawer);
+    document.getElementById('tosCheckbox').addEventListener('change', (e) => {
+        document.getElementById('tosAcceptBtn').disabled = !e.target.checked;
+    });
 
-        // ── New / clear ────────────────────────────────────────
+    document.getElementById('tosAcceptBtn').addEventListener('click', async () => {
+        const btn = document.getElementById('tosAcceptBtn');
+        btn.disabled = true; btn.textContent = 'Saving…';
+        try {
+            await sb.auth.updateUser({ data: { tos_accepted_version: TOS_VERSION } });
+        } catch (e) { console.warn('Could not save ToS acceptance:', e.message); }
+        document.getElementById('tosModal').classList.remove('active');
+        document.getElementById('tosCheckbox').checked = false;
+        btn.textContent = 'Accept & Continue';
+        authInitialized = true;
+        authState = 'signed-in';
+        updateAuthUI();
+        await loadHistory();
+    });
 
-        newChartBtn.addEventListener('click', () => { closeDrawer(); goToLanding(); });
+    document.getElementById('tosDeclineBtn').addEventListener('click', async () => {
+        document.getElementById('tosModal').classList.remove('active');
+        document.getElementById('tosCheckbox').checked = false;
+        document.getElementById('tosAcceptBtn').disabled = true;
+        await signOut();
+    });
 
-        clearHistoryBtn.addEventListener('click', () => {
-            if (!confirm('Clear all chart history?')) return;
-            chartHistory  = [];
-            analysisCount = 0;
-            activeChartId = null;
-            saveHistory();
-            goToLanding();
-        });
+    document.getElementById('tosLinkLanding')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('tosModal').classList.add('active');
+    });
 
-        function goToLanding() {
-            appState = 'landing';
-            chatView.style.display    = 'none';
-            landingView.style.display = 'flex';
-            loadingEl.classList.remove('visible');
-            errorEl.style.display = 'none';
-        }
+    // ── Supabase auth state machine ────────────────────────────
 
-        // ── Handle file upload (streaming) ─────────────────────
-
-        async function handleFile(file) {
-            if (!file.type.startsWith('image/')) {
-                showError('Please upload an image file');
-                return;
+    sb.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+            if (session?.user) {
+                await checkTosAndProceed(session.user);
+            } else if (event === 'INITIAL_SESSION') {
+                authState = 'signed-out';
+                updateAuthUI();
             }
+        } else if (event === 'SIGNED_OUT') {
+            currentUser = null; authState = 'signed-out'; authInitialized = false;
+            chartHistory = []; activeChartId = null;
+            updateAuthUI(); goToLanding();
+        } else if (event === 'USER_UPDATED' && session?.user) {
+            currentUser = session.user;
+        }
+    });
 
-            // Show spinner on landing; disable send btn in chat
-            if (appState === 'landing') {
-                loadingEl.classList.add('visible');
-                errorEl.style.display = 'none';
-            }
-            mainSendBtn.disabled = true;
+    // ── Sign-in / sign-out buttons ─────────────────────────────
 
-            const formData = new FormData();
-            formData.append('chart', file);
+    document.getElementById('googleSignInBtn').addEventListener('click', signInWithGoogle);
+    signOutBtn.addEventListener('click', signOut);
 
-            let chartData = null;
-            let accumulatedText = '';
+    // ── Supabase DB operations (replace localStorage) ──────────
 
-            try {
-                const response = await fetch('/analyze_stream', { method: 'POST', body: formData });
+    async function loadHistory() {
+        if (!currentUser) return;
+        try {
+            const { data: charts, error: ce } = await sb
+                .from('charts')
+                .select('id, filename, display_name, starred, image_data, explanation, analysis_raw, created_at')
+                .order('created_at', { ascending: false })
+                .limit(MAX_HISTORY);
+            if (ce) throw ce;
+            if (!charts || charts.length === 0) return;
 
-                if (!response.ok) {
-                    const err = await response.json().catch(() => ({ error: 'Upload failed' }));
-                    showError(err.error || 'Failed to analyze chart');
-                    return;
-                }
+            const chartIds = charts.map(c => c.id);
+            const { data: messages, error: me } = await sb
+                .from('messages')
+                .select('id, chart_id, role, content, html, created_at')
+                .in('chart_id', chartIds)
+                .order('created_at', { ascending: true });
+            if (me) throw me;
 
-                for await (const { event, data } of readSSE(response)) {
+            chartHistory = charts.map(c => ({
+                id:          c.id,
+                timestamp:   new Date(c.created_at),
+                image:       c.image_data,
+                explanation: c.explanation || '',
+                analysisRaw: c.analysis_raw || '',
+                filename:    c.filename,
+                displayName: c.display_name || null,
+                starred:     c.starred,
+                conversation: (messages || [])
+                    .filter(m => m.chart_id === c.id)
+                    .map(m => ({ role: m.role, content: m.content, html: m.html || '' })),
+            }));
 
-                    if (event === 'image') {
-                        // Create chart entry and switch to chat immediately
-                        analysisCount++;
-                        chartData = {
-                            id:           analysisCount,
-                            timestamp:    new Date(),
-                            image:        data.image,
-                            explanation:  '',           // filled on 'done'
-                            filename:     file.name,
-                            displayName:  null,         // null = use filename
-                            starred:      false,
-                            conversation: [],
+            if (chartHistory.length > 0) switchToChatView(chartHistory[0].id);
+        } catch (err) {
+            console.error('loadHistory failed:', err.message);
+            showError('Could not load history from server.');
+        }
+    }
+
+    async function saveChartToSupabase(chartData) {
+        if (!currentUser) return;
+        const oldId = chartData.id;
+        try {
+            const { data, error } = await sb.from('charts').insert({
+                user_id:      currentUser.id,
+                filename:     chartData.filename,
+                display_name: chartData.displayName,
+                starred:      chartData.starred,
+                image_data:   chartData.image,
+                explanation:  chartData.explanation,
+                analysis_raw: chartData.analysisRaw,
+            }).select('id').single();
+            if (error) throw error;
+
+            // Swap temp integer ID → real UUID
+            chartData.id = data.id;
+            activeChartId = data.id;
+            ['analysis', 'thread', 'copy'].forEach(prefix => {
+                const el = document.getElementById(`${prefix}-${oldId}`);
+                if (el) el.id = `${prefix}-${data.id}`;
+            });
+            renderSidebar();
+        } catch (err) {
+            console.error('saveChart failed:', err.message);
+        }
+    }
+
+    async function saveMessageToSupabase(chartId, role, content, html) {
+        if (!currentUser) return;
+        try {
+            const { error } = await sb.from('messages').insert({ chart_id: chartId, role, content, html });
+            if (error) throw error;
+        } catch (err) {
+            console.error('saveMessage failed:', err.message);
+        }
+    }
+
+    // ── SSE stream reader ──────────────────────────────────────
+
+    async function* readSSE(response) {
+        const reader  = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const parts = buffer.split('\n\n');
+                buffer = parts.pop();
+                for (const part of parts) {
+                    if (!part.trim()) continue;
+                    const eventMatch = part.match(/^event: (.+)$/m);
+                    const dataMatch  = part.match(/^data: (.+)$/m);
+                    if (dataMatch) {
+                        yield {
+                            event: eventMatch ? eventMatch[1].trim() : 'message',
+                            data:  JSON.parse(dataMatch[1]),
                         };
-                        chartHistory.unshift(chartData);
-                        loadingEl.classList.remove('visible');
-                        switchToChatView(chartData.id);
-
-                    } else if (event === 'text' && chartData) {
-                        accumulatedText += data.chunk;
-                        const el = document.getElementById(`analysis-${chartData.id}`);
-                        if (el) el.textContent = accumulatedText; // raw text during stream
-                        mainContent.scrollTop = mainContent.scrollHeight;
-
-                    } else if (event === 'done' && chartData) {
-                        const html = marked.parse(accumulatedText);
-                        chartData.explanation  = html;
-                        chartData.analysisRaw  = accumulatedText; // passed as context on follow-ups
-                        const el = document.getElementById(`analysis-${chartData.id}`);
-                        if (el) {
-                            el.innerHTML  = html;
-                            el.className  = 'analysis-content';
-                        }
-                        saveHistory(); // persist only after explanation is complete
-
-                    } else if (event === 'error') {
-                        showError(data.error || 'Analysis failed');
-                        // Remove incomplete chart from history if it was added
-                        if (chartData) {
-                            chartHistory = chartHistory.filter(c => c.id !== chartData.id);
-                            renderSidebar();
-                        }
                     }
                 }
-
-            } catch (err) {
-                showError('Network error: ' + err.message);
-                if (chartData) {
-                    chartHistory = chartHistory.filter(c => c.id !== chartData.id);
-                    renderSidebar();
-                }
-            } finally {
-                loadingEl.classList.remove('visible');
-                mainSendBtn.disabled = false;
-                fileInput.value      = '';
-                fileInputChat.value  = '';
             }
+        } finally {
+            reader.releaseLock();
         }
+    }
 
-        // ── Switch to chat view ────────────────────────────────
+    // ── Upload events ──────────────────────────────────────────
 
-        function switchToChatView(id) {
-            appState = 'chat';
-            landingView.style.display = 'none';
-            chatView.style.display    = 'flex';
-            activeChartId             = id;
-            renderSidebar();
-            renderMainPanel(id);
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault(); uploadArea.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change',     (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
+    attachBtn.addEventListener('click',       () => fileInputChat.click());
+    fileInputChat.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
+
+    // ── Mobile drawer ──────────────────────────────────────────
+
+    function openDrawer()  { sidebar.classList.add('drawer-open');    drawerBackdrop.classList.add('visible');    document.body.style.overflow = 'hidden'; }
+    function closeDrawer() { sidebar.classList.remove('drawer-open'); drawerBackdrop.classList.remove('visible'); document.body.style.overflow = ''; }
+    hamburgerBtn.addEventListener('click', openDrawer);
+    drawerBackdrop.addEventListener('click', closeDrawer);
+
+    // ── New / clear ────────────────────────────────────────────
+
+    newChartBtn.addEventListener('click', () => { closeDrawer(); goToLanding(); });
+
+    clearHistoryBtn.addEventListener('click', async () => {
+        if (!confirm('Clear all chart history? This cannot be undone.')) return;
+        if (currentUser) {
+            try { await sb.from('charts').delete().eq('user_id', currentUser.id); }
+            catch (err) { console.error('clearHistory failed:', err.message); }
         }
+        chartHistory = []; analysisCount = 0; activeChartId = null;
+        goToLanding();
+    });
 
-        // ── Sidebar ────────────────────────────────────────────
+    function goToLanding() {
+        appState = 'landing';
+        chatView.style.display    = 'none';
+        landingView.style.display = 'flex';
+        loadingEl.classList.remove('visible');
+        errorEl.style.display = 'none';
+    }
 
-        function renderSidebar() {
-            // Starred charts float to the top
-            const sorted = [...chartHistory].sort((a, b) => (b.starred ? 1 : 0) - (a.starred ? 1 : 0));
+    // ── Handle file upload (streaming) ─────────────────────────
 
-            sidebarHistory.innerHTML = sorted.map(chart => `
-                <div class="sidebar-item ${chart.id === activeChartId ? 'active' : ''}"
-                     data-chart-id="${chart.id}"
-                     onclick="selectChart(${chart.id})">
-                    <img src="${chart.image}" class="sidebar-thumb" alt="chart">
-                    <div class="sidebar-info">
-                        <div class="sidebar-name">
-                            ${chart.starred ? '⭐ ' : ''}${escapeHtml(chart.displayName || chart.filename)}
-                        </div>
-                        <div class="sidebar-time">${formatTime(chart.timestamp)}</div>
-                    </div>
-                    <button class="sidebar-item-menu-btn"
-                            onclick="event.stopPropagation(); openChartMenu(event, ${chart.id})"
-                            title="Options">···</button>
-                </div>
-            `).join('');
-        }
+    async function handleFile(file) {
+        if (!file.type.startsWith('image/')) { showError('Please upload an image file'); return; }
 
-        function selectChart(id) {
-            closeDrawer();
-            activeChartId             = id;
-            mainChatInput.value       = '';
-            mainChatInput.style.height= 'auto';
-            chatErrorEl.style.display = 'none';
-            renderSidebar();
-            renderMainPanel(id);
-        }
+        if (appState === 'landing') { loadingEl.classList.add('visible'); errorEl.style.display = 'none'; }
+        mainSendBtn.disabled = true;
 
-        // ── Main panel ─────────────────────────────────────────
+        const formData = new FormData();
+        formData.append('chart', file);
 
-        function renderMainPanel(id) {
-            const chart = chartHistory.find(c => c.id === id);
-            if (!chart) return;
+        let chartData = null;
+        let accumulatedText = '';
 
-            // Determine analysis display state
-            const analysisClass = chart.explanation ? 'analysis-content' : 'analysis-content streaming';
-            const analysisBody  = chart.explanation || '';
-
-            mainInner.innerHTML = `
-                <img src="${chart.image}" class="main-chart-img" alt="Chart">
-                <div class="main-chart-meta">
-                    ${escapeHtml(chart.displayName || chart.filename)} · ${formatTime(chart.timestamp)}
-                    <button class="copy-btn-inline" id="copy-${chart.id}" onclick="copyAnalysis(${chart.id})">📋 Copy</button>
-                </div>
-                <div class="${analysisClass}" id="analysis-${chart.id}">${analysisBody}</div>
-                <hr class="chat-divider">
-                <div class="chat-label">Follow-up</div>
-                <div class="chat-thread" id="thread-${chart.id}"></div>
-            `;
-
-            // Re-render saved conversation bubbles
-            chart.conversation.forEach(msg => {
-                appendMessageEl(id, msg.role, msg.html || escapeHtml(msg.content));
+        try {
+            const token = await getAuthToken();
+            const response = await fetch('/analyze_stream', {
+                method: 'POST',
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+                body: formData,
             });
 
-            mainContent.scrollTop = mainContent.scrollHeight;
-        }
-
-        // ── Copy analysis ──────────────────────────────────────
-
-        async function copyAnalysis(id) {
-            const el  = document.getElementById(`analysis-${id}`);
-            const btn = document.getElementById(`copy-${id}`);
-            try {
-                await navigator.clipboard.writeText(el ? el.innerText : '');
-                btn.textContent = '✓ Copied!';
-                btn.style.color = 'var(--success)';
-                setTimeout(() => { btn.textContent = '📋 Copy'; btn.style.color = ''; }, 2000);
-            } catch {
-                btn.textContent = '✗ Failed';
-                setTimeout(() => { btn.textContent = '📋 Copy'; }, 2000);
+            if (response.status === 401) {
+                showError('Session expired. Please sign in again.');
+                await signOut(); return;
             }
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({ error: 'Upload failed' }));
+                showError(err.error || 'Failed to analyze chart'); return;
+            }
+
+            for await (const { event, data } of readSSE(response)) {
+                if (event === 'image') {
+                    analysisCount++;
+                    chartData = {
+                        id: analysisCount,   // temp integer — swapped to UUID after INSERT
+                        timestamp:    new Date(),
+                        image:        data.image,
+                        explanation:  '',
+                        analysisRaw:  '',
+                        filename:     file.name,
+                        displayName:  null,
+                        starred:      false,
+                        conversation: [],
+                    };
+                    chartHistory.unshift(chartData);
+                    loadingEl.classList.remove('visible');
+                    switchToChatView(chartData.id);
+
+                } else if (event === 'text' && chartData) {
+                    accumulatedText += data.chunk;
+                    const el = document.getElementById(`analysis-${chartData.id}`);
+                    if (el) el.textContent = accumulatedText;
+                    mainContent.scrollTop = mainContent.scrollHeight;
+
+                } else if (event === 'done' && chartData) {
+                    const html = marked.parse(accumulatedText);
+                    chartData.explanation = html;
+                    chartData.analysisRaw = accumulatedText;
+                    const el = document.getElementById(`analysis-${chartData.id}`);
+                    if (el) { el.innerHTML = html; el.className = 'analysis-content'; }
+                    await saveChartToSupabase(chartData); // swaps temp ID → UUID
+
+                } else if (event === 'error') {
+                    showError(data.error || 'Analysis failed');
+                    if (chartData) { chartHistory = chartHistory.filter(c => c.id !== chartData.id); renderSidebar(); }
+                }
+            }
+        } catch (err) {
+            showError('Network error: ' + err.message);
+            if (chartData) { chartHistory = chartHistory.filter(c => c.id !== chartData.id); renderSidebar(); }
+        } finally {
+            loadingEl.classList.remove('visible');
+            mainSendBtn.disabled = false;
+            fileInput.value = ''; fileInputChat.value = '';
         }
+    }
 
-        // ── Chat ───────────────────────────────────────────────
+    // ── Switch to chat view ────────────────────────────────────
 
-        mainChatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFollowUp(activeChartId); }
-        });
+    function switchToChatView(id) {
+        appState = 'chat';
+        landingView.style.display = 'none';
+        chatView.style.display    = 'flex';
+        activeChartId             = id;
+        renderSidebar();
+        renderMainPanel(id);
+    }
 
-        mainChatInput.addEventListener('input', () => autoResize(mainChatInput));
-        mainSendBtn.addEventListener('click', () => sendFollowUp(activeChartId));
+    // ── Sidebar ────────────────────────────────────────────────
 
-        function autoResize(el) {
-            el.style.height = 'auto';
-            el.style.height = el.scrollHeight + 'px';
+    function renderSidebar() {
+        const sorted = [...chartHistory].sort((a, b) => (b.starred ? 1 : 0) - (a.starred ? 1 : 0));
+        sidebarHistory.innerHTML = sorted.map(chart => `
+            <div class="sidebar-item ${chart.id === activeChartId ? 'active' : ''}"
+                 data-chart-id="${chart.id}"
+                 onclick="selectChart('${chart.id}')">
+                <img src="${chart.image}" class="sidebar-thumb" alt="chart">
+                <div class="sidebar-info">
+                    <div class="sidebar-name">${chart.starred ? '⭐ ' : ''}${escapeHtml(chart.displayName || chart.filename)}</div>
+                    <div class="sidebar-time">${formatTime(chart.timestamp)}</div>
+                </div>
+                <button class="sidebar-item-menu-btn"
+                        onclick="event.stopPropagation(); openChartMenu(event, '${chart.id}')"
+                        title="Options">···</button>
+            </div>
+        `).join('');
+    }
+
+    function selectChart(id) {
+        closeDrawer();
+        activeChartId = id;
+        mainChatInput.value = ''; mainChatInput.style.height = 'auto';
+        chatErrorEl.style.display = 'none';
+        renderSidebar(); renderMainPanel(id);
+    }
+
+    // ── Main panel ─────────────────────────────────────────────
+
+    function renderMainPanel(id) {
+        const chart = chartHistory.find(c => c.id === id);
+        if (!chart) return;
+        const analysisClass = chart.explanation ? 'analysis-content' : 'analysis-content streaming';
+        mainInner.innerHTML = `
+            <img src="${chart.image}" class="main-chart-img" alt="Chart">
+            <div class="main-chart-meta">
+                ${escapeHtml(chart.displayName || chart.filename)} · ${formatTime(chart.timestamp)}
+                <button class="copy-btn-inline" id="copy-${chart.id}" onclick="copyAnalysis('${chart.id}')">📋 Copy</button>
+            </div>
+            <div class="${analysisClass}" id="analysis-${chart.id}">${chart.explanation}</div>
+            <hr class="chat-divider">
+            <div class="chat-label">Follow-up</div>
+            <div class="chat-thread" id="thread-${chart.id}"></div>
+        `;
+        chart.conversation.forEach(msg => appendMessageEl(id, msg.role, msg.html || escapeHtml(msg.content)));
+        mainContent.scrollTop = mainContent.scrollHeight;
+    }
+
+    // ── Copy analysis ──────────────────────────────────────────
+
+    async function copyAnalysis(id) {
+        const el  = document.getElementById(`analysis-${id}`);
+        const btn = document.getElementById(`copy-${id}`);
+        try {
+            await navigator.clipboard.writeText(el ? el.innerText : '');
+            btn.textContent = '✓ Copied!'; btn.style.color = 'var(--success)';
+            setTimeout(() => { btn.textContent = '📋 Copy'; btn.style.color = ''; }, 2000);
+        } catch {
+            btn.textContent = '✗ Failed';
+            setTimeout(() => { btn.textContent = '📋 Copy'; }, 2000);
         }
+    }
 
-        function appendMessageEl(id, role, htmlContent) {
-            const thread = document.getElementById(`thread-${id}`);
-            if (!thread) return null;
-            const div = document.createElement('div');
-            div.className = `chat-bubble ${role}`;
-            div.innerHTML = htmlContent;
-            thread.appendChild(div);
-            mainContent.scrollTop = mainContent.scrollHeight;
-            return div;
-        }
+    // ── Chat ───────────────────────────────────────────────────
 
-        async function sendFollowUp(id) {
-            if (!id) return;
-            const question = mainChatInput.value.trim();
-            if (!question) return;
+    mainChatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFollowUp(activeChartId); }
+    });
+    mainChatInput.addEventListener('input', () => autoResize(mainChatInput));
+    mainSendBtn.addEventListener('click',   () => sendFollowUp(activeChartId));
 
-            const chart = chartHistory.find(c => c.id === id);
-            if (!chart) return;
+    function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
 
-            // User bubble
-            appendMessageEl(id, 'user', escapeHtml(question));
-            mainChatInput.value        = '';
-            mainChatInput.style.height = 'auto';
-            mainSendBtn.disabled       = true;
-            chatErrorEl.style.display  = 'none';
+    function appendMessageEl(id, role, htmlContent) {
+        const thread = document.getElementById(`thread-${id}`);
+        if (!thread) return null;
+        const div = document.createElement('div');
+        div.className = `chat-bubble ${role}`;
+        div.innerHTML = htmlContent;
+        thread.appendChild(div);
+        mainContent.scrollTop = mainContent.scrollHeight;
+        return div;
+    }
 
-            const thread = document.getElementById(`thread-${id}`);
+    async function sendFollowUp(id) {
+        if (!id) return;
+        const question = mainChatInput.value.trim();
+        if (!question) return;
+        const chart = chartHistory.find(c => c.id === id);
+        if (!chart) return;
 
-            // Typing indicator
-            const typingEl = document.createElement('div');
-            typingEl.className = 'chat-typing';
-            typingEl.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
-            thread.appendChild(typingEl);
-            mainContent.scrollTop = mainContent.scrollHeight;
+        appendMessageEl(id, 'user', escapeHtml(question));
+        mainChatInput.value = ''; mainChatInput.style.height = 'auto';
+        mainSendBtn.disabled = true; chatErrorEl.style.display = 'none';
 
-            // Assistant bubble (created now, filled as stream arrives)
-            const assistantBubble = document.createElement('div');
-            assistantBubble.className = 'chat-bubble assistant streaming';
+        const thread = document.getElementById(`thread-${id}`);
+        const typingEl = document.createElement('div');
+        typingEl.className = 'chat-typing';
+        typingEl.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span>';
+        thread.appendChild(typingEl);
+        mainContent.scrollTop = mainContent.scrollHeight;
 
-            let accumulatedText = '';
-            let streamStarted   = false;
+        const assistantBubble = document.createElement('div');
+        assistantBubble.className = 'chat-bubble assistant streaming';
 
-            try {
-                const response = await fetch('/followup_stream', {
-                    method:  'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify({
-                        question,
-                        image:                chart.image,
-                        analysis_raw:         chart.analysisRaw || '',
-                        conversation_history: chart.conversation.map(m => ({ role: m.role, content: m.content })),
-                    }),
-                });
+        let accumulatedText = '';
+        let streamStarted   = false;
 
-                if (!response.ok) {
-                    typingEl.remove();
-                    const err = await response.json().catch(() => ({ error: 'Request failed' }));
-                    chatErrorEl.textContent   = err.error || 'Failed to get a response.';
+        try {
+            const token = await getAuthToken();
+            const response = await fetch('/followup_stream', {
+                method:  'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({
+                    question,
+                    image:                chart.image,
+                    analysis_raw:         chart.analysisRaw || '',
+                    conversation_history: chart.conversation.map(m => ({ role: m.role, content: m.content })),
+                }),
+            });
+
+            if (response.status === 401) {
+                typingEl.remove();
+                chatErrorEl.textContent = 'Session expired. Please sign in again.';
+                chatErrorEl.style.display = 'block';
+                await signOut(); return;
+            }
+            if (!response.ok) {
+                typingEl.remove();
+                const err = await response.json().catch(() => ({ error: 'Request failed' }));
+                chatErrorEl.textContent = err.error || 'Failed to get a response.';
+                chatErrorEl.style.display = 'block'; return;
+            }
+
+            for await (const { event, data } of readSSE(response)) {
+                if (event === 'text') {
+                    if (!streamStarted) { typingEl.replaceWith(assistantBubble); streamStarted = true; }
+                    accumulatedText += data.chunk;
+                    assistantBubble.textContent = accumulatedText;
+                    mainContent.scrollTop = mainContent.scrollHeight;
+
+                } else if (event === 'done') {
+                    const html = marked.parse(accumulatedText);
+                    assistantBubble.innerHTML = html;
+                    assistantBubble.className = 'chat-bubble assistant';
+
+                    chart.conversation.push({ role: 'user',      content: question,       html: escapeHtml(question) });
+                    chart.conversation.push({ role: 'assistant', content: accumulatedText, html });
+
+                    await saveMessageToSupabase(id, 'user',      question,       escapeHtml(question));
+                    await saveMessageToSupabase(id, 'assistant', accumulatedText, html);
+                    mainContent.scrollTop = mainContent.scrollHeight;
+
+                } else if (event === 'error') {
+                    if (streamStarted) assistantBubble.remove(); else typingEl.remove();
+                    chatErrorEl.textContent = data.error || 'Failed to get a response.';
                     chatErrorEl.style.display = 'block';
-                    return;
                 }
-
-                for await (const { event, data } of readSSE(response)) {
-
-                    if (event === 'text') {
-                        if (!streamStarted) {
-                            // Replace typing indicator with live bubble on first chunk
-                            typingEl.replaceWith(assistantBubble);
-                            streamStarted = true;
-                        }
-                        accumulatedText += data.chunk;
-                        assistantBubble.textContent = accumulatedText; // plain text while streaming
-                        mainContent.scrollTop = mainContent.scrollHeight;
-
-                    } else if (event === 'done') {
-                        const html = marked.parse(accumulatedText);
-                        assistantBubble.innerHTML  = html;
-                        assistantBubble.className  = 'chat-bubble assistant'; // remove streaming class
-
-                        chart.conversation.push({ role: 'user',      content: question,        html: escapeHtml(question) });
-                        chart.conversation.push({ role: 'assistant', content: accumulatedText,  html: html });
-                        saveHistory();
-                        mainContent.scrollTop = mainContent.scrollHeight;
-
-                    } else if (event === 'error') {
-                        if (streamStarted) assistantBubble.remove();
-                        else typingEl.remove();
-                        chatErrorEl.textContent   = data.error || 'Failed to get a response.';
-                        chatErrorEl.style.display = 'block';
-                    }
-                }
-
-                // If stream ended without any text (empty response), clean up
-                if (!streamStarted) typingEl.remove();
-
-            } catch (err) {
-                if (streamStarted) assistantBubble.remove();
-                else typingEl.remove();
-                chatErrorEl.textContent   = 'Network error: ' + err.message;
-                chatErrorEl.style.display = 'block';
-            } finally {
-                mainSendBtn.disabled = false;
-                mainChatInput.focus();
             }
+            if (!streamStarted) typingEl.remove();
+
+        } catch (err) {
+            if (streamStarted) assistantBubble.remove(); else typingEl.remove();
+            chatErrorEl.textContent = 'Network error: ' + err.message;
+            chatErrorEl.style.display = 'block';
+        } finally {
+            mainSendBtn.disabled = false;
+            mainChatInput.focus();
         }
+    }
 
-        // ── Utilities ──────────────────────────────────────────
+    // ── Utilities ──────────────────────────────────────────────
 
-        function formatTime(date) {
-            if (!(date instanceof Date) || isNaN(date)) return '';
-            const diff = Math.floor((Date.now() - date) / 1000);
-            if (diff < 60)    return 'Just now';
-            if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
-            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-            return date.toLocaleDateString();
+    function formatTime(date) {
+        if (!(date instanceof Date) || isNaN(date)) return '';
+        const diff = Math.floor((Date.now() - date) / 1000);
+        if (diff < 60)    return 'Just now';
+        if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return date.toLocaleDateString();
+    }
+
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/\n/g, '<br>');
+    }
+
+    function showError(msg) {
+        if (appState === 'landing') {
+            errorEl.textContent = msg; errorEl.style.display = 'block';
+            setTimeout(() => { errorEl.style.display = 'none'; }, 5000);
+        } else {
+            chatErrorEl.textContent = msg; chatErrorEl.style.display = 'block';
+            setTimeout(() => { chatErrorEl.style.display = 'none'; }, 5000);
         }
+    }
 
-        function escapeHtml(str) {
-            return String(str)
-                .replace(/&/g,  '&amp;')
-                .replace(/</g,  '&lt;')
-                .replace(/>/g,  '&gt;')
-                .replace(/"/g,  '&quot;')
-                .replace(/\n/g, '<br>');
-        }
+    // ── Sidebar context menu ───────────────────────────────────
 
-        function showError(msg) {
-            if (appState === 'landing') {
-                errorEl.textContent    = msg;
-                errorEl.style.display  = 'block';
-                setTimeout(() => { errorEl.style.display = 'none'; }, 5000);
-            } else {
-                chatErrorEl.textContent   = msg;
-                chatErrorEl.style.display = 'block';
-                setTimeout(() => { chatErrorEl.style.display = 'none'; }, 5000);
-            }
-        }
+    const chartMenu  = document.getElementById('chartMenu');
+    const menuStar   = document.getElementById('menuStar');
+    const menuRename = document.getElementById('menuRename');
+    const menuDelete = document.getElementById('menuDelete');
+    let menuActiveId = null;
 
-        // ── Sidebar context menu ────────────────────────────────
+    function openChartMenu(event, id) {
+        menuActiveId = id;
+        const chart  = chartHistory.find(c => c.id === id);
+        menuStar.textContent = chart?.starred ? '★ Unstar' : '⭐ Star';
+        const rect = event.currentTarget.getBoundingClientRect();
+        chartMenu.style.top  = (rect.bottom + 4) + 'px';
+        chartMenu.style.left = Math.min(rect.left, window.innerWidth - 180) + 'px';
+        chartMenu.classList.add('visible');
+    }
 
-        const chartMenu  = document.getElementById('chartMenu');
-        const menuStar   = document.getElementById('menuStar');
-        const menuRename = document.getElementById('menuRename');
-        const menuDelete = document.getElementById('menuDelete');
-        let menuActiveId = null;
+    function closeChartMenu() { chartMenu.classList.remove('visible'); menuActiveId = null; }
+    document.addEventListener('click', (e) => { if (!chartMenu.contains(e.target)) closeChartMenu(); });
 
-        function openChartMenu(event, id) {
-            menuActiveId = id;
-            const chart  = chartHistory.find(c => c.id === id);
-            menuStar.textContent = chart && chart.starred ? '★ Unstar' : '⭐ Star';
+    menuStar.addEventListener('click', async () => {
+        const chart = chartHistory.find(c => c.id === menuActiveId);
+        if (!chart) return;
+        chart.starred = !chart.starred;
+        closeChartMenu(); renderSidebar();
+        try { await sb.from('charts').update({ starred: chart.starred }).eq('id', menuActiveId); }
+        catch (err) { console.error('star failed:', err.message); }
+    });
 
-            // Position dropdown near the ··· button, keeping it inside viewport
-            const rect  = event.currentTarget.getBoundingClientRect();
-            const left  = Math.min(rect.left, window.innerWidth - 180);
-            chartMenu.style.top  = (rect.bottom + 4) + 'px';
-            chartMenu.style.left = left + 'px';
-            chartMenu.classList.add('visible');
-        }
+    menuRename.addEventListener('click', () => {
+        const id = menuActiveId; closeChartMenu();
+        const chart = chartHistory.find(c => c.id === id);
+        if (!chart) return;
+        const itemEl = document.querySelector(`[data-chart-id="${id}"] .sidebar-name`);
+        if (!itemEl) return;
+        const currentName = chart.displayName || chart.filename;
+        itemEl.innerHTML  = '';
+        const input = document.createElement('input');
+        input.type = 'text'; input.className = 'sidebar-rename-input';
+        input.value = currentName; itemEl.appendChild(input);
+        input.focus(); input.select();
 
-        function closeChartMenu() {
-            chartMenu.classList.remove('visible');
-            menuActiveId = null;
-        }
-
-        // Close on any outside click
-        document.addEventListener('click', (e) => {
-            if (!chartMenu.contains(e.target)) closeChartMenu();
-        });
-
-        menuStar.addEventListener('click', () => {
-            const chart = chartHistory.find(c => c.id === menuActiveId);
-            if (!chart) return;
-            chart.starred = !chart.starred;
-            saveHistory();
+        async function commitRename() {
+            const newName = input.value.trim();
+            if (!newName) { renderSidebar(); return; }
+            const taken = chartHistory.some(c =>
+                c.id !== id && (c.displayName || c.filename).toLowerCase() === newName.toLowerCase()
+            );
+            if (taken) { input.classList.add('error'); input.title = 'Name already in use'; input.focus(); return; }
+            chart.displayName = newName;
             renderSidebar();
-            closeChartMenu();
-        });
-
-        menuRename.addEventListener('click', () => {
-            const id = menuActiveId;
-            closeChartMenu();
-
-            const chart = chartHistory.find(c => c.id === id);
-            if (!chart) return;
-
-            // Replace the sidebar-name text with an inline input
-            const itemEl = document.querySelector(`[data-chart-id="${id}"] .sidebar-name`);
-            if (!itemEl) return;
-
-            const currentName = chart.displayName || chart.filename;
-            itemEl.innerHTML  = '';
-
-            const input = document.createElement('input');
-            input.type      = 'text';
-            input.className = 'sidebar-rename-input';
-            input.value     = currentName;
-            itemEl.appendChild(input);
-            input.focus();
-            input.select();
-
-            function commitRename() {
-                const newName = input.value.trim();
-
-                if (!newName) { renderSidebar(); return; }   // blank → cancel
-
-                // Uniqueness check (case-insensitive)
-                const taken = chartHistory.some(c =>
-                    c.id !== id &&
-                    (c.displayName || c.filename).toLowerCase() === newName.toLowerCase()
-                );
-
-                if (taken) {
-                    input.classList.add('error');
-                    input.title = 'That name is already in use — try another';
-                    input.focus();
-                    return;
-                }
-
-                chart.displayName = newName;
-                saveHistory();
-                renderSidebar();
-                // Also update main panel meta if this is the active chart
-                if (activeChartId === id) {
-                    const metaEl = document.querySelector('.main-chart-meta');
-                    if (metaEl) {
-                        const first = metaEl.firstChild;
-                        if (first && first.nodeType === Node.TEXT_NODE) {
-                            first.textContent = escapeHtml(newName) + ' · ' + formatTime(chart.timestamp) + ' ';
-                        }
-                    }
-                }
-            }
-
-            input.addEventListener('keydown', (e) => {
-                e.stopPropagation();
-                if (e.key === 'Enter')  { e.preventDefault(); commitRename(); }
-                if (e.key === 'Escape') { renderSidebar(); }
-            });
-            input.addEventListener('blur',  commitRename);
-            input.addEventListener('click', e => e.stopPropagation());
-        });
-
-        menuDelete.addEventListener('click', () => {
-            const id = menuActiveId;
-            closeChartMenu();
-
-            chartHistory = chartHistory.filter(c => c.id !== id);
-            saveHistory();
-
             if (activeChartId === id) {
-                chartHistory.length > 0 ? switchToChatView(chartHistory[0].id) : goToLanding();
-            } else {
-                renderSidebar();
+                const metaEl = document.querySelector('.main-chart-meta');
+                if (metaEl?.firstChild?.nodeType === Node.TEXT_NODE) {
+                    metaEl.firstChild.textContent = escapeHtml(newName) + ' · ' + formatTime(chart.timestamp) + ' ';
+                }
             }
-        });
-
-        // Expose for inline onclick handlers
-        window.selectChart    = selectChart;
-        window.copyAnalysis   = copyAnalysis;
-        window.openChartMenu  = openChartMenu;
-
-        // ── Feedback modal ─────────────────────────────────────
-
-        const feedbackBtn     = document.getElementById('feedbackBtn');
-        const feedbackModal   = document.getElementById('feedbackModal');
-        const feedbackForm    = document.getElementById('feedbackForm');
-        const feedbackText    = document.getElementById('feedbackText');
-        const cancelBtn       = document.getElementById('cancelBtn');
-        const submitBtn       = document.getElementById('submitBtn');
-        const feedbackSuccess = document.getElementById('feedbackSuccess');
-        const feedbackError   = document.getElementById('feedbackError');
-
-        feedbackBtn.addEventListener('click', () => { feedbackModal.classList.add('active'); feedbackText.focus(); });
-        cancelBtn.addEventListener('click', closeModal);
-        feedbackModal.addEventListener('click', (e) => { if (e.target === feedbackModal) closeModal(); });
-
-        function closeModal() {
-            feedbackModal.classList.remove('active');
-            feedbackForm.reset();
-            feedbackSuccess.style.display = 'none';
-            feedbackError.style.display   = 'none';
+            try { await sb.from('charts').update({ display_name: newName }).eq('id', id); }
+            catch (err) { console.error('rename failed:', err.message); }
         }
 
-        feedbackForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            submitBtn.disabled    = true;
-            submitBtn.textContent = 'Sending…';
-            feedbackSuccess.style.display = 'none';
-            feedbackError.style.display   = 'none';
-
-            try {
-                const res = await fetch('https://formspree.io/f/xkogwewa', {
-                    method: 'POST', body: new FormData(feedbackForm),
-                    headers: { 'Accept': 'application/json' },
-                });
-                if (res.ok) {
-                    feedbackSuccess.style.display = 'block';
-                    feedbackForm.reset();
-                    setTimeout(() => closeModal(), 2000);
-                } else {
-                    feedbackError.style.display = 'block';
-                }
-            } catch {
-                feedbackError.style.display = 'block';
-            } finally {
-                submitBtn.disabled    = false;
-                submitBtn.textContent = 'Send Feedback';
-            }
+        input.addEventListener('keydown', (e) => {
+            e.stopPropagation();
+            if (e.key === 'Enter')  { e.preventDefault(); commitRename(); }
+            if (e.key === 'Escape') { renderSidebar(); }
         });
+        input.addEventListener('blur',  commitRename);
+        input.addEventListener('click', e => e.stopPropagation());
+    });
 
-        // ── Boot: restore from localStorage ───────────────────
-        loadHistory();
-    </script>
+    menuDelete.addEventListener('click', async () => {
+        const id = menuActiveId; closeChartMenu();
+        chartHistory = chartHistory.filter(c => c.id !== id);
+        try { await sb.from('charts').delete().eq('id', id); }
+        catch (err) { console.error('delete failed:', err.message); }
+        if (activeChartId === id) {
+            chartHistory.length > 0 ? switchToChatView(chartHistory[0].id) : goToLanding();
+        } else { renderSidebar(); }
+    });
+
+    // ── Feedback modal ─────────────────────────────────────────
+
+    const feedbackBtn     = document.getElementById('feedbackBtn');
+    const feedbackModal   = document.getElementById('feedbackModal');
+    const feedbackForm    = document.getElementById('feedbackForm');
+    const feedbackText    = document.getElementById('feedbackText');
+    const cancelBtn       = document.getElementById('cancelBtn');
+    const submitBtn       = document.getElementById('submitBtn');
+    const feedbackSuccess = document.getElementById('feedbackSuccess');
+    const feedbackError   = document.getElementById('feedbackError');
+
+    feedbackBtn.addEventListener('click', () => { feedbackModal.classList.add('active'); feedbackText.focus(); });
+    cancelBtn.addEventListener('click', closeModal);
+    feedbackModal.addEventListener('click', (e) => { if (e.target === feedbackModal) closeModal(); });
+
+    function closeModal() {
+        feedbackModal.classList.remove('active');
+        feedbackForm.reset();
+        feedbackSuccess.style.display = 'none'; feedbackError.style.display = 'none';
+    }
+
+    feedbackForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        submitBtn.disabled = true; submitBtn.textContent = 'Sending…';
+        feedbackSuccess.style.display = 'none'; feedbackError.style.display = 'none';
+        try {
+            const res = await fetch('https://formspree.io/f/xkogwewa', {
+                method: 'POST', body: new FormData(feedbackForm), headers: { 'Accept': 'application/json' },
+            });
+            if (res.ok) {
+                feedbackSuccess.style.display = 'block'; feedbackForm.reset();
+                setTimeout(() => closeModal(), 2000);
+            } else { feedbackError.style.display = 'block'; }
+        } catch { feedbackError.style.display = 'block'; }
+        finally { submitBtn.disabled = false; submitBtn.textContent = 'Send Feedback'; }
+    });
+
+    // Expose globals for inline onclick handlers
+    window.selectChart   = selectChart;
+    window.copyAnalysis  = copyAnalysis;
+    window.openChartMenu = openChartMenu;
+</script>
 </body>
 </html>

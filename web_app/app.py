@@ -1,16 +1,44 @@
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context
+from functools import wraps
 import anthropic
 import os
 import base64
 import markdown
 import json
+from supabase import create_client
 
 app = Flask(__name__)
 
-# Initialize Anthropic client
+# ── Clients ────────────────────────────────────────────────────────────────────
+
 claude = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
-# Shared analysis prompt used by all endpoints
+SUPABASE_URL      = os.environ.get('SUPABASE_URL',      'https://csjiymeycevxqmlmqcwc.supabase.co')
+SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', 'sb_publishable_SFgQ0S4DZ0CPe9Rv6cyLpQ_imrEpD1P')
+supabase_client   = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+# ── Auth ───────────────────────────────────────────────────────────────────────
+
+def require_auth(f):
+    """Verify Supabase JWT before allowing access to Claude API endpoints."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization', '')
+        if not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Authentication required'}), 401
+        token = auth_header[7:]
+        try:
+            resp = supabase_client.auth.get_user(token)
+            if not resp.user:
+                raise ValueError('No user returned')
+            request.user_id = resp.user.id
+        except Exception:
+            return jsonify({'error': 'Invalid or expired session. Please sign in again.'}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+# ── Shared prompt + helpers ────────────────────────────────────────────────────
+
 ANALYSIS_PROMPT = """Analyze this chart/graph and provide:
 
 1. **What this shows**: Explain what data is being presented (2-3 sentences)
@@ -23,91 +51,48 @@ Be clear and helpful, not condescending. If the axes are misleading or there are
 
 
 def make_image_message(image_base64, media_type):
-    """Build the first user message containing the chart image and analysis prompt."""
     return {
         "role": "user",
         "content": [
-            {
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": media_type,
-                    "data": image_base64,
-                },
-            },
+            {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": image_base64}},
             {"type": "text", "text": ANALYSIS_PROMPT},
         ],
     }
 
 
 def sse_event(event, data):
-    """Format a single SSE event string."""
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
-
-# ── Non-streaming endpoints (kept for backwards compatibility) ─────────────────
-
-def explain_chart(image_base64, media_type):
-    """Send image to Claude for explanation"""
-    try:
-        message = claude.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1500,
-            messages=[make_image_message(image_base64, media_type)],
-        )
-        return message.content[0].text
-    except Exception as e:
-        return f"Error: {str(e)}"
-
-
-def follow_up_chart(image_base64, media_type, question, conversation_history, analysis_raw=''):
-    """Send a follow-up question to Claude with full chart context and conversation history"""
-    try:
-        messages = [make_image_message(image_base64, media_type)]
-        # Insert the initial analysis as an assistant turn so Claude doesn't repeat it
-        if analysis_raw:
-            messages.append({"role": "assistant", "content": analysis_raw})
-        for turn in conversation_history:
-            messages.append({"role": turn["role"], "content": turn["content"]})
-        messages.append({"role": "user", "content": question})
-
-        message = claude.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=1024,
-            messages=messages,
-        )
-        return message.content[0].text
-    except Exception as e:
-        return f"Error: {str(e)}"
-
+# ── Routes ─────────────────────────────────────────────────────────────────────
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
 
+# Non-streaming endpoints kept for backwards compatibility (no auth required)
+
 @app.route('/analyze', methods=['POST'])
 def analyze():
     if 'chart' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
-
     file = request.files['chart']
     if file.filename == '':
         return jsonify({'error': 'No file selected'}), 400
-
     image_bytes = file.read()
-    image_data = base64.b64encode(image_bytes).decode('utf-8')
-    media_type = file.content_type
+    image_data  = base64.b64encode(image_bytes).decode('utf-8')
+    media_type  = file.content_type
     if not media_type or not media_type.startswith('image/'):
         media_type = 'image/png'
-
-    explanation_markdown = explain_chart(image_data, media_type)
-    explanation_html = markdown.markdown(explanation_markdown, extensions=['extra', 'nl2br'])
-
-    return jsonify({
-        'explanation': explanation_html,
-        'image': f"data:{media_type};base64,{image_data}",
-    })
+    try:
+        message = claude.messages.create(
+            model="claude-sonnet-4-20250514", max_tokens=1500,
+            messages=[make_image_message(image_data, media_type)],
+        )
+        explanation_html = markdown.markdown(message.content[0].text, extensions=['extra', 'nl2br'])
+        return jsonify({'explanation': explanation_html, 'image': f"data:{media_type};base64,{image_data}"})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/followup', methods=['POST'])
@@ -115,64 +100,62 @@ def followup():
     data = request.get_json()
     if not data:
         return jsonify({'error': 'Invalid request'}), 400
-
-    question = data.get('question', '').strip()
-    image_data_url = data.get('image', '')
+    question             = data.get('question', '').strip()
+    image_data_url       = data.get('image', '')
     conversation_history = data.get('conversation_history', [])
-
-    if not question:
-        return jsonify({'error': 'No question provided'}), 400
-    if not image_data_url:
-        return jsonify({'error': 'No image provided'}), 400
-
+    analysis_raw         = data.get('analysis_raw', '')
+    if not question:   return jsonify({'error': 'No question provided'}), 400
+    if not image_data_url: return jsonify({'error': 'No image provided'}), 400
     if ',' in image_data_url:
         header, image_base64 = image_data_url.split(',', 1)
         media_type = header.split(':')[1].split(';')[0] if ':' in header else 'image/png'
     else:
-        image_base64 = image_data_url
-        media_type = 'image/png'
+        image_base64, media_type = image_data_url, 'image/png'
+    messages = [make_image_message(image_base64, media_type)]
+    if analysis_raw:
+        messages.append({"role": "assistant", "content": analysis_raw})
+    for turn in conversation_history:
+        messages.append({"role": turn["role"], "content": turn["content"]})
+    messages.append({"role": "user", "content": question})
+    try:
+        message = claude.messages.create(
+            model="claude-sonnet-4-20250514", max_tokens=1024, messages=messages,
+        )
+        answer_markdown = message.content[0].text
+        answer_html     = markdown.markdown(answer_markdown, extensions=['extra', 'nl2br'])
+        return jsonify({'answer': answer_html, 'answer_raw': answer_markdown})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-    analysis_raw = data.get('analysis_raw', '')
-    answer_markdown = follow_up_chart(image_base64, media_type, question, conversation_history, analysis_raw)
-    answer_html = markdown.markdown(answer_markdown, extensions=['extra', 'nl2br'])
 
-    return jsonify({'answer': answer_html, 'answer_raw': answer_markdown})
-
-
-# ── Streaming endpoints ────────────────────────────────────────────────────────
+# ── Streaming endpoints (auth-protected) ──────────────────────────────────────
 
 @app.route('/analyze_stream', methods=['POST'])
+@require_auth
 def analyze_stream():
     if 'chart' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
-
     file = request.files['chart']
     if file.filename == '':
         return jsonify({'error': 'No file selected'}), 400
 
-    image_bytes = file.read()
-    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-    media_type = file.content_type
+    image_bytes   = file.read()
+    image_base64  = base64.b64encode(image_bytes).decode('utf-8')
+    media_type    = file.content_type
     if not media_type or not media_type.startswith('image/'):
         media_type = 'image/png'
-
     image_data_url = f"data:{media_type};base64,{image_base64}"
 
     def generate():
         try:
-            # Send image first so the UI can display it while Claude streams
             yield sse_event('image', {'image': image_data_url})
-
             with claude.messages.stream(
-                model="claude-sonnet-4-20250514",
-                max_tokens=1500,
+                model="claude-sonnet-4-20250514", max_tokens=1500,
                 messages=[make_image_message(image_base64, media_type)],
             ) as stream:
                 for text in stream.text_stream:
                     yield sse_event('text', {'chunk': text})
-
             yield sse_event('done', {})
-
         except Exception as e:
             yield sse_event('error', {'error': str(e)})
 
@@ -184,30 +167,24 @@ def analyze_stream():
 
 
 @app.route('/followup_stream', methods=['POST'])
+@require_auth
 def followup_stream():
     data = request.get_json()
     if not data:
         return jsonify({'error': 'Invalid request'}), 400
-
-    question = data.get('question', '').strip()
-    image_data_url = data.get('image', '')
+    question             = data.get('question', '').strip()
+    image_data_url       = data.get('image', '')
     conversation_history = data.get('conversation_history', [])
-
-    if not question:
-        return jsonify({'error': 'No question provided'}), 400
-    if not image_data_url:
-        return jsonify({'error': 'No image provided'}), 400
-
+    analysis_raw         = data.get('analysis_raw', '')
+    if not question:       return jsonify({'error': 'No question provided'}), 400
+    if not image_data_url: return jsonify({'error': 'No image provided'}), 400
     if ',' in image_data_url:
         header, image_base64 = image_data_url.split(',', 1)
         media_type = header.split(':')[1].split(';')[0] if ':' in header else 'image/png'
     else:
-        image_base64 = image_data_url
-        media_type = 'image/png'
+        image_base64, media_type = image_data_url, 'image/png'
 
-    analysis_raw = data.get('analysis_raw', '')
     messages = [make_image_message(image_base64, media_type)]
-    # Insert the initial analysis as an assistant turn so Claude doesn't repeat it
     if analysis_raw:
         messages.append({"role": "assistant", "content": analysis_raw})
     for turn in conversation_history:
@@ -217,15 +194,11 @@ def followup_stream():
     def generate():
         try:
             with claude.messages.stream(
-                model="claude-sonnet-4-20250514",
-                max_tokens=1024,
-                messages=messages,
+                model="claude-sonnet-4-20250514", max_tokens=1024, messages=messages,
             ) as stream:
                 for text in stream.text_stream:
                     yield sse_event('text', {'chunk': text})
-
             yield sse_event('done', {})
-
         except Exception as e:
             yield sse_event('error', {'error': str(e)})
 
