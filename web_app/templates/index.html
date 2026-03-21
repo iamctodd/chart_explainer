@@ -412,7 +412,9 @@
 
     const SUPABASE_URL      = 'https://csjiymeycevxqmlmqcwc.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_SFgQ0S4DZ0CPe9Rv6cyLpQ_imrEpD1P';
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { flowType: 'implicit' },
+    });
 
     // ── Constants ──────────────────────────────────────────────
     const TOS_VERSION = 'v1';
