@@ -124,26 +124,12 @@
 
         .landing-send-btn:hover { background: var(--accent-hover); }
 
-        .landing-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-            max-width: 620px;
-        }
-
-        .chip {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 6px 14px;
+        .landing-hint {
             font-size: 0.82em;
             color: var(--text-muted);
-            user-select: none;
-            transition: border-color 0.15s, color 0.15s;
+            text-align: center;
+            margin-top: 4px;
         }
-
-        .chip:hover { border-color: var(--accent); color: var(--text-primary); }
 
         .landing-loading {
             display: none;
@@ -623,14 +609,7 @@
             <button class="landing-send-btn" tabindex="-1" aria-label="Upload">↑</button>
         </div>
 
-        <div class="landing-chips">
-            <span class="chip">📊 Bar chart</span>
-            <span class="chip">📈 Line chart</span>
-            <span class="chip">🔵 Scatter plot</span>
-            <span class="chip">🟦 Heatmap</span>
-            <span class="chip">🥧 Pie chart</span>
-            <span class="chip">📉 Histogram</span>
-        </div>
+        <p class="landing-hint">Works with bar, line, scatter, heatmap, pie, histogram — any chart image</p>
 
         <div class="landing-loading" id="loading">
             <div class="spinner"></div>
