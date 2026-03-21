@@ -14,7 +14,7 @@ app = Flask(__name__)
 claude = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 SUPABASE_URL      = os.environ.get('SUPABASE_URL',      'https://csjiymeycevxqmlmqcwc.supabase.co')
-SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', 'sb_publishable_SFgQ0S4DZ0CPe9Rv6cyLpQ_imrEpD1P')
+SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzaml5bWV5Y2V2eHFtbG1xY3djIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTc1MDUsImV4cCI6MjA4OTY3MzUwNX0.JwUVn-NHrRCmuI8QDe_GEOJfTcT7lcHbh0Fhadrg4h0')
 supabase_client   = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 # ── Auth ───────────────────────────────────────────────────────────────────────
