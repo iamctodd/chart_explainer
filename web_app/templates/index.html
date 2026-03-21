@@ -235,6 +235,74 @@
             border-left-color: var(--accent);
         }
 
+        .sidebar-item-menu-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 3px 6px;
+            border-radius: 5px;
+            font-size: 1.1em;
+            line-height: 1;
+            opacity: 0;
+            flex-shrink: 0;
+            transition: opacity 0.15s, color 0.15s, background 0.15s;
+        }
+
+        .sidebar-item:hover .sidebar-item-menu-btn,
+        .sidebar-item.active .sidebar-item-menu-btn { opacity: 1; }
+        .sidebar-item-menu-btn:hover { background: var(--border); color: var(--text-primary); }
+
+        /* Context menu dropdown */
+        .chart-menu {
+            position: fixed;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 4px;
+            z-index: 1000;
+            min-width: 164px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.55);
+            display: none;
+        }
+
+        .chart-menu.visible { display: block; }
+
+        .chart-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.88em;
+            color: var(--text-primary);
+            background: transparent;
+            border: none;
+            width: 100%;
+            text-align: left;
+            transition: background 0.12s;
+        }
+
+        .chart-menu-item:hover { background: var(--bg-card); }
+        .chart-menu-item.danger { color: var(--danger); }
+        .chart-menu-item.danger:hover { background: rgba(248,81,73,0.1); }
+
+        /* Inline rename input inside sidebar */
+        .sidebar-rename-input {
+            background: var(--bg-input);
+            border: 1.5px solid var(--accent);
+            border-radius: 5px;
+            color: var(--text-primary);
+            font-size: 0.82em;
+            padding: 2px 6px;
+            width: 100%;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .sidebar-rename-input.error { border-color: var(--danger); }
+
         .sidebar-thumb {
             width: 38px;
             height: 38px;
@@ -434,7 +502,7 @@
 
         .chat-input-area {
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             gap: 8px;
             background: var(--bg-input);
             border: 1.5px solid var(--border);
@@ -675,6 +743,13 @@
         </div>
     </div>
 
+    <!-- Shared sidebar context menu -->
+    <div class="chart-menu" id="chartMenu">
+        <button class="chart-menu-item" id="menuStar">⭐ Star</button>
+        <button class="chart-menu-item" id="menuRename">✏️ Rename</button>
+        <button class="chart-menu-item danger" id="menuDelete">🗑 Delete</button>
+    </div>
+
     <script>
         // ── marked.js config ───────────────────────────────────
         marked.setOptions({ breaks: true, gfm: true });
@@ -869,6 +944,8 @@
                             image:        data.image,
                             explanation:  '',           // filled on 'done'
                             filename:     file.name,
+                            displayName:  null,         // null = use filename
+                            starred:      false,
                             conversation: [],
                         };
                         chartHistory.unshift(chartData);
@@ -930,14 +1007,23 @@
         // ── Sidebar ────────────────────────────────────────────
 
         function renderSidebar() {
-            sidebarHistory.innerHTML = chartHistory.map(chart => `
+            // Starred charts float to the top
+            const sorted = [...chartHistory].sort((a, b) => (b.starred ? 1 : 0) - (a.starred ? 1 : 0));
+
+            sidebarHistory.innerHTML = sorted.map(chart => `
                 <div class="sidebar-item ${chart.id === activeChartId ? 'active' : ''}"
+                     data-chart-id="${chart.id}"
                      onclick="selectChart(${chart.id})">
                     <img src="${chart.image}" class="sidebar-thumb" alt="chart">
                     <div class="sidebar-info">
-                        <div class="sidebar-name">${escapeHtml(chart.filename)}</div>
+                        <div class="sidebar-name">
+                            ${chart.starred ? '⭐ ' : ''}${escapeHtml(chart.displayName || chart.filename)}
+                        </div>
                         <div class="sidebar-time">${formatTime(chart.timestamp)}</div>
                     </div>
+                    <button class="sidebar-item-menu-btn"
+                            onclick="event.stopPropagation(); openChartMenu(event, ${chart.id})"
+                            title="Options">···</button>
                 </div>
             `).join('');
         }
@@ -964,7 +1050,7 @@
             mainInner.innerHTML = `
                 <img src="${chart.image}" class="main-chart-img" alt="Chart">
                 <div class="main-chart-meta">
-                    ${escapeHtml(chart.filename)} · ${formatTime(chart.timestamp)}
+                    ${escapeHtml(chart.displayName || chart.filename)} · ${formatTime(chart.timestamp)}
                     <button class="copy-btn-inline" id="copy-${chart.id}" onclick="copyAnalysis(${chart.id})">📋 Copy</button>
                 </div>
                 <div class="${analysisClass}" id="analysis-${chart.id}">${analysisBody}</div>
@@ -1149,9 +1235,128 @@
             }
         }
 
+        // ── Sidebar context menu ────────────────────────────────
+
+        const chartMenu  = document.getElementById('chartMenu');
+        const menuStar   = document.getElementById('menuStar');
+        const menuRename = document.getElementById('menuRename');
+        const menuDelete = document.getElementById('menuDelete');
+        let menuActiveId = null;
+
+        function openChartMenu(event, id) {
+            menuActiveId = id;
+            const chart  = chartHistory.find(c => c.id === id);
+            menuStar.textContent = chart && chart.starred ? '★ Unstar' : '⭐ Star';
+
+            // Position dropdown near the ··· button, keeping it inside viewport
+            const rect  = event.currentTarget.getBoundingClientRect();
+            const left  = Math.min(rect.left, window.innerWidth - 180);
+            chartMenu.style.top  = (rect.bottom + 4) + 'px';
+            chartMenu.style.left = left + 'px';
+            chartMenu.classList.add('visible');
+        }
+
+        function closeChartMenu() {
+            chartMenu.classList.remove('visible');
+            menuActiveId = null;
+        }
+
+        // Close on any outside click
+        document.addEventListener('click', (e) => {
+            if (!chartMenu.contains(e.target)) closeChartMenu();
+        });
+
+        menuStar.addEventListener('click', () => {
+            const chart = chartHistory.find(c => c.id === menuActiveId);
+            if (!chart) return;
+            chart.starred = !chart.starred;
+            saveHistory();
+            renderSidebar();
+            closeChartMenu();
+        });
+
+        menuRename.addEventListener('click', () => {
+            const id = menuActiveId;
+            closeChartMenu();
+
+            const chart = chartHistory.find(c => c.id === id);
+            if (!chart) return;
+
+            // Replace the sidebar-name text with an inline input
+            const itemEl = document.querySelector(`[data-chart-id="${id}"] .sidebar-name`);
+            if (!itemEl) return;
+
+            const currentName = chart.displayName || chart.filename;
+            itemEl.innerHTML  = '';
+
+            const input = document.createElement('input');
+            input.type      = 'text';
+            input.className = 'sidebar-rename-input';
+            input.value     = currentName;
+            itemEl.appendChild(input);
+            input.focus();
+            input.select();
+
+            function commitRename() {
+                const newName = input.value.trim();
+
+                if (!newName) { renderSidebar(); return; }   // blank → cancel
+
+                // Uniqueness check (case-insensitive)
+                const taken = chartHistory.some(c =>
+                    c.id !== id &&
+                    (c.displayName || c.filename).toLowerCase() === newName.toLowerCase()
+                );
+
+                if (taken) {
+                    input.classList.add('error');
+                    input.title = 'That name is already in use — try another';
+                    input.focus();
+                    return;
+                }
+
+                chart.displayName = newName;
+                saveHistory();
+                renderSidebar();
+                // Also update main panel meta if this is the active chart
+                if (activeChartId === id) {
+                    const metaEl = document.querySelector('.main-chart-meta');
+                    if (metaEl) {
+                        const first = metaEl.firstChild;
+                        if (first && first.nodeType === Node.TEXT_NODE) {
+                            first.textContent = escapeHtml(newName) + ' · ' + formatTime(chart.timestamp) + ' ';
+                        }
+                    }
+                }
+            }
+
+            input.addEventListener('keydown', (e) => {
+                e.stopPropagation();
+                if (e.key === 'Enter')  { e.preventDefault(); commitRename(); }
+                if (e.key === 'Escape') { renderSidebar(); }
+            });
+            input.addEventListener('blur',  commitRename);
+            input.addEventListener('click', e => e.stopPropagation());
+        });
+
+        menuDelete.addEventListener('click', () => {
+            const id = menuActiveId;
+            closeChartMenu();
+
+            chartHistory = chartHistory.filter(c => c.id !== id);
+            saveHistory();
+
+            if (activeChartId === id) {
+                chartHistory.length > 0 ? switchToChatView(chartHistory[0].id) : goToLanding();
+            } else {
+                renderSidebar();
+            }
+        });
+
         // Expose for inline onclick handlers
-        window.selectChart  = selectChart;
-        window.copyAnalysis = copyAnalysis;
+        window.selectChart    = selectChart;
+        window.copyAnalysis   = copyAnalysis;
+        window.openChartMenu  = openChartMenu;
 
         // ── Feedback modal ─────────────────────────────────────
 
