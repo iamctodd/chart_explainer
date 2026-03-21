@@ -904,7 +904,8 @@
 
                     } else if (event === 'done' && chartData) {
                         const html = marked.parse(accumulatedText);
-                        chartData.explanation = html;
+                        chartData.explanation  = html;
+                        chartData.analysisRaw  = accumulatedText; // passed as context on follow-ups
                         const el = document.getElementById(`analysis-${chartData.id}`);
                         if (el) {
                             el.innerHTML  = html;
@@ -1080,6 +1081,7 @@
                     body:    JSON.stringify({
                         question,
                         image:                chart.image,
+                        analysis_raw:         chart.analysisRaw || '',
                         conversation_history: chart.conversation.map(m => ({ role: m.role, content: m.content })),
                     }),
                 });
