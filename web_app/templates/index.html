@@ -1078,11 +1078,15 @@
         const btn = document.getElementById('tosAcceptBtn');
         btn.disabled = true; btn.textContent = 'Saving…';
         try {
-            await sb.auth.updateUser({ data: { tos_accepted_version: TOS_VERSION } });
+            // Race updateUser against a 4s timeout — proceed regardless
+            await Promise.race([
+                sb.auth.updateUser({ data: { tos_accepted_version: TOS_VERSION } }),
+                new Promise(resolve => setTimeout(() => resolve({ timedOut: true }), 4000))
+            ]);
         } catch (e) { console.warn('Could not save ToS acceptance:', e.message); }
         document.getElementById('tosModal').classList.remove('active');
         document.getElementById('tosCheckbox').checked = false;
-        btn.textContent = 'Accept & Continue';
+        btn.disabled = false; btn.textContent = 'Accept & Continue';
         authInitialized = true;
         authState = 'signed-in';
         updateAuthUI();
