@@ -319,6 +319,21 @@
         .feedback-success { background: rgba(63,185,80,0.1); color: var(--success); border: 1px solid rgba(63,185,80,0.3); padding: 11px 14px; border-radius: 8px; margin-bottom: 14px; display: none; font-size: 0.9em; }
         .feedback-error   { background: rgba(248,81,73,0.1); color: var(--danger); border: 1px solid rgba(248,81,73,0.3); padding: 11px 14px; border-radius: 8px; margin-bottom: 14px; display: none; font-size: 0.9em; }
 
+        /* ── Footer ────────────────────────────────────────────────── */
+        .app-footer {
+            text-align: center; padding: 28px 20px 22px;
+            font-size: 0.78em; color: var(--text-muted);
+            border-top: 1px solid var(--border); margin-top: auto;
+            flex-shrink: 0; line-height: 1.8;
+        }
+        .app-footer a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 3px; }
+        .app-footer a:hover { color: var(--text-primary); }
+        .app-footer .footer-sep { margin: 0 8px; opacity: 0.4; }
+
+        /* ── Privacy modal ──────────────────────────────────────────── */
+        .privacy-modal-inner { max-width: 560px; max-height: 70vh; }
+        .privacy-modal-inner .tos-body { max-height: calc(70vh - 160px); }
+
         /* ToS modal scroll area */
         .tos-scroll { max-height: 260px; overflow-y: auto; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; font-size: 0.86em; line-height: 1.7; color: var(--text-muted); margin-bottom: 16px; }
         .tos-scroll strong { color: var(--text-primary); }
@@ -417,6 +432,13 @@
         <button id="viewHistoryBtn" class="google-signin-btn-small" style="background:var(--bg-card); border:1px solid var(--border); color:var(--text-primary);">📂 View my history</button>
     </div>
     <input type="file" id="fileInput" accept="image/*" style="display:none;">
+    <footer class="app-footer">
+        © 2026 ChartHawk, All Rights Reserved
+        <span class="footer-sep">·</span>
+        <a href="#" id="footerPrivacyLink">Privacy Policy</a>
+        <span class="footer-sep">·</span>
+        <a href="#" id="footerTosLink">Terms of Service</a>
+    </footer>
 </div>
 
 <!-- ── CHAT VIEW ─────────────────────────────────────────────────────────── -->
@@ -462,11 +484,41 @@
     </main>
 </div>
 
+<!-- ── PRIVACY POLICY MODAL ──────────────────────────────────────────────── -->
+<div class="modal-overlay" id="privacyModal">
+    <div class="modal privacy-modal-inner">
+        <h2>Privacy Policy</h2>
+        <div class="tos-body">
+            <p><strong>Last updated: March 2026</strong></p>
+
+            <p>ChartHawk ("we", "our", "us") is committed to protecting your privacy. This policy explains what data we collect and how we use it.</p>
+
+            <p><strong>What we collect</strong><br>
+            When you create an account we collect your email address and, if you choose, a display name and profile photo. When you upload a chart image it is sent to Anthropic's Claude API for analysis and stored in your ChartHawk account so you can revisit it later. We do not sell your data.</p>
+
+            <p><strong>How we use your data</strong><br>
+            Your chart images and analyses are stored solely to provide the history feature. We use your email only to authenticate your account and, if you opt in, to send product updates.</p>
+
+            <p><strong>Third-party services</strong><br>
+            Chart images and questions are processed by <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">Anthropic</a> (AI analysis). Authentication and database storage are handled by <a href="https://supabase.com/privacy" target="_blank" rel="noopener">Supabase</a>. Both operate under their own privacy policies.</p>
+
+            <p><strong>Data retention &amp; deletion</strong><br>
+            You can delete individual chart analyses at any time from the sidebar. To delete your account and all associated data, use the feedback button and request account deletion — we will remove your data within 30 days.</p>
+
+            <p><strong>Contact</strong><br>
+            Questions about this policy? Use the feedback button in the app or email us directly.</p>
+        </div>
+        <div class="modal-buttons">
+            <button type="button" class="modal-btn submit" id="privacyCloseBtn">Close</button>
+        </div>
+    </div>
+</div>
+
 <!-- ── PROFILE MODAL ─────────────────────────────────────────────────────── -->
 <div class="modal-overlay" id="profileModal">
     <div class="modal profile-modal-inner">
         <h2>Edit Profile</h2>
-        <p>Update your name, avatar, or password.</p>
+        <p id="profileSubtitle">Update your name or avatar.</p>
 
         <!-- Avatar -->
         <div class="profile-avatar-section">
@@ -475,6 +527,17 @@
                 <div class="profile-avatar-overlay">Change photo</div>
             </div>
             <input type="file" id="profileAvatarInput" accept="image/*" style="display:none;">
+        </div>
+
+        <!-- Email (read-only) -->
+        <div class="auth-field" id="profileEmailField">
+            <label>Email</label>
+            <input type="email" id="profileEmailDisplay" readonly
+                style="opacity:0.55; cursor:default;"
+                tabindex="-1">
+        </div>
+        <div id="profileProviderBadge" style="display:none; margin: -6px 0 14px; font-size:0.8em; color:var(--text-muted);">
+            🔒 Signed in with Google — password managed by Google
         </div>
 
         <!-- Name -->
@@ -770,10 +833,16 @@
         // Populate avatar preview
         renderProfileAvatar(currentUser.user_metadata?.avatar_url || '');
 
-        // Show password section only for email/password users
+        // Email
+        document.getElementById('profileEmailDisplay').value = currentUser.email || '';
+
+        // Dynamic subtitle + password section visibility
         const provider = currentUser.app_metadata?.provider || '';
-        document.getElementById('profilePasswordSection').style.display =
-            provider === 'email' ? '' : 'none';
+        const isEmail  = provider === 'email';
+        document.getElementById('profileSubtitle').textContent =
+            isEmail ? 'Update your name, avatar, or password.' : 'Update your name or avatar.';
+        document.getElementById('profilePasswordSection').style.display = isEmail ? '' : 'none';
+        document.getElementById('profileProviderBadge').style.display   = isEmail ? 'none' : '';
 
         // Clear password fields
         ['profileCurrentPw','profileNewPw','profileConfirmPw'].forEach(id => {
@@ -1592,6 +1661,23 @@
     feedbackBtn.addEventListener('click', () => { feedbackModal.classList.add('active'); feedbackText.focus(); });
     cancelBtn.addEventListener('click', closeModal);
     feedbackModal.addEventListener('click', (e) => { if (e.target === feedbackModal) closeModal(); });
+
+    // Footer links
+    document.getElementById('footerPrivacyLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('privacyModal').classList.add('active');
+    });
+    document.getElementById('privacyCloseBtn')?.addEventListener('click', () => {
+        document.getElementById('privacyModal').classList.remove('active');
+    });
+    document.getElementById('privacyModal')?.addEventListener('click', (e) => {
+        if (e.target === document.getElementById('privacyModal'))
+            document.getElementById('privacyModal').classList.remove('active');
+    });
+    document.getElementById('footerTosLink')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('tosModal').classList.add('active');
+    });
 
     function closeModal() {
         feedbackModal.classList.remove('active');
