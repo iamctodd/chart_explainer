@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChartHawk Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0a0a0a; --bg-card: #111; --bg-input: #1a1a1a;
+    --border: #222; --text: #f0f0f0; --muted: #666;
+    --accent: #7c3aed; --accent-h: #6d28d9;
+    --success: #3fb950; --danger: #f85149; --warn: #e3b341;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  /* Auth gate */
+  #authGate { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .auth-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 40px; width: 360px; text-align: center; }
+  .auth-card h2 { margin-bottom: 8px; }
+  .auth-card p  { color: var(--muted); margin-bottom: 24px; font-size: 0.9em; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: background 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+  .btn-primary:hover { background: var(--accent-h); }
+  .btn-sm { padding: 5px 12px; font-size: 0.8em; border-radius: 6px; }
+  .btn-danger  { background: rgba(248,81,73,0.15); color: var(--danger); border: 1px solid rgba(248,81,73,0.3); }
+  .btn-danger:hover  { background: rgba(248,81,73,0.25); }
+  .btn-success { background: rgba(63,185,80,0.15); color: var(--success); border: 1px solid rgba(63,185,80,0.3); }
+  .btn-success:hover { background: rgba(63,185,80,0.25); }
+
+  /* Main layout */
+  #adminApp { display: none; flex-direction: column; min-height: 100vh; }
+  header { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 0 28px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+  .header-brand { font-weight: 700; font-size: 1.05em; display: flex; align-items: center; gap: 8px; }
+  .header-brand a { color: var(--text); text-decoration: none; }
+  .header-user  { display: flex; align-items: center; gap: 12px; font-size: 0.85em; color: var(--muted); }
+  .admin-badge  { background: rgba(124,58,237,0.2); color: var(--accent); border: 1px solid rgba(124,58,237,0.4); border-radius: 4px; padding: 2px 8px; font-size: 0.75em; font-weight: 700; letter-spacing: 0.05em; }
+  .signout-link { color: var(--muted); cursor: pointer; text-decoration: underline; }
+  .signout-link:hover { color: var(--text); }
+
+  main { padding: 32px 28px; flex: 1; max-width: 1100px; margin: 0 auto; width: 100%; }
+  h1 { font-size: 1.4em; margin-bottom: 6px; }
+  .page-sub { color: var(--muted); font-size: 0.88em; margin-bottom: 28px; }
+
+  /* Stat cards */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 36px; }
+  .stat-card  { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; }
+  .stat-label { font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 8px; }
+  .stat-value { font-size: 1.8em; font-weight: 700; line-height: 1; }
+  .stat-sub   { font-size: 0.78em; color: var(--muted); margin-top: 6px; }
+
+  /* Section */
+  .section-title { font-size: 1em; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+
+  /* Table */
+  .table-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; margin-bottom: 36px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.86em; }
+  th { padding: 11px 14px; text-align: left; color: var(--muted); font-weight: 600; font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .badge-admin { background: rgba(124,58,237,0.2); color: var(--accent); border-radius: 4px; padding: 1px 7px; font-size: 0.75em; font-weight: 700; }
+  .email-cell  { font-weight: 500; }
+  .cost-cell   { font-weight: 600; color: var(--warn); }
+  #usersTableBody tr.loading td { color: var(--muted); font-style: italic; }
+
+  /* Promote form */
+  .promote-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 22px; max-width: 480px; }
+  .promote-card p { color: var(--muted); font-size: 0.87em; margin-bottom: 16px; }
+  .field-row { display: flex; gap: 10px; margin-bottom: 12px; }
+  .field-row input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 7px; padding: 9px 12px; color: var(--text); font-size: 0.9em; }
+  .field-row input:focus { outline: none; border-color: var(--accent); }
+  .promote-msg { font-size: 0.85em; margin-top: 10px; min-height: 20px; }
+  .promote-msg.ok  { color: var(--success); }
+  .promote-msg.err { color: var(--danger); }
+
+  /* Error */
+  .error-banner { background: rgba(248,81,73,0.1); border: 1px solid rgba(248,81,73,0.3); color: var(--danger); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 0.88em; display: none; }
+</style>
+</head>
+<body>
+
+<!-- Auth gate (shown while loading or if not admin) -->
+<div id="authGate">
+  <div class="auth-card">
+    <h2>🔒 ChartHawk Admin</h2>
+    <p id="authMsg">Checking authentication…</p>
+    <button class="btn btn-primary" id="authSignInBtn" style="display:none;">Sign in with Google</button>
+  </div>
+</div>
+
+<!-- Admin app -->
+<div id="adminApp">
+  <header>
+    <div class="header-brand">
+      <a href="/">📊 ChartHawk</a>
+      <span class="admin-badge">ADMIN</span>
+    </div>
+    <div class="header-user">
+      <span id="headerEmail"></span>
+      <span class="signout-link" id="signOutLink">Sign out</span>
+    </div>
+  </header>
+
+  <main>
+    <h1>Dashboard</h1>
+    <p class="page-sub">API usage and cost tracking across all users.</p>
+
+    <div class="error-banner" id="errorBanner"></div>
+
+    <!-- Stats cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">This Month — Cost</div>
+        <div class="stat-value" id="statMonthCost">—</div>
+        <div class="stat-sub" id="statMonthCalls">— calls</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">All-Time Cost</div>
+        <div class="stat-value" id="statTotalCost">—</div>
+        <div class="stat-sub" id="statTotalCalls">— calls</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">All-Time Tokens</div>
+        <div class="stat-value" id="statTokens">—</div>
+        <div class="stat-sub">input + output</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value" id="statUsers">—</div>
+        <div class="stat-sub">registered accounts</div>
+      </div>
+    </div>
+
+    <!-- Users table -->
+    <div class="section-title">
+      <span>Users</span>
+      <button class="btn btn-sm btn-primary" id="refreshBtn">↺ Refresh</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Name</th>
+            <th>Analyses</th>
+            <th>Follow-ups</th>
+            <th>Tokens (in/out)</th>
+            <th>Cost</th>
+            <th>Last Used</th>
+            <th>Role</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody">
+          <tr class="loading"><td colspan="9">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Promote / demote -->
+    <div class="section-title">Manage Admin Access</div>
+    <div class="promote-card">
+      <p>Grant or revoke admin access for any registered user.</p>
+      <div class="field-row">
+        <input type="email" id="promoteEmail" placeholder="user@example.com">
+        <button class="btn btn-sm btn-success" id="grantBtn">Grant</button>
+        <button class="btn btn-sm btn-danger"  id="revokeBtn">Revoke</button>
+      </div>
+      <div class="promote-msg" id="promoteMsg"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const SUPABASE_URL      = 'https://csjiymeycevxqmlmqcwc.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzaml5bWV5Y2V2eHFtbG1xY3djIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTc1MDUsImV4cCI6MjA4OTY3MzUwNX0.JwUVn-NHrRCmuI8QDe_GEOJfTcT7lcHbh0Fhadrg4h0';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let currentSession = null;
+
+  function showError(msg) {
+    const el = document.getElementById('errorBanner');
+    el.textContent = msg; el.style.display = 'block';
+  }
+
+  function fmt$(n) { return '$' + Number(n).toFixed(4); }
+  function fmtNum(n) { return Number(n).toLocaleString(); }
+  function fmtDate(s) {
+    if (!s) return '—';
+    return new Date(s).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  async function authHeader() {
+    const { data } = await sb.auth.getSession();
+    return data?.session?.access_token ? `Bearer ${data.session.access_token}` : '';
+  }
+
+  async function loadStats() {
+    try {
+      const res  = await fetch('/admin/api/stats', { headers: { Authorization: await authHeader() } });
+      const data = await res.json();
+      if (data.error) { showError(data.error); return; }
+
+      document.getElementById('statMonthCost').textContent  = fmt$(data.this_month.cost);
+      document.getElementById('statMonthCalls').textContent = `${fmtNum(data.this_month.calls)} calls`;
+      document.getElementById('statTotalCost').textContent  = fmt$(data.all_time.cost);
+      document.getElementById('statTotalCalls').textContent = `${fmtNum(data.all_time.calls)} calls`;
+      const tok = fmtNum(data.all_time.input_tokens + data.all_time.output_tokens);
+      document.getElementById('statTokens').textContent = tok;
+      document.getElementById('statUsers').textContent  = fmtNum(data.user_count);
+    } catch(e) { showError('Failed to load stats: ' + e.message); }
+  }
+
+  async function loadUsers() {
+    const tbody = document.getElementById('usersTableBody');
+    tbody.innerHTML = '<tr class="loading"><td colspan="9">Loading…</td></tr>';
+    try {
+      const res  = await fetch('/admin/api/users', { headers: { Authorization: await authHeader() } });
+      const data = await res.json();
+      if (data.error) { showError(data.error); return; }
+
+      if (!data.users.length) {
+        tbody.innerHTML = '<tr><td colspan="9" style="color:var(--muted)">No users yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.users.map(u => `
+        <tr>
+          <td class="email-cell">${u.email || '—'}</td>
+          <td>${u.name || '—'}</td>
+          <td>${u.analyses}</td>
+          <td>${u.followups}</td>
+          <td>${fmtNum(u.input_tokens)} / ${fmtNum(u.output_tokens)}</td>
+          <td class="cost-cell">${fmt$(u.cost_usd)}</td>
+          <td>${fmtDate(u.last_used)}</td>
+          <td>${u.is_admin ? '<span class="badge-admin">ADMIN</span>' : ''}</td>
+          <td>
+            ${u.is_admin
+              ? `<button class="btn btn-sm btn-danger"  onclick="quickPromote('${u.email}', false)">Revoke</button>`
+              : `<button class="btn btn-sm btn-success" onclick="quickPromote('${u.email}', true)">Grant</button>`}
+          </td>
+        </tr>
+      `).join('');
+    } catch(e) { showError('Failed to load users: ' + e.message); tbody.innerHTML = '<tr><td colspan="9" style="color:var(--danger)">Error loading users.</td></tr>'; }
+  }
+
+  async function promote(email, grant) {
+    const res  = await fetch('/admin/api/promote', {
+      method: 'POST',
+      headers: { Authorization: await authHeader(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, grant })
+    });
+    return res.json();
+  }
+
+  async function quickPromote(email, grant) {
+    const data = await promote(email, grant);
+    if (data.error) { showError(data.error); return; }
+    loadUsers();
+  }
+
+  document.getElementById('grantBtn').addEventListener('click', async () => {
+    const email = document.getElementById('promoteEmail').value.trim();
+    const msg   = document.getElementById('promoteMsg');
+    if (!email) { msg.className = 'promote-msg err'; msg.textContent = 'Enter an email.'; return; }
+    const data = await promote(email, true);
+    if (data.error) { msg.className = 'promote-msg err'; msg.textContent = data.error; }
+    else            { msg.className = 'promote-msg ok';  msg.textContent = `✓ ${email} is now an admin.`; loadUsers(); }
+  });
+
+  document.getElementById('revokeBtn').addEventListener('click', async () => {
+    const email = document.getElementById('promoteEmail').value.trim();
+    const msg   = document.getElementById('promoteMsg');
+    if (!email) { msg.className = 'promote-msg err'; msg.textContent = 'Enter an email.'; return; }
+    const data = await promote(email, false);
+    if (data.error) { msg.className = 'promote-msg err'; msg.textContent = data.error; }
+    else            { msg.className = 'promote-msg ok';  msg.textContent = `✓ Admin revoked for ${email}.`; loadUsers(); }
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', () => { loadStats(); loadUsers(); });
+  document.getElementById('signOutLink').addEventListener('click', async () => { await sb.auth.signOut(); location.href = '/'; });
+  document.getElementById('authSignInBtn').addEventListener('click', async () => {
+    await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+  });
+
+  // Boot
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_OUT') {
+      document.getElementById('authMsg').textContent = 'You are not signed in.';
+      document.getElementById('authSignInBtn').style.display = '';
+      document.getElementById('authGate').style.display = 'flex';
+      document.getElementById('adminApp').style.display  = 'none';
+      return;
+    }
+    if (!session?.user) return;
+
+    const isAdmin = session.user.user_metadata?.is_admin;
+    if (!isAdmin) {
+      document.getElementById('authMsg').textContent = 'Access denied. Admin accounts only.';
+      document.getElementById('authGate').style.display = 'flex';
+      document.getElementById('adminApp').style.display  = 'none';
+      return;
+    }
+
+    // Show app
+    document.getElementById('authGate').style.display  = 'none';
+    document.getElementById('adminApp').style.display  = 'flex';
+    document.getElementById('headerEmail').textContent = session.user.email;
+    currentSession = session;
+
+    loadStats();
+    loadUsers();
+  });
+</script>
+</body>
+</html>

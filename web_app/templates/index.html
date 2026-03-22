@@ -453,6 +453,7 @@
         <div class="sidebar-section-label">History</div>
         <div class="sidebar-history" id="sidebarHistory"></div>
         <div class="sidebar-footer">
+            <a href="/admin" target="_blank" id="adminLink" style="display:none;" class="sidebar-footer-btn">⚙ Admin dashboard</a>
             <button class="sidebar-signin-btn" id="sidebarSignInBtn">Sign in to save history</button>
             <div class="user-profile" id="userProfile">
                 <img class="user-avatar" id="userAvatar" src="" alt="">
@@ -734,6 +735,11 @@
                     <span>${escapeHtml(name)}</span>
                 </div>`;
                 document.getElementById('landingUserChip')?.addEventListener('click', openProfileModal);
+            }
+            // Show admin link if admin
+            const adminLink = document.getElementById('adminLink');
+            if (adminLink) {
+                adminLink.style.display = currentUser?.user_metadata?.is_admin ? '' : 'none';
             }
             // Show "View History" button
             const vh = document.getElementById('viewHistoryNudge');
