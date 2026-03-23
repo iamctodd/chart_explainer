@@ -898,17 +898,22 @@
     document.getElementById('landingSignInBtn')?.addEventListener('click', openAuthModal);
     document.getElementById('sidebarSignInBtn')?.addEventListener('click', openAuthModal);
     document.getElementById('viewHistoryBtn')?.addEventListener('click', async () => {
-        console.log('[ChartHawk] viewHistoryBtn clicked — chartHistory.length:', chartHistory.length, 'authState:', authState, 'currentUser:', !!currentUser);
+        // Switch to chat view immediately — don't wait for history load
+        landingView.style.display = 'none';
+        chatView.style.display = 'flex';
+        appState = 'chat';
         if (chartHistory.length > 0) {
-            switchToChatView(chartHistory[0].id);
-        } else {
-            // History may not have loaded yet — retry before showing empty sidebar
-            await loadHistory();
-            if (chartHistory.length === 0) {
-                chatView.style.display = 'flex';
-                renderSidebar();
-            }
+            renderSidebar();
+            renderMainPanel(chartHistory[0].id);
+            return;
         }
+        renderSidebar(); // show spinner / empty state while loading
+        // Load history with 6s timeout so client lock contention can't hang the UI
+        await Promise.race([
+            loadHistory(),
+            new Promise(resolve => setTimeout(resolve, 6000))
+        ]);
+        renderSidebar();
     });
 
     // ── Sidebar collapse (desktop) ─────────────────────────────
