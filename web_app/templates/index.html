@@ -301,8 +301,9 @@
         .chat-error { color: var(--danger); font-size: 0.82em; margin-top: 6px; padding: 0 4px; }
 
         /* ── MODALS ── */
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; }
         .modal-overlay.active { display: flex; }
+        .modal { margin: auto; }
         .modal { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.6); animation: slideIn 0.22s ease; }
         @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .modal h2 { color: var(--text-primary); margin-bottom: 8px; font-size: 1.5em; }
@@ -1244,7 +1245,7 @@
 
     // ── Supabase DB operations (replace localStorage) ──────────
 
-    async function loadHistory() {
+    async function loadHistory(retries = 3) {
         if (!currentUser) return;
         try {
             // Ensure session token is committed before making RLS-protected queries
@@ -1286,8 +1287,12 @@
 
             if (chartHistory.length > 0) switchToChatView(chartHistory[0].id);
         } catch (err) {
+            // Supabase Web Lock contention (multiple tabs) — retry after short delay
+            if (err.message?.includes('Lock') && retries > 0) {
+                await new Promise(r => setTimeout(r, 700));
+                return loadHistory(retries - 1);
+            }
             console.error('loadHistory failed:', err.message);
-            // Reset so next auth event can retry
             authInitialized = false;
             showError('Could not load history from server.');
         }
