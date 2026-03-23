@@ -142,6 +142,11 @@
             cursor: pointer; text-align: left; transition: background 0.15s, border-color 0.15s; margin-bottom: 16px;
         }
         .new-chart-btn:hover { background: var(--bg-card); border-color: var(--accent); }
+        .sidebar-loading { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 32px 16px; color: var(--text-muted); font-size: 0.85em; }
+        .sidebar-loading .spin { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .sidebar-load-error { padding: 16px; color: var(--text-muted); font-size: 0.83em; text-align: center; line-height: 1.5; }
+        .sidebar-load-error a { color: var(--accent); cursor: pointer; text-decoration: underline; }
         .sidebar-section-label {
             font-size: 0.72em; font-weight: 600; text-transform: uppercase;
             letter-spacing: 0.07em; color: var(--text-muted); padding: 0 4px; margin-bottom: 6px;
@@ -898,7 +903,6 @@
     document.getElementById('landingSignInBtn')?.addEventListener('click', openAuthModal);
     document.getElementById('sidebarSignInBtn')?.addEventListener('click', openAuthModal);
     document.getElementById('viewHistoryBtn')?.addEventListener('click', async () => {
-        // Switch to chat view immediately — don't wait for history load
         landingView.style.display = 'none';
         chatView.style.display = 'flex';
         appState = 'chat';
@@ -907,13 +911,12 @@
             renderMainPanel(chartHistory[0].id);
             return;
         }
-        renderSidebar(); // show spinner / empty state while loading
-        // Load history with 6s timeout so client lock contention can't hang the UI
-        await Promise.race([
-            loadHistory(),
-            new Promise(resolve => setTimeout(resolve, 6000))
-        ]);
-        renderSidebar();
+        // Show spinner while loading
+        sidebarHistory.innerHTML = '<div class="sidebar-loading"><div class="spin"></div><span>Loading history…</span></div>';
+        await loadHistory();
+        if (chartHistory.length === 0 && !sidebarHistory.querySelector('.sidebar-load-error')) {
+            sidebarHistory.innerHTML = '<div class="sidebar-load-error">No saved charts yet.<br>Upload one to get started!</div>';
+        }
     });
 
     // ── Sidebar collapse (desktop) ─────────────────────────────
@@ -1251,29 +1254,55 @@
 
     // ── Supabase DB operations (replace localStorage) ──────────
 
-    async function loadHistory(retries = 3) {
-        if (!currentUser) return;
+    // Read access token directly from localStorage — bypasses Supabase client
+    // Web Lock so history loads even when _initialize is contended.
+    function getStoredAccessToken() {
         try {
-            const { data: charts, error: ce } = await sb
-                .from('charts')
-                .select('id, filename, display_name, starred, image_data, explanation, analysis_raw, created_at')
-                .order('created_at', { ascending: false })
-                .limit(MAX_HISTORY);
-            if (ce) throw ce;
+            const projectRef = SUPABASE_URL.split('//')[1].split('.')[0];
+            const raw = localStorage.getItem(`sb-${projectRef}-auth-token`);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                return parsed?.access_token || parsed?.session?.access_token || null;
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    async function loadHistory() {
+        if (!currentUser) return;
+        const token = getStoredAccessToken();
+        if (!token) { console.warn('loadHistory: no stored token'); return; }
+
+        const headers = {
+            'Authorization': `Bearer ${token}`,
+            'apikey': SUPABASE_ANON_KEY,
+            'Content-Type': 'application/json',
+        };
+
+        try {
+            // Fetch charts via direct REST (no Supabase client lock involved)
+            const chartsUrl = new URL(`${SUPABASE_URL}/rest/v1/charts`);
+            chartsUrl.searchParams.set('select', 'id,filename,display_name,starred,image_data,explanation,analysis_raw,created_at');
+            chartsUrl.searchParams.set('order', 'created_at.desc');
+            chartsUrl.searchParams.set('limit', String(MAX_HISTORY));
+            const chartsRes = await fetch(chartsUrl, { headers });
+            if (!chartsRes.ok) throw new Error(`charts ${chartsRes.status}`);
+            const charts = await chartsRes.json();
+
             if (!charts || charts.length === 0) {
-                chatView.style.display = 'flex';
-                landingView.style.display = 'none';
                 renderSidebar();
                 return;
             }
 
-            const chartIds = charts.map(c => c.id);
-            const { data: messages, error: me } = await sb
-                .from('messages')
-                .select('id, chart_id, role, content, html, created_at')
-                .in('chart_id', chartIds)
-                .order('created_at', { ascending: true });
-            if (me) throw me;
+            // Fetch messages for those charts
+            const ids = charts.map(c => c.id).join(',');
+            const msgsUrl = new URL(`${SUPABASE_URL}/rest/v1/messages`);
+            msgsUrl.searchParams.set('select', 'id,chart_id,role,content,html,created_at');
+            msgsUrl.searchParams.set('chart_id', `in.(${ids})`);
+            msgsUrl.searchParams.set('order', 'created_at.asc');
+            const msgsRes = await fetch(msgsUrl, { headers });
+            if (!msgsRes.ok) throw new Error(`messages ${msgsRes.status}`);
+            const messages = await msgsRes.json();
 
             chartHistory = charts.map(c => ({
                 id:          c.id,
@@ -1291,15 +1320,20 @@
 
             if (chartHistory.length > 0) switchToChatView(chartHistory[0].id);
         } catch (err) {
-            // Supabase Web Lock contention (multiple tabs) — retry after short delay
-            if (err.message?.includes('Lock') && retries > 0) {
-                await new Promise(r => setTimeout(r, 700));
-                return loadHistory(retries - 1);
-            }
             console.error('loadHistory failed:', err.message);
             authInitialized = false;
-            showError('Could not load history from server.');
+            sidebarHistory.innerHTML = `<div class="sidebar-load-error">
+                Couldn't load history.<br>
+                <a onclick="retryLoadHistory()">Tap to retry</a>
+            </div>`;
         }
+    }
+
+    async function retryLoadHistory() {
+        sidebarHistory.innerHTML = '<div class="sidebar-loading"><div class="spin"></div><span>Loading…</span></div>';
+        authInitialized = false;
+        await loadHistory();
+        renderSidebar();
     }
 
     async function saveChartToSupabase(chartData) {
@@ -1856,9 +1890,10 @@
     });
 
     // Expose globals for inline onclick handlers
-    window.selectChart   = selectChart;
-    window.copyAnalysis  = copyAnalysis;
-    window.openChartMenu = openChartMenu;
+    window.selectChart        = selectChart;
+    window.copyAnalysis       = copyAnalysis;
+    window.openChartMenu      = openChartMenu;
+    window.retryLoadHistory   = retryLoadHistory;
 </script>
 </body>
 </html>
