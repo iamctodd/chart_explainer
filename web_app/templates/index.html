@@ -1247,19 +1247,20 @@
     // ── Supabase DB operations (replace localStorage) ──────────
 
     async function loadHistory(retries = 3) {
-        if (!currentUser) return;
+        if (!currentUser) { console.log('[loadHistory] abort: no currentUser'); return; }
         try {
             // Ensure session token is committed before making RLS-protected queries
             const { data: { session } } = await sb.auth.getSession();
-            if (!session) return;
+            console.log('[loadHistory] session:', !!session, 'retries left:', retries);
+            if (!session) { console.log('[loadHistory] abort: no session'); return; }
             const { data: charts, error: ce } = await sb
                 .from('charts')
                 .select('id, filename, display_name, starred, image_data, explanation, analysis_raw, created_at')
                 .order('created_at', { ascending: false })
                 .limit(MAX_HISTORY);
+            console.log('[loadHistory] charts result:', charts?.length, 'error:', ce?.message);
             if (ce) throw ce;
             if (!charts || charts.length === 0) {
-                // Still switch to chat view so sidebar is visible; history will be empty
                 renderSidebar();
                 return;
             }
