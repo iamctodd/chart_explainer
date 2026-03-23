@@ -329,6 +329,18 @@
         .app-footer a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 3px; }
         .app-footer a:hover { color: var(--text-primary); }
         .app-footer .footer-sep { margin: 0 8px; opacity: 0.4; }
+        .footer-nav { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+        .footer-nav a { color: var(--text-muted); font-size: 0.8em; text-decoration: none; transition: color 0.15s; }
+        .footer-nav a:hover { color: var(--text-primary); }
+        /* Info modals (Pricing, How it Works, etc.) */
+        .info-modal-inner { max-width: 520px; }
+        .info-modal-inner h2 { margin-bottom: 6px; }
+        .info-modal-inner .info-section { margin-top: 18px; }
+        .info-modal-inner .info-section h3 { font-size: 0.95em; font-weight: 600; margin-bottom: 6px; color: var(--text-primary); }
+        .info-modal-inner .info-section p, .info-modal-inner .info-section ul { font-size: 0.88em; color: var(--text-muted); line-height: 1.6; margin: 0; padding-left: 16px; }
+        .info-modal-inner .price-tag { font-size: 2em; font-weight: 700; color: var(--accent); margin: 8px 0 4px; }
+        .info-modal-inner .price-sub { font-size: 0.82em; color: var(--text-muted); }
+        .info-modal-close { margin-top: 20px; }
 
         /* ── Privacy modal ──────────────────────────────────────────── */
         .privacy-modal-inner { max-width: 560px; max-height: 70vh; }
@@ -438,6 +450,12 @@
         <a href="#" id="footerPrivacyLink">Privacy Policy</a>
         <span class="footer-sep">·</span>
         <a href="#" id="footerTosLink">Terms of Service</a>
+        <nav class="footer-nav">
+            <a href="#" id="footerPricingLink">Pricing</a>
+            <a href="#" id="footerApiDocsLink">API Docs</a>
+            <a href="#" id="footerHowLink">How This Works</a>
+            <a href="#" id="footerContactLink">Contact</a>
+        </nav>
     </footer>
 </div>
 
@@ -784,15 +802,16 @@
     document.getElementById('openAuthModalBtn')?.addEventListener('click', openAuthModal);
     document.getElementById('landingSignInBtn')?.addEventListener('click', openAuthModal);
     document.getElementById('sidebarSignInBtn')?.addEventListener('click', openAuthModal);
-    document.getElementById('viewHistoryBtn')?.addEventListener('click', () => {
+    document.getElementById('viewHistoryBtn')?.addEventListener('click', async () => {
         if (chartHistory.length > 0) {
             switchToChatView(chartHistory[0].id);
         } else {
-            // Switch to chat view anyway — sidebar will show empty state
-            appState = 'chat';
-            landingView.style.display = 'none';
-            chatView.style.display = 'flex';
-            renderSidebar();
+            // History may not have loaded yet — retry before showing empty sidebar
+            await loadHistory();
+            if (chartHistory.length === 0) {
+                chatView.style.display = 'flex';
+                renderSidebar();
+            }
         }
     });
 
@@ -1134,6 +1153,9 @@
     async function loadHistory() {
         if (!currentUser) return;
         try {
+            // Ensure session token is committed before making RLS-protected queries
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) return;
             const { data: charts, error: ce } = await sb
                 .from('charts')
                 .select('id, filename, display_name, starred, image_data, explanation, analysis_raw, created_at')
@@ -1171,6 +1193,8 @@
             if (chartHistory.length > 0) switchToChatView(chartHistory[0].id);
         } catch (err) {
             console.error('loadHistory failed:', err.message);
+            // Reset so next auth event can retry
+            authInitialized = false;
             showError('Could not load history from server.');
         }
     }
@@ -1689,6 +1713,23 @@
         document.getElementById('tosModal').classList.add('active');
     });
 
+    // Footer nav modals
+    document.getElementById('footerPricingLink')?.addEventListener('click', e => { e.preventDefault(); document.getElementById('pricingModal').classList.add('active'); });
+    document.getElementById('pricingCloseBtn')?.addEventListener('click', () => document.getElementById('pricingModal').classList.remove('active'));
+    document.getElementById('pricingModal')?.addEventListener('click', e => { if (e.target === document.getElementById('pricingModal')) document.getElementById('pricingModal').classList.remove('active'); });
+
+    document.getElementById('footerApiDocsLink')?.addEventListener('click', e => { e.preventDefault(); document.getElementById('apiDocsModal').classList.add('active'); });
+    document.getElementById('apiDocsCloseBtn')?.addEventListener('click', () => document.getElementById('apiDocsModal').classList.remove('active'));
+    document.getElementById('apiDocsModal')?.addEventListener('click', e => { if (e.target === document.getElementById('apiDocsModal')) document.getElementById('apiDocsModal').classList.remove('active'); });
+
+    document.getElementById('footerHowLink')?.addEventListener('click', e => { e.preventDefault(); document.getElementById('howWorksModal').classList.add('active'); });
+    document.getElementById('howWorksCloseBtn')?.addEventListener('click', () => document.getElementById('howWorksModal').classList.remove('active'));
+    document.getElementById('howWorksModal')?.addEventListener('click', e => { if (e.target === document.getElementById('howWorksModal')) document.getElementById('howWorksModal').classList.remove('active'); });
+
+    document.getElementById('footerContactLink')?.addEventListener('click', e => { e.preventDefault(); document.getElementById('contactModal').classList.add('active'); });
+    document.getElementById('contactCloseBtn')?.addEventListener('click', () => document.getElementById('contactModal').classList.remove('active'));
+    document.getElementById('contactModal')?.addEventListener('click', e => { if (e.target === document.getElementById('contactModal')) document.getElementById('contactModal').classList.remove('active'); });
+
     function closeModal() {
         feedbackModal.classList.remove('active');
         feedbackForm.reset();
@@ -1716,5 +1757,101 @@
     window.copyAnalysis  = copyAnalysis;
     window.openChartMenu = openChartMenu;
 </script>
+
+<!-- ── PRICING MODAL ─────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="pricingModal">
+    <div class="modal info-modal-inner">
+        <h2>Pricing</h2>
+        <p>ChartHawk is free while we're in beta.</p>
+        <div class="info-section">
+            <div class="price-tag">$0</div>
+            <div class="price-sub">No credit card required · No usage limits during beta</div>
+        </div>
+        <div class="info-section">
+            <h3>What's included</h3>
+            <ul>
+                <li>Unlimited chart analyses</li>
+                <li>Follow-up questions per chart</li>
+                <li>Persistent history across devices</li>
+                <li>Powered by Anthropic's Claude</li>
+            </ul>
+        </div>
+        <div class="info-section">
+            <p>Paid plans with higher limits and team features are on the roadmap. Early users will receive a discount.</p>
+        </div>
+        <div class="modal-buttons info-modal-close">
+            <button type="button" class="modal-btn submit" id="pricingCloseBtn">Got it</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── API DOCS MODAL ────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="apiDocsModal">
+    <div class="modal info-modal-inner">
+        <h2>API Documentation</h2>
+        <p>Programmatic access to ChartHawk is coming soon.</p>
+        <div class="info-section">
+            <h3>Planned API features</h3>
+            <ul>
+                <li>Submit chart images via REST API</li>
+                <li>Receive structured analysis as JSON</li>
+                <li>Webhook callbacks for async analysis</li>
+                <li>API key management in your account</li>
+            </ul>
+        </div>
+        <div class="info-section">
+            <p>Interested in early API access? Send us a note via the feedback button and we'll add you to the waitlist.</p>
+        </div>
+        <div class="modal-buttons info-modal-close">
+            <button type="button" class="modal-btn submit" id="apiDocsCloseBtn">Got it</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── HOW THIS WORKS MODAL ──────────────────────────────────────────────── -->
+<div class="modal-overlay" id="howWorksModal">
+    <div class="modal info-modal-inner">
+        <h2>How ChartHawk Works</h2>
+        <p>Upload any chart image and get an instant plain-English explanation.</p>
+        <div class="info-section">
+            <h3>1. Upload a chart</h3>
+            <p>Drag and drop or click to upload a PNG, JPG, or GIF. Works with bar charts, line graphs, scatter plots, heatmaps, pie charts, histograms — any chart image.</p>
+        </div>
+        <div class="info-section">
+            <h3>2. Get an AI-powered analysis</h3>
+            <p>Your chart is sent to Anthropic's Claude, which explains what the chart shows, identifies key trends, and flags common misreadings — in plain English.</p>
+        </div>
+        <div class="info-section">
+            <h3>3. Ask follow-up questions</h3>
+            <p>Not satisfied? Ask follow-up questions in the chat. Claude remembers the chart and your conversation so you can dig deeper.</p>
+        </div>
+        <div class="info-section">
+            <h3>4. Your history is saved</h3>
+            <p>Sign in to save your analyses across sessions and devices. Revisit, rename, star, or delete any past analysis.</p>
+        </div>
+        <div class="modal-buttons info-modal-close">
+            <button type="button" class="modal-btn submit" id="howWorksCloseBtn">Got it</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── CONTACT MODAL ─────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="contactModal">
+    <div class="modal info-modal-inner">
+        <h2>Contact</h2>
+        <p>We'd love to hear from you.</p>
+        <div class="info-section">
+            <h3>Feedback &amp; bug reports</h3>
+            <p>Use the <strong>Send Feedback</strong> button in the sidebar — it goes directly to our inbox.</p>
+        </div>
+        <div class="info-section">
+            <h3>Everything else</h3>
+            <p>Email us at <a href="mailto:hi@ctodd.com" style="color:var(--accent);">hi@ctodd.com</a></p>
+        </div>
+        <div class="modal-buttons info-modal-close">
+            <button type="button" class="modal-btn submit" id="contactCloseBtn">Got it</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
