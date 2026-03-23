@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChartHawk — Upload any chart. Learn what it actually says.</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -26,7 +27,7 @@
 
         html, body {
             height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--bg-body);
             color: var(--text-primary);
             overflow: hidden;
@@ -343,8 +344,9 @@
         .info-modal-close { margin-top: 20px; }
 
         /* ── Privacy modal ──────────────────────────────────────────── */
-        .privacy-modal-inner { max-width: 560px; max-height: 70vh; }
-        .privacy-modal-inner .tos-body { max-height: calc(70vh - 160px); }
+        .privacy-modal-inner { max-width: 560px; max-height: 80vh; display: flex; flex-direction: column; }
+        .privacy-modal-inner .tos-body { flex: 1; overflow-y: auto; padding-right: 4px; }
+        .privacy-modal-inner .modal-buttons { flex-shrink: 0; margin-top: 16px; }
 
         /* ToS modal scroll area */
         .tos-scroll { max-height: 260px; overflow-y: auto; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; font-size: 0.86em; line-height: 1.7; color: var(--text-muted); margin-bottom: 16px; }
@@ -673,6 +675,98 @@
     <button class="chart-menu-item" id="menuStar">⭐ Star</button>
     <button class="chart-menu-item" id="menuRename">✏️ Rename</button>
     <button class="chart-menu-item danger" id="menuDelete">🗑 Delete</button>
+</div>
+
+<!-- ── PRICING MODAL ─────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="pricingModal">
+    <div class="modal info-modal-inner">
+        <h2>Pricing</h2>
+        <p>ChartHawk is free while we're in beta.</p>
+        <div class="info-section">
+            <div class="price-tag">$0</div>
+            <div class="price-sub">No credit card required · No usage limits during beta</div>
+        </div>
+        <div class="info-section">
+            <h3>What's included</h3>
+            <ul>
+                <li>Unlimited chart analyses</li>
+                <li>Follow-up questions per chart</li>
+                <li>Persistent history across devices</li>
+                <li>Powered by Anthropic's Claude</li>
+            </ul>
+        </div>
+        <div class="info-section">
+            <p>Paid plans with higher limits and team features are on the roadmap. Early users will receive a discount.</p>
+        </div>
+        <div class="modal-buttons info-modal-close">
+            <button type="button" class="modal-btn submit" id="pricingCloseBtn">Got it</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── API DOCS MODAL ────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="apiDocsModal">
+    <div class="modal info-modal-inner">
+        <h2>API Documentation</h2>
+        <p>Programmatic access to ChartHawk is coming soon.</p>
+        <div class="info-section">
+            <h3>Planned API features</h3>
+            <ul>
+                <li>Submit chart images via REST API</li>
+                <li>Receive structured analysis as JSON</li>
+                <li>Webhook callbacks for async analysis</li>
+                <li>API key management in your account</li>
+            </ul>
+        </div>
+        <div class="info-section">
+            <p>Interested in early API access? Send us a note via the feedback button and we'll add you to the waitlist.</p>
+        </div>
+        <div class="modal-buttons info-modal-close">
+            <button type="button" class="modal-btn submit" id="apiDocsCloseBtn">Got it</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── HOW THIS WORKS MODAL ──────────────────────────────────────────────── -->
+<div class="modal-overlay" id="howWorksModal">
+    <div class="modal info-modal-inner">
+        <h2>How ChartHawk Works</h2>
+        <p>Upload any chart image and get an instant plain-English explanation.</p>
+        <div class="info-section">
+            <h3>1. Upload a chart</h3>
+            <p>Drag and drop or click to upload a PNG, JPG, or GIF. Works with bar charts, line graphs, scatter plots, heatmaps, pie charts, histograms — any chart image.</p>
+        </div>
+        <div class="info-section">
+            <h3>2. Get an AI-powered analysis</h3>
+            <p>Your chart is sent to Anthropic's Claude, which explains what the chart shows, identifies key trends, and flags common misreadings — in plain English.</p>
+        </div>
+        <div class="info-section">
+            <h3>3. Ask follow-up questions</h3>
+            <p>Not satisfied? Ask follow-up questions in the chat. Claude remembers the chart and your conversation so you can dig deeper.</p>
+        </div>
+        <div class="info-section">
+            <h3>4. Your history is saved</h3>
+            <p>Sign in to save your analyses across sessions and devices. Revisit, rename, star, or delete any past analysis.</p>
+        </div>
+        <div class="modal-buttons info-modal-close">
+            <button type="button" class="modal-btn submit" id="howWorksCloseBtn">Got it</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── CONTACT MODAL ─────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="contactModal">
+    <div class="modal info-modal-inner">
+        <h2>Contact</h2>
+        <p>We'd love to hear from you.</p>
+        <div class="info-section">
+            <h3>Feedback &amp; bug reports</h3>
+            <p>Use the <strong>Send Feedback</strong> button in the sidebar — it goes directly to our inbox.</p>
+        </div>
+        <div class="modal-buttons info-modal-close">
+            <button type="button" class="modal-btn submit" id="contactCloseBtn">Got it</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -1757,97 +1851,5 @@
     window.copyAnalysis  = copyAnalysis;
     window.openChartMenu = openChartMenu;
 </script>
-
-<!-- ── PRICING MODAL ─────────────────────────────────────────────────────── -->
-<div class="modal-overlay" id="pricingModal">
-    <div class="modal info-modal-inner">
-        <h2>Pricing</h2>
-        <p>ChartHawk is free while we're in beta.</p>
-        <div class="info-section">
-            <div class="price-tag">$0</div>
-            <div class="price-sub">No credit card required · No usage limits during beta</div>
-        </div>
-        <div class="info-section">
-            <h3>What's included</h3>
-            <ul>
-                <li>Unlimited chart analyses</li>
-                <li>Follow-up questions per chart</li>
-                <li>Persistent history across devices</li>
-                <li>Powered by Anthropic's Claude</li>
-            </ul>
-        </div>
-        <div class="info-section">
-            <p>Paid plans with higher limits and team features are on the roadmap. Early users will receive a discount.</p>
-        </div>
-        <div class="modal-buttons info-modal-close">
-            <button type="button" class="modal-btn submit" id="pricingCloseBtn">Got it</button>
-        </div>
-    </div>
-</div>
-
-<!-- ── API DOCS MODAL ────────────────────────────────────────────────────── -->
-<div class="modal-overlay" id="apiDocsModal">
-    <div class="modal info-modal-inner">
-        <h2>API Documentation</h2>
-        <p>Programmatic access to ChartHawk is coming soon.</p>
-        <div class="info-section">
-            <h3>Planned API features</h3>
-            <ul>
-                <li>Submit chart images via REST API</li>
-                <li>Receive structured analysis as JSON</li>
-                <li>Webhook callbacks for async analysis</li>
-                <li>API key management in your account</li>
-            </ul>
-        </div>
-        <div class="info-section">
-            <p>Interested in early API access? Send us a note via the feedback button and we'll add you to the waitlist.</p>
-        </div>
-        <div class="modal-buttons info-modal-close">
-            <button type="button" class="modal-btn submit" id="apiDocsCloseBtn">Got it</button>
-        </div>
-    </div>
-</div>
-
-<!-- ── HOW THIS WORKS MODAL ──────────────────────────────────────────────── -->
-<div class="modal-overlay" id="howWorksModal">
-    <div class="modal info-modal-inner">
-        <h2>How ChartHawk Works</h2>
-        <p>Upload any chart image and get an instant plain-English explanation.</p>
-        <div class="info-section">
-            <h3>1. Upload a chart</h3>
-            <p>Drag and drop or click to upload a PNG, JPG, or GIF. Works with bar charts, line graphs, scatter plots, heatmaps, pie charts, histograms — any chart image.</p>
-        </div>
-        <div class="info-section">
-            <h3>2. Get an AI-powered analysis</h3>
-            <p>Your chart is sent to Anthropic's Claude, which explains what the chart shows, identifies key trends, and flags common misreadings — in plain English.</p>
-        </div>
-        <div class="info-section">
-            <h3>3. Ask follow-up questions</h3>
-            <p>Not satisfied? Ask follow-up questions in the chat. Claude remembers the chart and your conversation so you can dig deeper.</p>
-        </div>
-        <div class="info-section">
-            <h3>4. Your history is saved</h3>
-            <p>Sign in to save your analyses across sessions and devices. Revisit, rename, star, or delete any past analysis.</p>
-        </div>
-        <div class="modal-buttons info-modal-close">
-            <button type="button" class="modal-btn submit" id="howWorksCloseBtn">Got it</button>
-        </div>
-    </div>
-</div>
-
-<!-- ── CONTACT MODAL ─────────────────────────────────────────────────────── -->
-<div class="modal-overlay" id="contactModal">
-    <div class="modal info-modal-inner">
-        <h2>Contact</h2>
-        <p>We'd love to hear from you.</p>
-        <div class="info-section">
-            <h3>Feedback &amp; bug reports</h3>
-            <p>Use the <strong>Send Feedback</strong> button in the sidebar — it goes directly to our inbox.</p>
-        </div>
-        <div class="modal-buttons info-modal-close">
-            <button type="button" class="modal-btn submit" id="contactCloseBtn">Got it</button>
-        </div>
-    </div>
-</div>
 </body>
 </html>
