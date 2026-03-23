@@ -18,6 +18,7 @@ SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR
 supabase_client   = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
+POSTHOG_KEY = os.environ.get('POSTHOG_KEY', '')
 admin_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY) if SUPABASE_SERVICE_KEY else None
 
 # ── Auth ───────────────────────────────────────────────────────────────────────
@@ -96,7 +97,7 @@ def sse_event(event, data):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', posthog_key=POSTHOG_KEY)
 
 
 # Non-streaming endpoints kept for backwards compatibility (no auth required)
