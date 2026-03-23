@@ -898,6 +898,7 @@
     document.getElementById('landingSignInBtn')?.addEventListener('click', openAuthModal);
     document.getElementById('sidebarSignInBtn')?.addEventListener('click', openAuthModal);
     document.getElementById('viewHistoryBtn')?.addEventListener('click', async () => {
+        console.log('[ChartHawk] viewHistoryBtn clicked — chartHistory.length:', chartHistory.length, 'authState:', authState, 'currentUser:', !!currentUser);
         if (chartHistory.length > 0) {
             switchToChatView(chartHistory[0].id);
         } else {
