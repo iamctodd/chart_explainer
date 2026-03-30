@@ -5,9 +5,17 @@ import os
 import base64
 import markdown
 import json
+import re
+import io
+from PIL import Image
 from supabase import create_client
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5 MB upload limit
+
+@app.errorhandler(413)
+def too_large(e):
+    return jsonify({'error': 'Image must be under 5MB. Please resize and try again.'}), 413
 
 # ── Clients ────────────────────────────────────────────────────────────────────
 
@@ -388,6 +396,245 @@ def admin_promote():
         meta['is_admin'] = grant
         admin_client.auth.admin.update_user_by_id(target.id, {'user_metadata': meta})
         return jsonify({'success': True, 'email': email, 'is_admin': grant})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ── Gallery helpers ────────────────────────────────────────────────────────────
+
+def make_thumbnail(image_base64, max_width=400):
+    """Resize a base64 image to a compact thumbnail for gallery cards."""
+    try:
+        raw = base64.b64decode(image_base64.split(',')[-1])
+        img = Image.open(io.BytesIO(raw))
+        ratio = min(max_width / img.width, 1.0)
+        new_size = (int(img.width * ratio), int(img.height * ratio))
+        img = img.resize(new_size, Image.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format='WEBP', quality=70)
+        return 'data:image/webp;base64,' + base64.b64encode(buf.getvalue()).decode()
+    except Exception as e:
+        print(f'Thumbnail generation failed: {e}')
+        return None
+
+
+def generate_gallery_summary(analysis_raw):
+    """Ask Claude to extract 3 insights + 3 improvements as JSON."""
+    prompt = (
+        'From this chart analysis, extract exactly:\n'
+        '- 3 key insights (1 sentence each)\n'
+        '- 3 improvement suggestions (1 sentence each)\n\n'
+        'Return ONLY valid JSON with no markdown fencing:\n'
+        '{"insights": ["...", "...", "..."], "improvements": ["...", "...", "..."]}\n\n'
+        f'Analysis:\n{analysis_raw[:3000]}'
+    )
+    try:
+        msg = claude.messages.create(
+            model='claude-sonnet-4-20250514',
+            max_tokens=300,
+            messages=[{'role': 'user', 'content': prompt}],
+        )
+        raw_text = msg.content[0].text.strip()
+        raw_text = re.sub(r'^```[a-z]*\n?', '', raw_text, flags=re.MULTILINE).strip('`').strip()
+        return json.loads(raw_text)
+    except Exception as e:
+        print(f'Summary generation failed: {e}')
+        return {'insights': [], 'improvements': []}
+
+
+# ── Gallery & share routes ─────────────────────────────────────────────────────
+
+@app.route('/gallery')
+def gallery_page():
+    return render_template('gallery.html')
+
+
+@app.route('/share/<chart_id>')
+def share_page(chart_id):
+    return render_template('share.html', chart_id=chart_id)
+
+
+@app.route('/api/gallery')
+def gallery_feed():
+    """Paginated public charts feed — no auth required."""
+    if not admin_client:
+        return jsonify({'error': 'Server misconfigured'}), 500
+    page   = max(0, int(request.args.get('page', 0)))
+    limit  = 20
+    offset = page * limit
+    try:
+        resp = (
+            admin_client.from_('charts')
+            .select('id,filename,display_name,thumbnail_data,gallery_summary,created_at')
+            .eq('is_public', True)
+            .order('created_at', desc=True)
+            .range(offset, offset + limit - 1)
+            .execute()
+        )
+        return jsonify({'charts': resp.data or [], 'page': page})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/chart/<chart_id>/publish', methods=['POST'])
+@require_auth
+def toggle_publish(chart_id):
+    """Toggle is_public; generate thumbnail + gallery summary on first publish."""
+    if not admin_client:
+        return jsonify({'error': 'Server misconfigured'}), 500
+    body      = request.get_json() or {}
+    is_public = bool(body.get('is_public', False))
+    update    = {'is_public': is_public}
+    try:
+        existing = (
+            admin_client.from_('charts')
+            .select('gallery_summary,thumbnail_data,analysis_raw,image_data')
+            .eq('id', chart_id)
+            .eq('user_id', request.user_id)
+            .single()
+            .execute()
+        )
+        if not existing.data:
+            return jsonify({'error': 'Chart not found'}), 404
+
+        if is_public:
+            row = existing.data
+            if not row.get('gallery_summary'):
+                update['gallery_summary'] = generate_gallery_summary(row.get('analysis_raw', ''))
+            if not row.get('thumbnail_data') and row.get('image_data'):
+                thumb = make_thumbnail(row['image_data'])
+                if thumb:
+                    update['thumbnail_data'] = thumb
+
+        admin_client.from_('charts').update(update) \
+            .eq('id', chart_id).eq('user_id', request.user_id).execute()
+        return jsonify({'ok': True, 'is_public': is_public})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/share/<chart_id>')
+def share_data(chart_id):
+    """Return full public chart data + messages for the share page."""
+    if not admin_client:
+        return jsonify({'error': 'Server misconfigured'}), 500
+    try:
+        chart_resp = (
+            admin_client.from_('charts')
+            .select('id,filename,display_name,image_data,explanation,analysis_raw,created_at')
+            .eq('id', chart_id)
+            .eq('is_public', True)
+            .single()
+            .execute()
+        )
+        if not chart_resp.data:
+            return jsonify({'error': 'Chart not found or not public'}), 404
+
+        msgs_resp = (
+            admin_client.from_('messages')
+            .select('role,content,html,created_at')
+            .eq('chart_id', chart_id)
+            .order('created_at', desc=False)
+            .execute()
+        )
+        return jsonify({
+            'chart':    chart_resp.data,
+            'messages': msgs_resp.data or [],
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/chart/<chart_id>/comments', methods=['GET'])
+def get_comments(chart_id):
+    """List comments for a chart (public or own)."""
+    if not admin_client:
+        return jsonify({'error': 'Server misconfigured'}), 500
+    try:
+        # Verify chart is public (anyone can read) or skip check for now via admin client
+        resp = (
+            admin_client.from_('comments')
+            .select('id,author_name,content,created_at,updated_at,user_id')
+            .eq('chart_id', chart_id)
+            .order('created_at', desc=False)
+            .execute()
+        )
+        return jsonify({'comments': resp.data or []})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/chart/<chart_id>/comments', methods=['POST'])
+@require_auth
+def add_comment(chart_id):
+    """Add a comment to a public chart."""
+    if not admin_client:
+        return jsonify({'error': 'Server misconfigured'}), 500
+    body    = request.get_json() or {}
+    content = body.get('content', '').strip()
+    if not content:
+        return jsonify({'error': 'Comment cannot be empty'}), 400
+    if len(content) > 1000:
+        return jsonify({'error': 'Comment must be under 1000 characters'}), 400
+
+    # Resolve author name from auth
+    try:
+        user_resp = supabase_client.auth.get_user(request.headers.get('Authorization', '')[7:])
+        author_name = (user_resp.user.user_metadata or {}).get('full_name') or user_resp.user.email or 'Anonymous'
+    except Exception:
+        author_name = 'Anonymous'
+
+    try:
+        resp = admin_client.from_('comments').insert({
+            'chart_id':    chart_id,
+            'user_id':     request.user_id,
+            'author_name': author_name,
+            'content':     content,
+        }).select().single().execute()
+        return jsonify({'comment': resp.data}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/comment/<comment_id>', methods=['PUT'])
+@require_auth
+def edit_comment(comment_id):
+    """Edit own comment."""
+    if not admin_client:
+        return jsonify({'error': 'Server misconfigured'}), 500
+    body    = request.get_json() or {}
+    content = body.get('content', '').strip()
+    if not content:
+        return jsonify({'error': 'Comment cannot be empty'}), 400
+    if len(content) > 1000:
+        return jsonify({'error': 'Comment must be under 1000 characters'}), 400
+    try:
+        from datetime import datetime, timezone
+        resp = (
+            admin_client.from_('comments')
+            .update({'content': content, 'updated_at': datetime.now(timezone.utc).isoformat()})
+            .eq('id', comment_id)
+            .eq('user_id', request.user_id)
+            .execute()
+        )
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/comment/<comment_id>', methods=['DELETE'])
+@require_auth
+def delete_comment(comment_id):
+    """Delete own comment."""
+    if not admin_client:
+        return jsonify({'error': 'Server misconfigured'}), 500
+    try:
+        admin_client.from_('comments') \
+            .delete() \
+            .eq('id', comment_id) \
+            .eq('user_id', request.user_id) \
+            .execute()
+        return jsonify({'ok': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

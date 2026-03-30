@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery — ChartHawk</title>
+    <style>
+        :root {
+            --bg-base:     #0d0d0f;
+            --bg-surface:  #13131a;
+            --bg-card:     #1a1a24;
+            --bg-input:    #1e1e2a;
+            --border:      #2a2a3a;
+            --text-primary:#e8e8f0;
+            --text-muted:  #7a7a9a;
+            --accent:      #7c6af7;
+            --accent-dim:  rgba(124,106,247,0.12);
+            --success:     #4ade80;
+            --danger:      #f87171;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg-base); color: var(--text-primary); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 18px 32px; border-bottom: 1px solid var(--border); background: var(--bg-surface); position: sticky; top: 0; z-index: 10; }
+        .header-brand { display: flex; align-items: center; gap: 10px; font-size: 1.1em; font-weight: 700; color: var(--text-primary); text-decoration: none; }
+        .header-brand span { color: var(--accent); }
+        .header-title { font-size: 1em; color: var(--text-muted); }
+        .back-btn { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-muted); padding: 7px 14px; border-radius: 8px; font-size: 0.82em; text-decoration: none; transition: all 0.15s; }
+        .back-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        .page-body { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
+        .page-heading { font-size: 1.5em; font-weight: 700; margin-bottom: 6px; }
+        .page-subhead { color: var(--text-muted); font-size: 0.9em; margin-bottom: 32px; }
+
+        .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        @media (max-width: 900px) { .gallery-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 560px) { .gallery-grid { grid-template-columns: 1fr; } }
+
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: border-color 0.15s, transform 0.15s; text-decoration: none; color: inherit; display: flex; flex-direction: column; }
+        .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .card-thumb { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: var(--bg-input); display: block; }
+        .card-thumb-placeholder { width: 100%; aspect-ratio: 4/3; background: var(--bg-input); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 2em; }
+        .card-body { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+        .card-name { font-size: 0.92em; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-meta { display: flex; align-items: center; gap: 10px; font-size: 0.75em; color: var(--text-muted); }
+        .comment-badge { background: var(--bg-input); border: 1px solid var(--border); border-radius: 20px; padding: 2px 8px; font-size: 0.78em; color: var(--text-muted); }
+
+        .card-section-label { font-size: 0.7em; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+        .card-bullets { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+        .card-bullets li { font-size: 0.78em; color: var(--text-muted); line-height: 1.4; padding-left: 12px; position: relative; }
+        .card-bullets li::before { content: '›'; position: absolute; left: 0; color: var(--accent); }
+        .card-bullets.empty li { font-style: italic; }
+
+        .load-more-wrap { text-align: center; margin-top: 40px; }
+        .load-more-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); padding: 10px 28px; border-radius: 8px; font-size: 0.88em; cursor: pointer; transition: all 0.15s; }
+        .load-more-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .load-more-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .empty-state { text-align: center; padding: 80px 24px; color: var(--text-muted); }
+        .empty-state h2 { font-size: 1.2em; margin-bottom: 8px; color: var(--text-primary); }
+        .empty-state p { font-size: 0.9em; }
+
+        .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 60px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <a href="/" class="header-brand">📊 <span>Chart</span>Hawk</a>
+    <span class="header-title">Gallery</span>
+    <a href="/" class="back-btn">← Back to App</a>
+</header>
+
+<div class="page-body">
+    <h1 class="page-heading">Public Gallery</h1>
+    <p class="page-subhead">Charts shared by the ChartHawk community</p>
+
+    <div id="loadingSpinner"><div class="spinner"></div></div>
+    <div class="gallery-grid" id="galleryGrid"></div>
+    <div id="emptyState" class="empty-state" style="display:none;">
+        <h2>Nothing here yet</h2>
+        <p>Be the first to share a chart analysis with the community.</p>
+    </div>
+    <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
+        <button class="load-more-btn" id="loadMoreBtn">Load more</button>
+    </div>
+</div>
+
+<script>
+    const grid        = document.getElementById('galleryGrid');
+    const spinner     = document.getElementById('loadingSpinner');
+    const emptyState  = document.getElementById('emptyState');
+    const loadMoreWrap= document.getElementById('loadMoreWrap');
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+
+    let currentPage = 0;
+    let loading     = false;
+
+    function formatDate(iso) {
+        const d = new Date(iso);
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function escapeHtml(str) {
+        return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function buildCard(chart) {
+        const name    = escapeHtml(chart.display_name || chart.filename || 'Untitled');
+        const date    = formatDate(chart.created_at);
+        const summary = chart.gallery_summary || {};
+        const insights     = summary.insights     || [];
+        const improvements = summary.improvements || [];
+
+        const thumbHtml = chart.thumbnail_data
+            ? `<img class="card-thumb" src="${escapeHtml(chart.thumbnail_data)}" alt="${name}" loading="lazy">`
+            : `<div class="card-thumb-placeholder">📊</div>`;
+
+        const insightItems = insights.length
+            ? insights.map(i => `<li>${escapeHtml(i)}</li>`).join('')
+            : '<li class="empty">No summary yet</li>';
+
+        const improvItems = improvements.length
+            ? improvements.map(i => `<li>${escapeHtml(i)}</li>`).join('')
+            : '<li class="empty">—</li>';
+
+        const card = document.createElement('a');
+        card.href      = `/share/${chart.id}`;
+        card.className = 'card';
+        card.innerHTML = `
+            ${thumbHtml}
+            <div class="card-body">
+                <div class="card-name" title="${name}">${name}</div>
+                <div class="card-meta">
+                    <span>${date}</span>
+                </div>
+                <div>
+                    <div class="card-section-label">Key Insights</div>
+                    <ul class="card-bullets">${insightItems}</ul>
+                </div>
+                <div>
+                    <div class="card-section-label">Improvements</div>
+                    <ul class="card-bullets">${improvItems}</ul>
+                </div>
+            </div>
+        `;
+        return card;
+    }
+
+    async function loadPage(page) {
+        if (loading) return;
+        loading = true;
+        if (page === 0) spinner.style.display = 'block';
+        else loadMoreBtn.disabled = true;
+
+        try {
+            const res = await fetch(`/api/gallery?page=${page}`);
+            if (!res.ok) throw new Error('Failed to load gallery');
+            const { charts } = await res.json();
+
+            if (page === 0) spinner.style.display = 'none';
+
+            if (charts.length === 0 && page === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            charts.forEach(c => grid.appendChild(buildCard(c)));
+
+            if (charts.length === 20) {
+                loadMoreWrap.style.display = 'block';
+                loadMoreBtn.disabled = false;
+                currentPage = page + 1;
+            } else {
+                loadMoreWrap.style.display = 'none';
+            }
+        } catch (err) {
+            spinner.style.display = 'none';
+            grid.innerHTML = `<p style="color:var(--danger);padding:20px;">Failed to load gallery. Please try again.</p>`;
+        } finally {
+            loading = false;
+        }
+    }
+
+    loadMoreBtn.addEventListener('click', () => loadPage(currentPage));
+    loadPage(0);
+</script>
+</body>
+</html>

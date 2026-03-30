@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChartHawk — Shared Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-base:     #0d0d0f;
+            --bg-surface:  #13131a;
+            --bg-card:     #1a1a24;
+            --bg-input:    #1e1e2a;
+            --border:      #2a2a3a;
+            --text-primary:#e8e8f0;
+            --text-muted:  #7a7a9a;
+            --accent:      #7c6af7;
+            --accent-dim:  rgba(124,106,247,0.12);
+            --success:     #4ade80;
+            --danger:      #f87171;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg-base); color: var(--text-primary); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+        /* Header */
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 18px 32px; border-bottom: 1px solid var(--border); background: var(--bg-surface); position: sticky; top: 0; z-index: 10; }
+        .header-brand { display: flex; align-items: center; gap: 10px; font-size: 1.1em; font-weight: 700; color: var(--text-primary); text-decoration: none; }
+        .header-brand span { color: var(--accent); }
+        .header-actions { display: flex; gap: 10px; }
+        .btn-ghost { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-muted); padding: 7px 14px; border-radius: 8px; font-size: 0.82em; text-decoration: none; cursor: pointer; transition: all 0.15s; }
+        .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-accent { background: var(--accent); border: none; color: #fff; padding: 7px 14px; border-radius: 8px; font-size: 0.82em; text-decoration: none; cursor: pointer; transition: opacity 0.15s; }
+        .btn-accent:hover { opacity: 0.85; }
+
+        /* Main layout */
+        .page-body { max-width: 800px; margin: 0 auto; padding: 40px 24px 80px; }
+
+        /* Chart image */
+        .chart-img { width: 100%; border-radius: 10px; border: 1px solid var(--border); display: block; margin-bottom: 24px; }
+
+        /* Chart meta */
+        .chart-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .chart-name { font-size: 1.1em; font-weight: 700; }
+        .chart-date { font-size: 0.82em; color: var(--text-muted); }
+        .copy-link-btn { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-muted); padding: 6px 12px; border-radius: 6px; font-size: 0.78em; cursor: pointer; transition: all 0.15s; }
+        .copy-link-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* Analysis */
+        .analysis-content { font-size: 0.93em; line-height: 1.7; color: var(--text-primary); }
+        .analysis-content h2 { font-size: 1em; font-weight: 700; color: var(--accent); margin: 20px 0 6px; }
+        .analysis-content h3 { font-size: 0.95em; font-weight: 600; margin: 16px 0 4px; }
+        .analysis-content p  { margin-bottom: 10px; }
+        .analysis-content ul, .analysis-content ol { padding-left: 20px; margin-bottom: 10px; }
+        .analysis-content li { margin-bottom: 4px; }
+        .analysis-content strong { color: var(--text-primary); }
+
+        /* Conversation thread */
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+        .section-label { font-size: 0.75em; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px; }
+        .msg-bubble { padding: 12px 16px; border-radius: 10px; font-size: 0.88em; line-height: 1.6; margin-bottom: 10px; max-width: 90%; }
+        .msg-bubble.user { background: var(--accent-dim); border: 1px solid rgba(124,106,247,0.25); color: var(--text-primary); margin-left: auto; }
+        .msg-bubble.assistant { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary); }
+        .msg-bubble p { margin: 0 0 6px; }
+        .msg-bubble p:last-child { margin-bottom: 0; }
+
+        /* Comments */
+        .comments-section { margin-top: 40px; }
+        .comments-section h2 { font-size: 1em; font-weight: 700; margin-bottom: 20px; }
+        .comment-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; }
+        .comment-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; gap: 8px; }
+        .comment-author { font-size: 0.82em; font-weight: 600; color: var(--accent); }
+        .comment-date   { font-size: 0.75em; color: var(--text-muted); }
+        .comment-content { font-size: 0.88em; line-height: 1.55; color: var(--text-primary); white-space: pre-wrap; word-break: break-word; }
+        .comment-actions { display: flex; gap: 8px; }
+        .comment-action-btn { background: none; border: none; color: var(--text-muted); font-size: 0.75em; cursor: pointer; padding: 2px 4px; border-radius: 4px; transition: color 0.15s; }
+        .comment-action-btn:hover { color: var(--text-primary); }
+        .comment-action-btn.danger:hover { color: var(--danger); }
+
+        /* Comment input */
+        .comment-form { margin-top: 20px; }
+        .comment-textarea { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-family: inherit; font-size: 0.88em; padding: 12px 14px; resize: vertical; min-height: 80px; outline: none; transition: border-color 0.15s; }
+        .comment-textarea:focus { border-color: var(--accent); }
+        .comment-form-footer { display: flex; justify-content: flex-end; margin-top: 8px; }
+        .comment-submit-btn { background: var(--accent); border: none; color: #fff; padding: 8px 18px; border-radius: 8px; font-size: 0.85em; cursor: pointer; transition: opacity 0.15s; }
+        .comment-submit-btn:hover { opacity: 0.85; }
+        .comment-submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .sign-in-prompt { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; text-align: center; margin-top: 20px; }
+        .sign-in-prompt p { font-size: 0.88em; color: var(--text-muted); margin-bottom: 12px; }
+
+        /* Sign-in modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+        .modal-overlay.visible { display: flex; }
+        .modal-box { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; width: 100%; max-width: 360px; }
+        .modal-box h2 { font-size: 1.1em; margin-bottom: 18px; }
+        .auth-input { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 0.9em; padding: 10px 12px; margin-bottom: 10px; outline: none; }
+        .auth-input:focus { border-color: var(--accent); }
+        .google-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: #fff; color: #333; border: none; border-radius: 8px; padding: 10px; font-size: 0.9em; font-weight: 500; cursor: pointer; margin-bottom: 12px; transition: opacity 0.15s; }
+        .google-btn:hover { opacity: 0.9; }
+        .auth-divider { text-align: center; color: var(--text-muted); font-size: 0.8em; margin: 8px 0; }
+        .auth-submit-btn { width: 100%; background: var(--accent); border: none; color: #fff; padding: 10px; border-radius: 8px; font-size: 0.9em; cursor: pointer; margin-top: 4px; }
+        .modal-close { float: right; background: none; border: none; color: var(--text-muted); font-size: 1.2em; cursor: pointer; line-height: 1; }
+        .auth-error { color: var(--danger); font-size: 0.8em; margin-top: 6px; min-height: 1em; }
+
+        /* CTA */
+        .cta-box { margin-top: 48px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; text-align: center; }
+        .cta-box h3 { font-size: 1em; font-weight: 700; margin-bottom: 6px; }
+        .cta-box p  { font-size: 0.85em; color: var(--text-muted); margin-bottom: 16px; }
+
+        /* States */
+        .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 80px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-state { text-align: center; padding: 80px 24px; }
+        .error-state h2 { font-size: 1.2em; margin-bottom: 8px; color: var(--text-muted); }
+        .error-state p  { font-size: 0.9em; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <a href="/" class="header-brand">📊 <span>Chart</span>Hawk</a>
+    <div class="header-actions">
+        <a href="/gallery" class="btn-ghost">← Gallery</a>
+        <a href="/" class="btn-accent">Analyze your own chart</a>
+    </div>
+</header>
+
+<div class="page-body" id="pageBody">
+    <div class="spinner" id="loadingSpinner"></div>
+</div>
+
+<!-- Sign-in modal -->
+<div class="modal-overlay" id="signInModal">
+    <div class="modal-box">
+        <button class="modal-close" id="modalClose">✕</button>
+        <h2>Sign in to comment</h2>
+        <button class="google-btn" id="googleSignIn">
+            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+            Sign in with Google
+        </button>
+        <div class="auth-divider">or</div>
+        <input class="auth-input" type="email" id="authEmail" placeholder="Email">
+        <input class="auth-input" type="password" id="authPassword" placeholder="Password">
+        <button class="auth-submit-btn" id="authSubmit">Sign in</button>
+        <div class="auth-error" id="authError"></div>
+    </div>
+</div>
+
+<script>
+    // ── Config ────────────────────────────────────────────────────────────────
+    const SUPABASE_URL      = 'https://csjiymeycevxqmlmqcwc.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzaml5bWV5Y2V2eHFtbG1xY3djIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTc1MDUsImV4cCI6MjA4OTY3MzUwNX0.JwUVn-NHrRCmuI8QDe_GEOJfTcT7lcHbh0Fhadrg4h0';
+    const CHART_ID          = '{{ chart_id }}';
+
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { flowType: 'implicit' }
+    });
+
+    const pageBody      = document.getElementById('pageBody');
+    const loadingSpinner= document.getElementById('loadingSpinner');
+    const signInModal   = document.getElementById('signInModal');
+
+    let currentUser = null;
+    let commentsData= [];
+
+    // ── Auth ──────────────────────────────────────────────────────────────────
+    sb.auth.onAuthStateChange((event, session) => {
+        currentUser = session?.user || null;
+        refreshCommentInput();
+    });
+
+    function getStoredToken() {
+        const projectRef = SUPABASE_URL.split('//')[1].split('.')[0];
+        const stored = localStorage.getItem(`sb-${projectRef}-auth-token`);
+        return stored ? JSON.parse(stored)?.access_token : null;
+    }
+
+    // ── Load chart data ───────────────────────────────────────────────────────
+    async function loadChart() {
+        try {
+            const res = await fetch(`/api/share/${CHART_ID}`);
+            if (res.status === 404) { renderNotFound(); return; }
+            if (!res.ok) throw new Error('Failed to load');
+            const { chart, messages } = await res.json();
+            renderChart(chart, messages);
+            await loadComments();
+        } catch (err) {
+            renderError();
+        }
+    }
+
+    function escapeHtml(str) {
+        return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function formatDate(iso) {
+        return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function formatDateTime(iso) {
+        return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderChart(chart, messages) {
+        loadingSpinner.remove();
+        const name = escapeHtml(chart.display_name || chart.filename || 'Chart');
+        const date = formatDate(chart.created_at);
+
+        let html = `
+            <img class="chart-img" src="${escapeHtml(chart.image_data)}" alt="${name}">
+            <div class="chart-meta">
+                <div>
+                    <div class="chart-name">${name}</div>
+                    <div class="chart-date">${date}</div>
+                </div>
+                <button class="copy-link-btn" id="copyLinkBtn">🔗 Copy link</button>
+            </div>
+            <div class="analysis-content" id="analysisContent">${chart.explanation || ''}</div>
+        `;
+
+        if (messages && messages.length > 0) {
+            html += `<hr class="section-divider"><div class="section-label">Follow-up conversation</div><div id="threadEl">`;
+            messages.forEach(m => {
+                const cls  = m.role === 'user' ? 'user' : 'assistant';
+                const body = m.html || escapeHtml(m.content);
+                html += `<div class="msg-bubble ${cls}">${body}</div>`;
+            });
+            html += `</div>`;
+        }
+
+        html += `
+            <div class="comments-section" id="commentsSection">
+                <h2>Comments</h2>
+                <div id="commentsList"></div>
+                <div id="commentInput"></div>
+            </div>
+            <div class="cta-box">
+                <h3>Want to understand your own charts?</h3>
+                <p>Upload any chart and get an instant AI-powered breakdown — free to try.</p>
+                <a href="/" class="btn-accent">Try ChartHawk →</a>
+            </div>
+        `;
+
+        pageBody.innerHTML = html;
+
+        document.getElementById('copyLinkBtn').addEventListener('click', () => {
+            navigator.clipboard.writeText(location.href).then(() => {
+                const btn = document.getElementById('copyLinkBtn');
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => { btn.textContent = '🔗 Copy link'; }, 2000);
+            });
+        });
+    }
+
+    function renderNotFound() {
+        loadingSpinner.remove();
+        pageBody.innerHTML = `
+            <div class="error-state">
+                <h2>Chart not found</h2>
+                <p>This chart has been removed by its owner or made private.</p>
+                <br>
+                <a href="/gallery" class="btn-ghost">Browse the Gallery</a>
+            </div>`;
+    }
+
+    function renderError() {
+        loadingSpinner.remove();
+        pageBody.innerHTML = `
+            <div class="error-state">
+                <h2>Something went wrong</h2>
+                <p>Couldn't load this chart. Please try again.</p>
+                <br>
+                <button class="btn-ghost" onclick="location.reload()">Retry</button>
+            </div>`;
+    }
+
+    // ── Comments ──────────────────────────────────────────────────────────────
+    async function loadComments() {
+        const listEl = document.getElementById('commentsList');
+        if (!listEl) return;
+        try {
+            const res = await fetch(`/api/chart/${CHART_ID}/comments`);
+            if (!res.ok) throw new Error();
+            const { comments } = await res.json();
+            commentsData = comments || [];
+            renderCommentsList();
+            refreshCommentInput();
+        } catch {
+            if (listEl) listEl.innerHTML = `<p style="color:var(--text-muted);font-size:0.85em;">Couldn't load comments.</p>`;
+        }
+    }
+
+    function renderCommentsList() {
+        const listEl = document.getElementById('commentsList');
+        if (!listEl) return;
+        if (commentsData.length === 0) {
+            listEl.innerHTML = `<p style="color:var(--text-muted);font-size:0.85em;margin-bottom:16px;">No comments yet. Be the first!</p>`;
+            return;
+        }
+        listEl.innerHTML = commentsData.map(c => {
+            const isOwn    = currentUser && currentUser.id === c.user_id;
+            const actions  = isOwn ? `
+                <div class="comment-actions">
+                    <button class="comment-action-btn" onclick="startEditComment('${c.id}')">Edit</button>
+                    <button class="comment-action-btn danger" onclick="deleteComment('${c.id}')">Delete</button>
+                </div>` : '';
+            return `
+                <div class="comment-item" id="comment-${c.id}">
+                    <div class="comment-header">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span class="comment-author">${escapeHtml(c.author_name || 'Anonymous')}</span>
+                            <span class="comment-date">${formatDateTime(c.created_at)}${c.updated_at !== c.created_at ? ' (edited)' : ''}</span>
+                        </div>
+                        ${actions}
+                    </div>
+                    <div class="comment-content" id="comment-content-${c.id}">${escapeHtml(c.content)}</div>
+                </div>`;
+        }).join('');
+    }
+
+    function refreshCommentInput() {
+        const inputEl = document.getElementById('commentInput');
+        if (!inputEl) return;
+        if (currentUser) {
+            inputEl.innerHTML = `
+                <div class="comment-form">
+                    <textarea class="comment-textarea" id="newCommentText" placeholder="Add a comment…" maxlength="1000"></textarea>
+                    <div class="comment-form-footer">
+                        <button class="comment-submit-btn" id="submitCommentBtn">Post comment</button>
+                    </div>
+                </div>`;
+            document.getElementById('submitCommentBtn').addEventListener('click', submitComment);
+        } else {
+            inputEl.innerHTML = `
+                <div class="sign-in-prompt">
+                    <p>Sign in to leave a comment</p>
+                    <button class="btn-accent" id="signInToCommentBtn">Sign in</button>
+                </div>`;
+            document.getElementById('signInToCommentBtn').addEventListener('click', () => {
+                signInModal.classList.add('visible');
+            });
+        }
+    }
+
+    async function submitComment() {
+        const textarea = document.getElementById('newCommentText');
+        const btn      = document.getElementById('submitCommentBtn');
+        const content  = textarea.value.trim();
+        if (!content) return;
+        btn.disabled = true; btn.textContent = 'Posting…';
+        const token = getStoredToken();
+        try {
+            const res = await fetch(`/api/chart/${CHART_ID}/comments`, {
+                method:  'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ content }),
+            });
+            if (!res.ok) throw new Error((await res.json()).error || 'Failed');
+            textarea.value = '';
+            await loadComments();
+        } catch (err) {
+            alert('Failed to post comment: ' + err.message);
+        } finally {
+            btn.disabled = false; btn.textContent = 'Post comment';
+        }
+    }
+
+    function startEditComment(id) {
+        const comment    = commentsData.find(c => c.id === id);
+        const contentEl  = document.getElementById(`comment-content-${id}`);
+        if (!comment || !contentEl) return;
+        contentEl.innerHTML = `
+            <textarea class="comment-textarea" id="edit-textarea-${id}" style="min-height:60px;">${escapeHtml(comment.content)}</textarea>
+            <div class="comment-form-footer" style="margin-top:6px;">
+                <button class="comment-action-btn" onclick="cancelEdit('${id}')">Cancel</button>
+                <button class="comment-submit-btn" style="padding:5px 12px;font-size:0.8em;" onclick="saveEdit('${id}')">Save</button>
+            </div>`;
+    }
+
+    function cancelEdit(id) {
+        renderCommentsList();
+    }
+
+    async function saveEdit(id) {
+        const textarea = document.getElementById(`edit-textarea-${id}`);
+        const content  = textarea?.value.trim();
+        if (!content) return;
+        const token = getStoredToken();
+        try {
+            const res = await fetch(`/api/comment/${id}`, {
+                method:  'PUT',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ content }),
+            });
+            if (!res.ok) throw new Error((await res.json()).error || 'Failed');
+            const c = commentsData.find(c => c.id === id);
+            if (c) { c.content = content; c.updated_at = new Date().toISOString(); }
+            renderCommentsList();
+        } catch (err) {
+            alert('Failed to save: ' + err.message);
+        }
+    }
+
+    async function deleteComment(id) {
+        if (!confirm('Delete this comment?')) return;
+        const token = getStoredToken();
+        try {
+            const res = await fetch(`/api/comment/${id}`, {
+                method:  'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (!res.ok) throw new Error();
+            commentsData = commentsData.filter(c => c.id !== id);
+            renderCommentsList();
+        } catch {
+            alert('Failed to delete comment.');
+        }
+    }
+
+    // ── Sign-in modal ─────────────────────────────────────────────────────────
+    document.getElementById('modalClose').addEventListener('click', () => {
+        signInModal.classList.remove('visible');
+    });
+
+    document.getElementById('googleSignIn').addEventListener('click', async () => {
+        await sb.auth.signInWithOAuth({
+            provider: 'google',
+            options:  { redirectTo: location.href },
+        });
+    });
+
+    document.getElementById('authSubmit').addEventListener('click', async () => {
+        const email    = document.getElementById('authEmail').value.trim();
+        const password = document.getElementById('authPassword').value;
+        const errEl    = document.getElementById('authError');
+        errEl.textContent = '';
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) { errEl.textContent = error.message; }
+        else { signInModal.classList.remove('visible'); }
+    });
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    loadChart();
+</script>
+</body>
+</html>

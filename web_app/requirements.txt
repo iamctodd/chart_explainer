@@ -3,3 +3,4 @@ anthropic
 gunicorn
 markdown
 supabase
+Pillow

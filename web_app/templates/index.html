@@ -151,6 +151,8 @@
             cursor: pointer; text-align: left; transition: background 0.15s, border-color 0.15s; margin-bottom: 16px;
         }
         .new-chart-btn:hover { background: var(--bg-card); border-color: var(--accent); }
+        .gallery-nav-btn { display: block; text-align: center; padding: 7px 12px; margin-bottom: 12px; border-radius: 8px; background: var(--bg-input); border: 1px solid var(--border); color: var(--text-muted); font-size: 0.82em; text-decoration: none; transition: all 0.15s; }
+        .gallery-nav-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--bg-card); }
         .sidebar-loading { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 32px 16px; color: var(--text-muted); font-size: 0.85em; }
         .sidebar-loading .spin { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -487,6 +489,7 @@
             <button class="new-chart-btn" id="newChartBtn">＋ New Chart</button>
             <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Collapse sidebar">‹</button>
         </div>
+        <a href="/gallery" class="gallery-nav-btn">🖼 Gallery</a>
         <div class="sidebar-section-label">History</div>
         <div class="sidebar-history" id="sidebarHistory"></div>
         <div class="sidebar-footer">
@@ -691,6 +694,7 @@
 <div class="chart-menu" id="chartMenu">
     <button class="chart-menu-item" id="menuStar">⭐ Star</button>
     <button class="chart-menu-item" id="menuRename">✏️ Rename</button>
+    <button class="chart-menu-item" id="menuPublish">🌐 Make Public</button>
     <button class="chart-menu-item danger" id="menuDelete">🗑 Delete</button>
 </div>
 
@@ -1299,7 +1303,7 @@
         try {
             // Fetch charts via direct REST (no Supabase client lock involved)
             const chartsUrl = new URL(`${SUPABASE_URL}/rest/v1/charts`);
-            chartsUrl.searchParams.set('select', 'id,filename,display_name,starred,image_data,explanation,analysis_raw,created_at');
+            chartsUrl.searchParams.set('select', 'id,filename,display_name,starred,is_public,image_data,explanation,analysis_raw,created_at');
             chartsUrl.searchParams.set('order', 'created_at.desc');
             chartsUrl.searchParams.set('limit', String(MAX_HISTORY));
             const chartsRes = await fetch(chartsUrl, { headers });
@@ -1330,6 +1334,7 @@
                 filename:    c.filename,
                 displayName: c.display_name || null,
                 starred:     c.starred,
+                isPublic:    c.is_public || false,
                 conversation: (messages || [])
                     .filter(m => m.chart_id === c.id)
                     .map(m => ({ role: m.role, content: m.content, html: m.html || '' })),
@@ -1362,6 +1367,7 @@
                 filename:     chartData.filename,
                 display_name: chartData.displayName,
                 starred:      chartData.starred,
+                is_public:    false,
                 image_data:   chartData.image,
                 explanation:  chartData.explanation,
                 analysis_raw: chartData.analysisRaw,
@@ -1470,6 +1476,7 @@
 
     async function handleFile(file) {
         if (!file.type.startsWith('image/')) { showError('Please upload an image file'); return; }
+        if (file.size > 5 * 1024 * 1024) { showError('Image must be under 5MB. Please resize and try again.'); return; }
 
         if (appState === 'landing') { loadingEl.classList.add('visible'); errorEl.style.display = 'none'; }
         mainSendBtn.disabled = true;
@@ -1496,7 +1503,7 @@
                 for await (const { event, data } of readSSE(response)) {
                     if (event === 'image') {
                         analysisCount++;
-                        chartData = { id: analysisCount, timestamp: new Date(), image: data.image, explanation: '', analysisRaw: '', filename: file.name, displayName: null, starred: false, conversation: [] };
+                        chartData = { id: analysisCount, timestamp: new Date(), image: data.image, explanation: '', analysisRaw: '', filename: file.name, displayName: null, starred: false, isPublic: false, conversation: [] };
                         chartHistory.unshift(chartData);
                         loadingEl.classList.remove('visible');
                         switchToChatView(chartData.id);
@@ -1590,6 +1597,7 @@
                 ${escapeHtml(chart.displayName || chart.filename)} · ${formatTime(chart.timestamp)}
                 <button class="copy-btn-inline" id="copy-${chart.id}" onclick="copyAnalysis('${chart.id}')">📋 Copy</button>
                 <button class="meta-action-btn" onclick="exportChart('${chart.id}')">⬇ Export</button>
+                <button class="meta-action-btn" id="share-btn-${chart.id}" onclick="handleShareBtn('${chart.id}')">${chart.isPublic ? '🔗 Share' : '🌐 Make Public'}</button>
             </div>
             <div class="${analysisClass}" id="analysis-${chart.id}">${chart.explanation}</div>
             <hr class="chat-divider">
@@ -1782,16 +1790,18 @@
 
     // ── Sidebar context menu ───────────────────────────────────
 
-    const chartMenu  = document.getElementById('chartMenu');
-    const menuStar   = document.getElementById('menuStar');
-    const menuRename = document.getElementById('menuRename');
-    const menuDelete = document.getElementById('menuDelete');
-    let menuActiveId = null;
+    const chartMenu   = document.getElementById('chartMenu');
+    const menuStar    = document.getElementById('menuStar');
+    const menuRename  = document.getElementById('menuRename');
+    const menuPublish = document.getElementById('menuPublish');
+    const menuDelete  = document.getElementById('menuDelete');
+    let menuActiveId  = null;
 
     function openChartMenu(event, id) {
         menuActiveId = id;
         const chart  = chartHistory.find(c => c.id === id);
-        menuStar.textContent = chart?.starred ? '★ Unstar' : '⭐ Star';
+        menuStar.textContent     = chart?.starred   ? '★ Unstar'       : '⭐ Star';
+        menuPublish.textContent  = chart?.isPublic  ? '🔒 Make Private' : '🌐 Make Public';
         const rect = event.currentTarget.getBoundingClientRect();
         chartMenu.style.top  = (rect.bottom + 4) + 'px';
         chartMenu.style.left = Math.min(rect.left, window.innerWidth - 180) + 'px';
@@ -1860,6 +1870,57 @@
             chartHistory.length > 0 ? switchToChatView(chartHistory[0].id) : goToLanding();
         } else { renderSidebar(); }
     });
+
+    menuPublish.addEventListener('click', async () => {
+        const id = menuActiveId; closeChartMenu();
+        await togglePublish(id);
+    });
+
+    async function togglePublish(id) {
+        const chart = chartHistory.find(c => c.id === id);
+        if (!chart) return;
+        const newState = !chart.isPublic;
+        const btn = document.getElementById(`share-btn-${id}`);
+        if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+        try {
+            const token = getStoredAccessToken();
+            const res = await fetch(`/api/chart/${id}/publish`, {
+                method:  'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ is_public: newState }),
+            });
+            if (!res.ok) throw new Error((await res.json()).error || 'Publish failed');
+            chart.isPublic = newState;
+            renderMainPanel(id);
+        } catch (err) {
+            console.error('togglePublish failed:', err.message);
+            if (btn) { btn.textContent = '✗ Failed'; btn.disabled = false; }
+        }
+    }
+
+    async function handleShareBtn(id) {
+        const chart = chartHistory.find(c => c.id === id);
+        if (!chart) return;
+        if (chart.isPublic) {
+            copyShareLink(id);
+        } else {
+            await togglePublish(id);
+        }
+    }
+
+    function copyShareLink(id) {
+        const url = `${location.origin}/share/${id}`;
+        navigator.clipboard.writeText(url).then(() => {
+            const btn = document.getElementById(`share-btn-${id}`);
+            if (btn) {
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => { btn.textContent = '🔗 Share'; }, 2000);
+            }
+        }).catch(() => {
+            const btn = document.getElementById(`share-btn-${id}`);
+            if (btn) btn.textContent = '✗ Failed';
+        });
+    }
 
     // ── Feedback modal ─────────────────────────────────────────
 
