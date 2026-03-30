@@ -585,13 +585,13 @@ def add_comment(chart_id):
         author_name = 'Anonymous'
 
     try:
-        resp = admin_client.from_('comments').insert({
+        admin_client.from_('comments').insert({
             'chart_id':    chart_id,
             'user_id':     request.user_id,
             'author_name': author_name,
             'content':     content,
-        }).select().single().execute()
-        return jsonify({'comment': resp.data}), 201
+        }).execute()
+        return jsonify({'ok': True}), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
