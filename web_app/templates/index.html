@@ -386,6 +386,8 @@
             cursor: pointer; font-family: inherit; transition: color 0.15s, border-color 0.15s;
         }
         .landing-signin-link:hover { color: var(--text-primary); border-color: var(--text-muted); }
+        .landing-gallery-link { color: var(--text-muted); font-size: 0.82em; text-decoration: none; padding: 6px 10px; border-radius: 7px; transition: color 0.15s; }
+        .landing-gallery-link:hover { color: var(--accent); }
         .landing-user-chip {
             display: flex; align-items: center; gap: 7px;
             background: var(--bg-surface); border: 1px solid var(--border);
@@ -445,6 +447,7 @@
     <div class="landing-brand">📊 ChartHawk</div>
     <!-- Auth status: top-right of landing -->
     <div class="landing-auth-status" id="landingAuthStatus">
+        <a href="/gallery" class="landing-gallery-link">🖼 Gallery</a>
         <button class="landing-signin-link" id="landingSignInBtn">Sign in</button>
     </div>
     <h1 class="landing-headline">What chart do you<br>want to understand?</h1>
