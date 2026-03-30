@@ -866,10 +866,11 @@
             if (landingStatus) {
                 const name = currentUser.user_metadata?.full_name || currentUser.email || '';
                 const avatar = currentUser.user_metadata?.avatar_url || '';
-                landingStatus.innerHTML = `<div class="landing-user-chip" id="landingUserChip" title="Edit profile">
-                    ${avatar ? `<img src="${avatar}" alt="">` : ''}
-                    <span>${escapeHtml(name)}</span>
-                </div>`;
+                landingStatus.innerHTML = `<a href="/gallery" class="landing-gallery-link">🖼 Gallery</a>
+                    <div class="landing-user-chip" id="landingUserChip" title="Edit profile">
+                        ${avatar ? `<img src="${avatar}" alt="">` : ''}
+                        <span>${escapeHtml(name)}</span>
+                    </div>`;
                 document.getElementById('landingUserChip')?.addEventListener('click', openProfileModal);
             }
             // Show admin link if admin
@@ -888,7 +889,7 @@
             if (vhEl) vhEl.style.display = 'none';
             // Landing top-right: restore sign-in button
             if (landingStatus) {
-                landingStatus.innerHTML = `<button class="landing-signin-link" id="landingSignInBtn">Sign in</button>`;
+                landingStatus.innerHTML = `<a href="/gallery" class="landing-gallery-link">🖼 Gallery</a><button class="landing-signin-link" id="landingSignInBtn">Sign in</button>`;
                 document.getElementById('landingSignInBtn')?.addEventListener('click', openAuthModal);
             }
             if (authState === 'signed-out' && appState === 'chat') goToLanding();
