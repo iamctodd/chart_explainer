@@ -7,6 +7,8 @@ import markdown
 import json
 import re
 import io
+import hashlib
+import secrets
 from PIL import Image
 from supabase import create_client
 
@@ -50,6 +52,10 @@ def require_auth(f):
     return decorated
 
 
+def hash_api_key(raw_key):
+    return hashlib.sha256(raw_key.encode()).hexdigest()
+
+
 def calculate_cost(input_tokens, output_tokens):
     """Cost in USD — claude-sonnet-4-20250514: $3/1M input, $15/1M output"""
     return round((input_tokens * 3.0 + output_tokens * 15.0) / 1_000_000, 6)
@@ -71,6 +77,39 @@ def require_admin(f):
             request.admin_user = resp.user
         except Exception:
             return jsonify({'error': 'Unauthorized'}), 401
+        return f(*args, **kwargs)
+    return decorated
+
+
+def require_api_key(f):
+    """Authenticate via a stable sk-hawk-... API key stored in api_keys table."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not admin_client:
+            return jsonify({'error': 'Server misconfigured'}), 500
+        auth_header = request.headers.get('Authorization', '')
+        if not auth_header.startswith('Bearer sk-hawk-'):
+            return jsonify({'error': 'Valid API key required (Bearer sk-hawk-...)'}), 401
+        raw_key  = auth_header[7:]
+        key_hash = hash_api_key(raw_key)
+        try:
+            result = admin_client.from_('api_keys') \
+                .select('id,user_id') \
+                .eq('key_hash', key_hash) \
+                .single().execute()
+            if not result.data:
+                raise ValueError('Key not found')
+            request.user_id = result.data['user_id']
+            # Update last_used_at — fire and forget
+            try:
+                from datetime import datetime, timezone
+                admin_client.from_('api_keys') \
+                    .update({'last_used_at': datetime.now(timezone.utc).isoformat()}) \
+                    .eq('id', result.data['id']).execute()
+            except Exception:
+                pass
+        except Exception:
+            return jsonify({'error': 'Invalid or revoked API key'}), 401
         return f(*args, **kwargs)
     return decorated
 
@@ -396,6 +435,107 @@ def admin_promote():
         meta['is_admin'] = grant
         admin_client.auth.admin.update_user_by_id(target.id, {'user_metadata': meta})
         return jsonify({'success': True, 'email': email, 'is_admin': grant})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ── API Key management routes ─────────────────────────────────────────────────
+
+@app.route('/api/keys', methods=['GET'])
+@require_auth
+def list_api_keys():
+    if not admin_client:
+        return jsonify({'error': 'Server misconfigured'}), 500
+    try:
+        resp = admin_client.from_('api_keys') \
+            .select('id,name,key_prefix,created_at,last_used_at') \
+            .eq('user_id', request.user_id) \
+            .order('created_at', desc=True) \
+            .execute()
+        return jsonify({'keys': resp.data or []})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/keys', methods=['POST'])
+@require_auth
+def create_api_key():
+    if not admin_client:
+        return jsonify({'error': 'Server misconfigured'}), 500
+    body = request.get_json() or {}
+    name = body.get('name', '').strip() or 'My API key'
+    raw_key    = 'sk-hawk-' + secrets.token_urlsafe(32)
+    key_prefix = raw_key[:16] + '…'
+    key_hash   = hash_api_key(raw_key)
+    try:
+        admin_client.from_('api_keys').insert({
+            'user_id':    request.user_id,
+            'name':       name,
+            'key_hash':   key_hash,
+            'key_prefix': key_prefix,
+        }).execute()
+        # Return the raw key ONCE — never stored, never retrievable again
+        return jsonify({'key': raw_key, 'prefix': key_prefix, 'name': name}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/keys/<key_id>', methods=['DELETE'])
+@require_auth
+def delete_api_key(key_id):
+    if not admin_client:
+        return jsonify({'error': 'Server misconfigured'}), 500
+    try:
+        admin_client.from_('api_keys') \
+            .delete() \
+            .eq('id', key_id) \
+            .eq('user_id', request.user_id) \
+            .execute()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ── Programmatic API (API key auth) ───────────────────────────────────────────
+
+@app.route('/api/v1/analyze', methods=['POST'])
+@require_api_key
+def api_v1_analyze():
+    """Synchronous JSON endpoint for programmatic use (Claude Skills, scripts, etc.)"""
+    if 'chart' not in request.files:
+        return jsonify({'error': 'No file uploaded. Send chart as multipart/form-data field "chart".'}), 400
+    file = request.files['chart']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    image_bytes  = file.read()
+    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+    media_type   = file.content_type
+    if not media_type or not media_type.startswith('image/'):
+        media_type = 'image/png'
+    try:
+        message = claude.messages.create(
+            model='claude-sonnet-4-20250514',
+            max_tokens=1500,
+            messages=[make_image_message(image_base64, media_type)],
+        )
+        raw_text = message.content[0].text
+        # Track usage
+        try:
+            if admin_client:
+                admin_client.table('usage').insert({
+                    'user_id':       request.user_id,
+                    'chart_id':      None,
+                    'event':         'analyze',
+                    'input_tokens':  message.usage.input_tokens,
+                    'output_tokens': message.usage.output_tokens,
+                    'cost_usd':      calculate_cost(message.usage.input_tokens, message.usage.output_tokens),
+                }).execute()
+        except Exception as ue:
+            print(f'Usage tracking error: {ue}')
+        return jsonify({
+            'analysis': raw_text,
+            'filename': file.filename,
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

@@ -503,6 +503,7 @@
                 <button class="sign-out-btn" id="signOutBtn">Sign out</button>
             </div>
             <a href="/admin" target="_blank" id="adminLink" style="display:none;" class="sidebar-footer-btn">⚙️ Admin dashboard</a>
+            <button class="sidebar-footer-btn" id="apiKeysBtn" style="display:none;">🔑 API Keys</button>
             <button class="sidebar-footer-btn danger" id="clearHistoryBtn">🗑 Clear history</button>
             <button class="sidebar-footer-btn" id="feedbackBtn">💬 Send feedback</button>
         </div>
@@ -644,6 +645,30 @@
         </div>
         <div style="margin-top:14px; text-align:center;">
             <a href="#" id="authCloseBtn" style="font-size:0.8em; color:var(--text-muted);">Cancel</a>
+        </div>
+    </div>
+</div>
+
+<!-- ── API KEYS MODAL ────────────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="apiKeysModal">
+    <div class="modal" style="max-width:560px;">
+        <h2>🔑 API Keys</h2>
+        <p>Use these to call ChartHawk from scripts or Claude Code skills. A key is shown once — save it somewhere safe.</p>
+        <div id="apiKeysList" style="margin-bottom:18px;"></div>
+        <div id="apiKeyReveal" style="display:none; background:var(--bg-input); border:1px solid var(--accent); border-radius:8px; padding:14px; margin-bottom:18px;">
+            <div style="font-size:0.75em; color:var(--accent); font-weight:700; margin-bottom:8px;">⚠ Copy this key now — it won't be shown again</div>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <code id="apiKeyValue" style="flex:1; font-size:0.82em; word-break:break-all; color:var(--text-primary); background:none; border:none;"></code>
+                <button class="modal-btn submit" id="copyApiKeyBtn" style="white-space:nowrap; padding:6px 14px; font-size:0.8em;">Copy</button>
+            </div>
+        </div>
+        <div style="display:flex; gap:8px; margin-bottom:6px;">
+            <input type="text" class="auth-field-input" id="apiKeyName" placeholder="Key name (e.g. Claude Code skill)" style="flex:1; background:var(--bg-input); border:1px solid var(--border); border-radius:8px; color:var(--text-primary); padding:9px 12px; font-size:0.9em; outline:none;">
+            <button class="modal-btn submit" id="generateApiKeyBtn" style="white-space:nowrap;">Generate key</button>
+        </div>
+        <div class="profile-error" id="apiKeysError" style="display:none;"></div>
+        <div class="modal-buttons" style="margin-top:18px;">
+            <button class="modal-btn cancel" id="apiKeysCancelBtn">Close</button>
         </div>
     </div>
 </div>
@@ -878,6 +903,9 @@
             if (adminLink) {
                 adminLink.style.display = currentUser?.user_metadata?.is_admin ? '' : 'none';
             }
+            // Show API Keys button for all signed-in users
+            const apiKeysBtnEl = document.getElementById('apiKeysBtn');
+            if (apiKeysBtnEl) apiKeysBtnEl.style.display = '';
             // Show "View History" button
             const vh = document.getElementById('viewHistoryNudge');
             if (vh) vh.style.display = '';
@@ -887,6 +915,8 @@
             if (nudge) nudge.style.display = '';
             const vhEl = document.getElementById('viewHistoryNudge');
             if (vhEl) vhEl.style.display = 'none';
+            const apiKeysBtnEl2 = document.getElementById('apiKeysBtn');
+            if (apiKeysBtnEl2) apiKeysBtnEl2.style.display = 'none';
             // Landing top-right: restore sign-in button
             if (landingStatus) {
                 landingStatus.innerHTML = `<a href="/gallery" class="landing-gallery-link">🖼 Gallery</a><button class="landing-signin-link" id="landingSignInBtn">Sign in</button>`;
@@ -1925,6 +1955,107 @@
             if (btn) btn.textContent = '✗ Failed';
         });
     }
+
+    // ── API Keys modal ─────────────────────────────────────────
+
+    const apiKeysModal     = document.getElementById('apiKeysModal');
+    const apiKeysCancelBtn = document.getElementById('apiKeysCancelBtn');
+    const generateApiKeyBtn= document.getElementById('generateApiKeyBtn');
+    const copyApiKeyBtn    = document.getElementById('copyApiKeyBtn');
+    const apiKeysList      = document.getElementById('apiKeysList');
+    const apiKeyReveal     = document.getElementById('apiKeyReveal');
+    const apiKeyValue      = document.getElementById('apiKeyValue');
+    const apiKeyName       = document.getElementById('apiKeyName');
+    const apiKeysError     = document.getElementById('apiKeysError');
+
+    document.getElementById('apiKeysBtn')?.addEventListener('click', openApiKeysModal);
+    apiKeysCancelBtn?.addEventListener('click', () => apiKeysModal.classList.remove('active'));
+
+    async function openApiKeysModal() {
+        apiKeysModal.classList.add('active');
+        apiKeyReveal.style.display = 'none';
+        apiKeyName.value = '';
+        apiKeysError.style.display = 'none';
+        await refreshApiKeysList();
+    }
+
+    async function refreshApiKeysList() {
+        apiKeysList.innerHTML = '<div style="color:var(--text-muted);font-size:0.85em;">Loading…</div>';
+        try {
+            const token = getStoredAccessToken();
+            const res   = await fetch('/api/keys', { headers: { 'Authorization': `Bearer ${token}` } });
+            if (!res.ok) throw new Error();
+            const { keys } = await res.json();
+            if (!keys.length) {
+                apiKeysList.innerHTML = '<div style="color:var(--text-muted);font-size:0.85em;margin-bottom:4px;">No keys yet. Generate one below.</div>';
+                return;
+            }
+            apiKeysList.innerHTML = keys.map(k => `
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+                    <div>
+                        <div style="font-size:0.88em;font-weight:600;color:var(--text-primary);">${escapeHtml(k.name)}</div>
+                        <div style="font-size:0.78em;color:var(--text-muted);font-family:monospace;">${escapeHtml(k.key_prefix)}</div>
+                        <div style="font-size:0.75em;color:var(--text-muted);">
+                            Created ${new Date(k.created_at).toLocaleDateString()}
+                            ${k.last_used_at ? ' · Last used ' + new Date(k.last_used_at).toLocaleDateString() : ' · Never used'}
+                        </div>
+                    </div>
+                    <button class="modal-btn cancel" style="padding:5px 12px;font-size:0.78em;color:var(--danger);border-color:var(--danger);" onclick="revokeApiKey('${k.id}')">Revoke</button>
+                </div>
+            `).join('');
+        } catch {
+            apiKeysList.innerHTML = '<div style="color:var(--danger);font-size:0.85em;">Failed to load keys.</div>';
+        }
+    }
+
+    generateApiKeyBtn?.addEventListener('click', async () => {
+        const name = apiKeyName.value.trim() || 'My API key';
+        generateApiKeyBtn.disabled = true;
+        generateApiKeyBtn.textContent = 'Generating…';
+        apiKeysError.style.display = 'none';
+        apiKeyReveal.style.display = 'none';
+        try {
+            const token = getStoredAccessToken();
+            const res   = await fetch('/api/keys', {
+                method:  'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ name }),
+            });
+            if (!res.ok) throw new Error((await res.json()).error || 'Failed');
+            const { key } = await res.json();
+            apiKeyValue.textContent = key;
+            apiKeyReveal.style.display = 'block';
+            apiKeyName.value = '';
+            await refreshApiKeysList();
+        } catch (err) {
+            apiKeysError.textContent = err.message;
+            apiKeysError.style.display = 'block';
+        } finally {
+            generateApiKeyBtn.disabled = false;
+            generateApiKeyBtn.textContent = 'Generate key';
+        }
+    });
+
+    copyApiKeyBtn?.addEventListener('click', () => {
+        navigator.clipboard.writeText(apiKeyValue.textContent).then(() => {
+            copyApiKeyBtn.textContent = '✓ Copied!';
+            setTimeout(() => { copyApiKeyBtn.textContent = 'Copy'; }, 2000);
+        });
+    });
+
+    async function revokeApiKey(id) {
+        if (!confirm('Revoke this key? Any scripts using it will stop working.')) return;
+        try {
+            const token = getStoredAccessToken();
+            await fetch(`/api/keys/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            apiKeyReveal.style.display = 'none';
+            await refreshApiKeysList();
+        } catch {
+            alert('Failed to revoke key.');
+        }
+    }
+
+    window.revokeApiKey = revokeApiKey;
 
     // ── Feedback modal ─────────────────────────────────────────
 
