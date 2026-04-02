@@ -1,158 +1,112 @@
 # 🗺️ ChartHawk Roadmap
 
-## Current Version: v0.1 (MVP)
-
-This roadmap outlines planned features and improvements for ChartHawk. Items are organized by priority and complexity.
+*Last updated: April 2, 2026*
 
 ---
 
-## ✅ Completed (v0.1)
+## ✅ Shipped
 
-- [x] Basic chart upload and analysis
-- [x] Multi-chart session history
-- [x] Expandable/collapsible analysis cards
-- [x] Copy to clipboard functionality
-- [x] Feedback form integration
-- [x] Railway deployment
-- [x] Responsive design
-
----
-
-## 🚀 Next Up (v0.2) - Q1 2026
-
-### High Priority
-
-- [ ] **File type expansion**
-  - Support for PDF uploads
-  - Excel/Google Sheets screenshots
-  - Multi-page documents
-
-- [ ] **Export options**
-  - Download analysis as PDF
-  - Download as Markdown
-  - Export multiple analyses at once
-
-- [ ] **Analytics integration**
-  - Track usage metrics (Plausible/Cloudflare)
-  - Monitor chart types analyzed
-  - User engagement metrics
-
-### Medium Priority
-
-- [ ] **Enhanced analysis**
-  - Detect chart type automatically
-  - Provide industry-specific insights
-  - Compare multiple charts side-by-side
-
-- [ ] **UX improvements**
-  - Keyboard shortcuts (Ctrl+V to paste image)
-  - Batch upload (multiple charts at once)
-  - Dark mode toggle
-
-- [ ] **Performance**
-  - Image compression before upload
-  - Faster analysis response times
-  - Better error handling and retry logic
+- [x] Chart upload and AI-powered analysis (Claude claude-sonnet-4-20250514 with vision)
+- [x] Real-time streaming responses (SSE)
+- [x] Follow-up conversation threads per chart
+- [x] Multi-chart session history with sidebar
+- [x] Google OAuth + email/password auth (Supabase)
+- [x] Persistent chart + conversation history (Postgres + RLS)
+- [x] User profiles (name, avatar, password change)
+- [x] Export analysis to Markdown
+- [x] Public Gallery (community chart feed)
+- [x] Shareable analysis links (`/share/<id>`)
+- [x] Per-chart public/private toggle
+- [x] Comment threads on public charts
+- [x] Admin dashboard (usage, cost, promote/demote)
+- [x] API key system (`sk-hawk-...`) for programmatic access
+- [x] `/api/v1/analyze` endpoint (JSON, no SSE — for scripts and skills)
+- [x] Claude Code Skill (`skills/charthawk.md`)
+- [x] PostHog analytics
+- [x] Formspree feedback integration
+- [x] Railway deployment (gunicorn, auto-deploy from GitHub)
+- [x] 5MB upload size limit (client + server enforced)
 
 ---
 
-## 🔮 Future Considerations (v0.3+)
+## 🔜 Next Up
 
-### Collaboration Features
+### ALT text generation
+Auto-generate a concise, screen-reader-friendly alt text description for every uploaded chart. Stored alongside the analysis. Used in:
+- Gallery card `<img alt="...">` attributes
+- Share page image rendering
+- Exported Markdown files
 
-- [ ] Shareable analysis links
-- [ ] Team workspaces
-- [ ] Comment threads on analyses
-- [ ] Email sharing
+*Implementation: small addition to the analysis prompt; new `alt_text` column on `charts` table.*
 
-### Advanced Analysis
+### Chart type tagging
+Ask Claude to classify each chart at analysis time (bar, line, scatter, heatmap, pie, funnel, treemap, etc.) and store it as a structured tag. Enables:
+- Filter the public gallery by chart type
+- Tag badges on gallery cards and share pages
+- Search/filter within a user's own history
 
-- [ ] Ask follow-up questions about charts
-- [ ] Suggest alternative visualizations
-- [ ] Data extraction from charts
-- [ ] Trend prediction and forecasting
+*Implementation: add to `gallery_summary` JSON or a dedicated `chart_type` column; filter UI on gallery page.*
+
+### UX + UI polish pass
+Inspired by [ini.fyi](https://ini.fyi) — richer micro-interactions, smoother transitions, more considered hover/focus states. Particularly relevant for:
+- Gallery card hover animations
+- Share page scroll behavior
+- Analysis reveal transitions
+
+---
+
+## 🔮 Future Considerations
+
+### Analysis enhancements
+- [ ] Suggest alternative visualizations for the same data
+- [ ] Side-by-side chart comparison
+- [ ] Data extraction (pull numbers out of a chart image)
+- [ ] Industry-specific insight modes (finance, product, marketing)
+
+### File type expansion
+- [ ] PDF upload — extract and analyze individual charts from multi-page documents
+- [ ] Batch upload — analyze multiple charts in one session
+
+### Sharing + collaboration
+- [ ] Shareable collections (group related charts)
+- [ ] Team workspaces with shared history
+- [ ] Email sharing of analysis links
 
 ### Integrations
+- [ ] Browser extension — analyze any chart on any webpage
+- [ ] Slack app — forward a chart image, get analysis in thread
+- [ ] Google Slides / PowerPoint — analyze charts directly in presentations
 
-- [ ] Slack app improvements
-  - DM support working reliably
-  - Scheduled chart summaries
-  - Integration with Slack Canvas
-  
-- [ ] Google Workspace
-  - Drive integration
-  - Sheets addon
-  
-- [ ] Microsoft 365
-  - Teams bot
-  - Excel integration
-
-### Enterprise Features
-
-- [ ] User authentication
-- [ ] Persistent storage
-- [ ] API access
-- [ ] Custom branding
-- [ ] Usage analytics dashboard
-- [ ] Role-based permissions
+### API + developer experience
+- [ ] OpenAPI spec / Swagger docs for `/api/v1/`
+- [ ] Webhook support (POST analysis results to a URL)
+- [ ] MCP server (`charthawk-mcp`) for broader Claude ecosystem compatibility
 
 ---
 
 ## 💡 Ideas Under Consideration
 
-These are potential features that need more validation:
-
-- **AI tutor mode**: Teach users how to read charts better
-- **Chart creation wizard**: Help users create better visualizations
-- **Accessibility checker**: Identify charts that are hard to read
-- **Mobile app**: Native iOS/Android apps
-- **Browser extension**: Analyze charts directly on web pages
-- **Email parsing**: Forward charts via email for analysis
-- **Video support**: Analyze charts from presentation videos
+- **AI tutor mode** — teach users how to read a specific chart type better
+- **Accessibility checker** — flag charts that are hard to read (color contrast, missing labels, etc.)
+- **Chart creation wizard** — help users build better visualizations from scratch
+- **Mobile app** — native iOS/Android
+- **Video support** — extract and analyze charts from presentation recordings
 
 ---
 
-## 🐛 Known Issues
+## 📊 Success Metrics
 
-Track bugs and technical debt:
-
-- [ ] Large images (>5MB) may timeout
-- [ ] Mobile upload UX could be smoother
-- [ ] Some complex dashboards need better handling
-
----
-
-## 📊 Metrics for Success
-
-How we'll measure progress:
-
-- **Adoption**: 100 unique users in first month
+- **Adoption**: 100 unique signed-in users
 - **Engagement**: 3+ charts analyzed per session
-- **Quality**: <5% feedback submissions report errors
-- **Performance**: <3 second analysis time
 - **Retention**: 20% weekly active users
+- **Quality**: <5% of sessions trigger an error
+- **Performance**: <3s to first analysis token
 
 ---
 
-## 🗳️ Community Input
+## Release History
 
-Have ideas? Vote on features or suggest new ones:
-
-- GitHub Discussions (coming soon)
-- Feedback form in app
-- Twitter: [@yourusername]
-
----
-
-## Release Schedule
-
-- **v0.1**: ✅ January 2026 (MVP launch)
-- **v0.2**: Target March 2026 (Export & Analytics)
-- **v0.3**: Target May 2026 (Advanced Features)
-- **v1.0**: Target Q3 2026 (Stable release)
-
----
-
-*Last updated: December 31, 2025*
-
-**Note**: This roadmap is a living document and priorities may shift based on user feedback and technical constraints.
+- **v0.1** — ✅ January 2026 — MVP (upload, analyze, streaming)
+- **v0.2** — ✅ March 2026 — Auth, history, admin, export, analytics
+- **v0.3** — ✅ April 2026 — Gallery, sharing, comments, API keys, Claude Skill
+- **v0.4** — 🔜 ALT text, chart type tagging, UI polish
