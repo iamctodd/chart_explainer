@@ -18,6 +18,6 @@ Accept any image format (PNG, JPG, GIF, PDF). The file size limit is 5MB.
 
 ### Step 2 — Call the ChartHawk API
 ```bash
-curl -X POST https://charthawk.info/analyze \
+curl -X POST https://charthawk.info/api/v1/analyze \
   -H "Authorization: Bearer $CHARTHAWK_API_KEY" \
   -F "chart=@/path/to/image.png"
