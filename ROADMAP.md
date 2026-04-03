@@ -89,8 +89,19 @@ Inspired by [ini.fyi](https://ini.fyi) — richer micro-interactions, smoother t
 - **AI tutor mode** — teach users how to read a specific chart type better
 - **Accessibility checker** — flag charts that are hard to read (color contrast, missing labels, etc.)
 - **Chart creation wizard** — help users build better visualizations from scratch
-- **Mobile app** — native iOS/Android
 - **Video support** — extract and analyze charts from presentation recordings
+
+### 📱 Mobile App
+Snap a photo of a chart (whiteboard, printed report, screen) or choose from your camera roll and get an analysis instantly. The mobile web experience already works reasonably well, but a native app unlocks meaningful advantages:
+
+- **Camera integration** — direct viewfinder capture, not just photo library picker
+- **Push notifications** — get notified when a long analysis completes
+- **Home screen shortcut** — one tap to open and shoot, no browser navigation
+- **Offline history** — browse past analyses without a connection
+- **Share sheet integration** — share a chart image from any app directly to ChartHawk for analysis
+- **Widgets** — quick-glance summary of your most recent analysis
+
+*Likely approach: React Native or a PWA with camera API — the `/api/v1/analyze` endpoint is already mobile-ready.*
 
 ---
 
