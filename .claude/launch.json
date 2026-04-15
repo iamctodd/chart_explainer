@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Web App",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["app.py"],
+      "port": 5000
+    },
+    {
+      "name": "Slack Bot",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["bot.py"],
+      "port": 3000
+    }
+  ]
+}
