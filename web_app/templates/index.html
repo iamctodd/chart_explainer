@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Charthawk — See What the Data's Hiding</title>
+    <title>ChartHawk — See What the Data's Hiding</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><polygon points='14,2 26,8.5 26,19.5 14,26 2,19.5 2,8.5' fill='none' stroke='%23e8a830' stroke-width='2'/><circle cx='14' cy='14' r='3' fill='%23e8a830'/></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -107,8 +107,8 @@
             display: flex; align-items: center; gap: 12px;
             cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; margin-bottom: 12px;
         }
-        .landing-upload-box:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
-        .landing-upload-box.dragover { border-color: var(--accent); background: rgba(124,58,237,0.06); box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
+        .landing-upload-box:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,168,48,0.12); }
+        .landing-upload-box.dragover { border-color: var(--accent); background: rgba(232,168,48,0.05); box-shadow: 0 0 0 3px rgba(232,168,48,0.15); }
         .upload-placeholder { flex: 1; color: var(--text-muted); font-size: 1em; user-select: none; }
         .upload-placeholder span { color: var(--accent); font-weight: 500; }
         .landing-upload-icon { font-size: 1.4em; flex-shrink: 0; opacity: 0.6; }
@@ -281,7 +281,7 @@
         .analysis-content h1, .analysis-content h2 { color: var(--accent); margin-top: 22px; margin-bottom: 8px; }
         .analysis-content h1 { font-size: 1.25em; } .analysis-content h2 { font-size: 1.1em; }
         .analysis-content p { margin-bottom: 14px; } .analysis-content p:last-child { margin-bottom: 0; }
-        .analysis-content strong { color: #c9b1f5; }
+        .analysis-content strong { color: #f0c060; }
         .analysis-content ul, .analysis-content ol { margin-left: 20px; margin-bottom: 14px; }
         .analysis-content li { margin-bottom: 6px; }
         .analysis-content.streaming { white-space: pre-wrap; color: var(--text-muted); font-size: 0.93em; }
@@ -291,14 +291,14 @@
         .chat-label { font-size: 0.75em; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 14px; }
         .chat-thread { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
         .chat-bubble { max-width: 88%; padding: 10px 14px; border-radius: 10px; font-size: 0.93em; line-height: 1.65; }
-        .chat-bubble.user { align-self: flex-end; background: var(--accent-dim); color: #d4bbff; border: 1px solid rgba(124,58,237,0.35); border-bottom-right-radius: 3px; }
+        .chat-bubble.user { align-self: flex-end; background: var(--accent-dim); color: var(--text-primary); border: 1px solid rgba(232,168,48,0.3); border-bottom-right-radius: 3px; }
         .chat-bubble.assistant { align-self: flex-start; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-bottom-left-radius: 3px; }
         .chat-bubble.assistant.streaming { white-space: pre-wrap; color: var(--text-muted); }
         .chat-bubble.assistant h1, .chat-bubble.assistant h2, .chat-bubble.assistant h3 { color: var(--accent); margin: 10px 0 6px; font-size: 1em; }
         .chat-bubble.assistant p { margin-bottom: 8px; } .chat-bubble.assistant p:last-child { margin-bottom: 0; }
         .chat-bubble.assistant ul, .chat-bubble.assistant ol { margin-left: 16px; margin-bottom: 8px; }
         .chat-bubble.assistant li { margin-bottom: 4px; }
-        .chat-bubble.assistant strong { color: #c9b1f5; }
+        .chat-bubble.assistant strong { color: #f0c060; }
         .chat-typing { align-self: flex-start; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; border-bottom-left-radius: 3px; padding: 12px 16px; }
         .typing-dots span { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--text-muted); margin: 0 2px; animation: bounce 1.2s infinite ease-in-out; }
         .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
@@ -449,7 +449,7 @@
 
 <!-- ── LANDING VIEW ──────────────────────────────────────────────────────── -->
 <div id="landingView" class="landing-view">
-    <div class="landing-brand" style="display:flex;align-items:center;gap:8px;"><svg width="20" height="20" viewBox="0 0 28 28" fill="none"><path d="M14 2L26 8.5V19.5L14 26L2 19.5V8.5L14 2Z" stroke="#e8a830" stroke-width="1.5" fill="none"/><circle cx="14" cy="14" r="3" fill="#e8a830"/></svg>Chart<span style="color:#e8a830">hawk</span></div>
+    <div class="landing-brand" style="display:flex;align-items:center;gap:8px;"><svg width="20" height="20" viewBox="0 0 28 28" fill="none"><path d="M14 2L26 8.5V19.5L14 26L2 19.5V8.5L14 2Z" stroke="#e8a830" stroke-width="1.5" fill="none"/><circle cx="14" cy="14" r="3" fill="#e8a830"/></svg>Chart<span style="color:#e8a830">Hawk</span></div>
     <!-- Auth status: top-right of landing -->
     <div class="landing-auth-status" id="landingAuthStatus">
         <a href="/gallery" class="landing-gallery-link">Gallery</a>
@@ -474,7 +474,7 @@
     </div>
     <input type="file" id="fileInput" accept="image/*" style="display:none;">
     <footer class="app-footer">
-        © 2026 Charthawk
+        © 2026 ChartHawk
         <span class="footer-sep">·</span>
         <a href="#" id="footerPrivacyLink">Privacy Policy</a>
         <span class="footer-sep">·</span>
