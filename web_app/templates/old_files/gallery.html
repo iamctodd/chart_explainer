@@ -3,25 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gallery — Charthawk</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <title>Gallery — ChartHawk</title>
     <style>
         :root {
-            --bg-base:     #0b0c0e;
-            --bg-surface:  #111316;
-            --bg-card:     #181b1f;
-            --bg-input:    #1e2126;
-            --border:      #2a2e35;
-            --text-primary:#f0ece4;
-            --text-muted:  #7a7670;
-            --accent:      #e8a830;
-            --accent-dim:  rgba(232,168,48,0.12);
+            --bg-base:     #0d0d0f;
+            --bg-surface:  #13131a;
+            --bg-card:     #1a1a24;
+            --bg-input:    #1e1e2a;
+            --border:      #2a2a3a;
+            --text-primary:#e8e8f0;
+            --text-muted:  #7a7a9a;
+            --accent:      #7c6af7;
+            --accent-dim:  rgba(124,106,247,0.12);
             --success:     #4ade80;
             --danger:      #f87171;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg-base); color: var(--text-primary); font-family: 'Syne', system-ui, sans-serif; min-height: 100vh; }
+        body { background: var(--bg-base); color: var(--text-primary); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
 
         .header { display: flex; align-items: center; justify-content: space-between; padding: 18px 32px; border-bottom: 1px solid var(--border); background: var(--bg-surface); position: sticky; top: 0; z-index: 10; }
         .header-brand { display: flex; align-items: center; gap: 10px; font-size: 1.1em; font-weight: 700; color: var(--text-primary); text-decoration: none; }
@@ -69,20 +67,20 @@
 <body>
 
 <header class="header">
-    <a href="/" class="header-brand" style="display:flex;align-items:center;gap:8px;"><svg width="18" height="18" viewBox="0 0 28 28" fill="none"><path d="M14 2L26 8.5V19.5L14 26L2 19.5V8.5L14 2Z" stroke="#e8a830" stroke-width="1.5" fill="none"/><circle cx="14" cy="14" r="3" fill="#e8a830"/></svg>Chart<span>hawk</span></a>
+    <a href="/" class="header-brand">📊 <span>ChartHawk</span></a>
     <span class="header-title">Gallery</span>
     <a href="/" class="back-btn">← Back to App</a>
 </header>
 
 <div class="page-body">
-    <h1 class="page-heading" style="font-family:'Syne',sans-serif;">Public Gallery</h1>
-    <p class="page-subhead">Chart audits shared by the Charthawk community</p>
+    <h1 class="page-heading">Public Gallery</h1>
+    <p class="page-subhead">Charts shared by the ChartHawk community</p>
 
     <div id="loadingSpinner"><div class="spinner"></div></div>
     <div class="gallery-grid" id="galleryGrid"></div>
     <div id="emptyState" class="empty-state" style="display:none;">
         <h2>Nothing here yet</h2>
-        <p>Be the first to share a chart audit with the community.</p>
+        <p>Be the first to share a chart analysis with the community.</p>
     </div>
     <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
         <button class="load-more-btn" id="loadMoreBtn">Load more</button>
@@ -138,11 +136,11 @@
                     <span>${date}</span>
                 </div>
                 <div>
-                    <div class="card-section-label">Audit Findings</div>
+                    <div class="card-section-label">Key Insights</div>
                     <ul class="card-bullets">${insightItems}</ul>
                 </div>
                 <div>
-                    <div class="card-section-label">Watch Out For</div>
+                    <div class="card-section-label">Improvements</div>
                     <ul class="card-bullets">${improvItems}</ul>
                 </div>
             </div>

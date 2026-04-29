@@ -3,10 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Charthawk — See What the Data's Hiding</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><polygon points='14,2 26,8.5 26,19.5 14,26 2,19.5 2,8.5' fill='none' stroke='%23e8a830' stroke-width='2'/><circle cx='14' cy='14' r='3' fill='%23e8a830'/></svg>">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <title>ChartHawk — Your Chart Analyst</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     {% if posthog_key %}
@@ -20,28 +18,25 @@
 {% endif %}
     <style>
         :root {
-            --bg-body:      #0b0c0e;
-            --bg-surface:   #111316;
-            --bg-card:      #181b1f;
-            --bg-input:     #1e2126;
-            --border:       #2a2e35;
-            --text-primary: #f0ece4;
-            --text-muted:   #7a7670;
-            --accent:       #e8a830;
-            --accent-hover: #c8922a;
-            --accent-dim:   rgba(232,168,48,0.13);
+            --bg-body:      #0B0D0F;
+            --bg-surface:   #161B22;
+            --bg-card:      #1C2128;
+            --bg-input:     #21262D;
+            --border:       #30363D;
+            --text-primary: #E6EDF3;
+            --text-muted:   #7D8590;
+            --accent:       #7C3AED;
+            --accent-hover: #6D28D9;
+            --accent-dim:   #2D1F5E;
             --success:      #3FB950;
             --danger:       #F85149;
-            --font-display: 'Playfair Display', Georgia, serif;
-            --font-ui:      'Syne', system-ui, sans-serif;
-            --font-mono:    'JetBrains Mono', monospace;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body {
             height: 100%;
-            font-family: var(--font-ui, 'Syne', system-ui, sans-serif);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--bg-body);
             color: var(--text-primary);
             overflow: hidden;
@@ -57,7 +52,7 @@
             position: absolute; top: 24px; left: 32px;
             font-size: 1em; font-weight: 700; color: var(--text-muted); letter-spacing: -0.01em;
         }
-        .landing-headline { font-family: "Playfair Display", Georgia, serif;
+        .landing-headline {
             font-size: clamp(2em, 5vw, 3.2em); font-weight: 700; text-align: center;
             line-height: 1.15; letter-spacing: -0.03em; color: var(--text-primary); margin-bottom: 32px;
         }
@@ -449,20 +444,20 @@
 
 <!-- ── LANDING VIEW ──────────────────────────────────────────────────────── -->
 <div id="landingView" class="landing-view">
-    <div class="landing-brand" style="display:flex;align-items:center;gap:8px;"><svg width="20" height="20" viewBox="0 0 28 28" fill="none"><path d="M14 2L26 8.5V19.5L14 26L2 19.5V8.5L14 2Z" stroke="#e8a830" stroke-width="1.5" fill="none"/><circle cx="14" cy="14" r="3" fill="#e8a830"/></svg>Chart<span style="color:#e8a830">hawk</span></div>
+    <div class="landing-brand">📊 ChartHawk</div>
     <!-- Auth status: top-right of landing -->
     <div class="landing-auth-status" id="landingAuthStatus">
-        <a href="/gallery" class="landing-gallery-link">Gallery</a>
+        <a href="/gallery" class="landing-gallery-link">🖼 Gallery</a>
         <button class="landing-signin-link" id="landingSignInBtn">Sign in</button>
     </div>
-    <h1 class="landing-headline">What chart do you<br>need to <em style="font-style:italic;color:#e8a830;">audit?</em></h1>
+    <h1 class="landing-headline">What chart do you<br>need to analyze?</h1>
     <div class="landing-upload-box" id="uploadArea">
         <span class="landing-upload-icon">📁</span>
         <span class="upload-placeholder">Drag a chart or <span>click to upload</span> — PNG, JPG, GIF</span>
         <button class="landing-send-btn" tabindex="-1" aria-label="Analyze">↑</button>
     </div>
-    <p class="landing-hint">Detects truncated axes, cherry-picked ranges, misleading chart types, and more</p>
-    <div class="landing-loading" id="loading"><div class="spinner"></div><span>Auditing your chart…</span></div>
+    <p class="landing-hint">Works with bar, line, scatter, heatmap, pie, histogram — any chart image</p>
+    <div class="landing-loading" id="loading"><div class="spinner"></div><span>Analyzing your chart…</span></div>
     <div class="landing-error" id="error"></div>
     <!-- Optional sign-in nudge — hidden when already signed in -->
     <div id="signInNudge" class="sign-in-nudge">
@@ -474,7 +469,7 @@
     </div>
     <input type="file" id="fileInput" accept="image/*" style="display:none;">
     <footer class="app-footer">
-        © 2026 Charthawk
+        © 2026 ChartHawk, All Rights Reserved
         <span class="footer-sep">·</span>
         <a href="#" id="footerPrivacyLink">Privacy Policy</a>
         <span class="footer-sep">·</span>
@@ -494,10 +489,10 @@
 
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-top-row">
-            <button class="new-chart-btn" id="newChartBtn">＋ New Audit</button>
+            <button class="new-chart-btn" id="newChartBtn">＋ New Chart</button>
             <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Collapse sidebar">‹</button>
         </div>
-        <a href="/gallery" class="gallery-nav-btn">Gallery</a>
+        <a href="/gallery" class="gallery-nav-btn">🖼 Gallery</a>
         <div class="sidebar-section-label">History</div>
         <div class="sidebar-history" id="sidebarHistory"></div>
         <div class="sidebar-footer">
@@ -541,10 +536,10 @@
         <div class="tos-body">
             <p><strong>Last updated: March 2026</strong></p>
 
-            <p>Charthawk ("we", "our", "us") is committed to protecting your privacy. This policy explains what data we collect and how we use it.</p>
+            <p>ChartHawk ("we", "our", "us") is committed to protecting your privacy. This policy explains what data we collect and how we use it.</p>
 
             <p><strong>What we collect</strong><br>
-            When you create an account we collect your email address and, if you choose, a display name and profile photo. When you upload a chart image it is sent to Anthropic's Claude API for analysis and stored in your Charthawk account so you can revisit it later. We do not sell your data.</p>
+            When you create an account we collect your email address and, if you choose, a display name and profile photo. When you upload a chart image it is sent to Anthropic's Claude API for analysis and stored in your ChartHawk account so you can revisit it later. We do not sell your data.</p>
 
             <p><strong>How we use your data</strong><br>
             Your chart images and analyses are stored solely to provide the history feature. We use your email only to authenticate your account and, if you opt in, to send product updates.</p>
@@ -626,7 +621,7 @@
 <!-- ── AUTH MODAL ─────────────────────────────────────────────────────────── -->
 <div class="modal-overlay" id="authModal">
     <div class="modal auth-modal-inner">
-        <h2 id="authModalTitle">Sign in to Charthawk</h2>
+        <h2 id="authModalTitle">Sign in to ChartHawk</h2>
         <p>Save your chart analyses and revisit them any time.</p>
         <div class="auth-error" id="authError"></div>
         <div class="auth-success" id="authSuccess"></div>
@@ -658,7 +653,7 @@
 <div class="modal-overlay" id="apiKeysModal">
     <div class="modal" style="max-width:560px;">
         <h2>🔑 API Keys</h2>
-        <p>Use these to call Charthawk from scripts or Claude Code skills. A key is shown once — save it somewhere safe.</p>
+        <p>Use these to call ChartHawk from scripts or Claude Code skills. A key is shown once — save it somewhere safe.</p>
         <div id="apiKeysList" style="margin-bottom:18px;"></div>
         <div id="apiKeyReveal" style="display:none; background:var(--bg-input); border:1px solid var(--accent); border-radius:8px; padding:14px; margin-bottom:18px;">
             <div style="font-size:0.75em; color:var(--accent); font-weight:700; margin-bottom:8px;">⚠ Copy this key now — it won't be shown again</div>
@@ -682,7 +677,7 @@
 <div class="modal-overlay" id="feedbackModal">
     <div class="modal">
         <h2>Send Feedback</h2>
-        <p>Help us improve Charthawk — bug reports, ideas, or anything on your mind.</p>
+        <p>Help us improve ChartHawk — bug reports, ideas, or anything on your mind.</p>
         <div class="feedback-success" id="feedbackSuccess">Thanks for your feedback! 🙏</div>
         <div class="feedback-error"   id="feedbackError">Oops! Something went wrong.</div>
         <form id="feedbackForm">
@@ -698,19 +693,19 @@
 <!-- ── TERMS OF SERVICE MODAL ─────────────────────────────────────────────── -->
 <div class="modal-overlay" id="tosModal">
     <div class="modal" style="max-width:540px;">
-        <h2>Welcome to Charthawk</h2>
+        <h2>Welcome to ChartHawk</h2>
         <p>Please read and accept these terms before continuing.</p>
         <div class="tos-scroll">
-            <strong>
-            Charthawk lets you upload any chart image and get an AI-powered audit — detecting misleading design choices, flagging truncated axes, cherry-picked date ranges, and distorted scales, and telling you what the data actually shows.<br><br>
+            <strong>What ChartHawk does</strong><br>
+            ChartHawk lets you upload chart images and receive an AI-powered explanation of what the chart shows, its limitations, and common misreadings.<br><br>
             <strong>What happens to your uploaded images</strong><br>
-            Images you upload are sent to <a href="https://www.anthropic.com" target="_blank" rel="noopener">Anthropic's Claude API</a> for analysis. They are also stored in your Charthawk account so you can revisit previous analyses. By using Charthawk you agree to <a href="https://www.anthropic.com/legal/usage-policy" target="_blank" rel="noopener">Anthropic's usage policies</a>.<br><br>
+            Images you upload are sent to <a href="https://www.anthropic.com" target="_blank" rel="noopener">Anthropic's Claude API</a> for analysis. They are also stored in your ChartHawk account so you can revisit previous analyses. By using ChartHawk you agree to <a href="https://www.anthropic.com/legal/usage-policy" target="_blank" rel="noopener">Anthropic's usage policies</a>.<br><br>
             <strong>Data storage</strong><br>
             Your charts and conversation history are stored in a database linked to your Google account. Only you can access your data. We use <a href="https://supabase.com/privacy" target="_blank" rel="noopener">Supabase</a> for data storage.<br><br>
             <strong>Deleting your data</strong><br>
             You can delete individual charts at any time using the Delete option in the sidebar. To delete your account and all data, use the feedback button and request account deletion. We will remove your data within 30 days.<br><br>
             <strong>No warranties</strong><br>
-            Charthawk is provided as-is. AI audits may contain errors. Always apply your own judgment. Charthawk is a tool to support critical thinking, not replace it.
+            ChartHawk is provided as-is. AI analysis may contain errors. Do not rely solely on ChartHawk for important decisions.
         </div>
         <label class="tos-check-row">
             <input type="checkbox" id="tosCheckbox">
@@ -735,7 +730,7 @@
 <div class="modal-overlay" id="pricingModal">
     <div class="modal info-modal-inner">
         <h2>Pricing</h2>
-        <p>Charthawk is free while we're in beta.</p>
+        <p>ChartHawk is free while we're in beta.</p>
         <div class="info-section">
             <div class="price-tag">$0</div>
             <div class="price-sub">No credit card required · No usage limits during beta</div>
@@ -762,7 +757,7 @@
 <div class="modal-overlay" id="apiDocsModal">
     <div class="modal info-modal-inner">
         <h2>API Documentation</h2>
-        <p>Programmatic access to Charthawk is coming soon.</p>
+        <p>Programmatic access to ChartHawk is coming soon.</p>
         <div class="info-section">
             <h3>Planned API features</h3>
             <ul>
@@ -784,7 +779,7 @@
 <!-- ── HOW THIS WORKS MODAL ──────────────────────────────────────────────── -->
 <div class="modal-overlay" id="howWorksModal">
     <div class="modal info-modal-inner">
-        <h2>How Charthawk Works</h2>
+        <h2>How ChartHawk Works</h2>
         <p>Upload any chart image and get an instant plain-English explanation.</p>
         <div class="info-section">
             <h3>1. Upload a chart</h3>
@@ -896,7 +891,7 @@
             if (landingStatus) {
                 const name = currentUser.user_metadata?.full_name || currentUser.email || '';
                 const avatar = currentUser.user_metadata?.avatar_url || '';
-                landingStatus.innerHTML = `<a href="/gallery" class="landing-gallery-link">Gallery</a>
+                landingStatus.innerHTML = `<a href="/gallery" class="landing-gallery-link">🖼 Gallery</a>
                     <div class="landing-user-chip" id="landingUserChip" title="Edit profile">
                         ${avatar ? `<img src="${avatar}" alt="">` : ''}
                         <span>${escapeHtml(name)}</span>
@@ -924,7 +919,7 @@
             if (apiKeysBtnEl2) apiKeysBtnEl2.style.display = 'none';
             // Landing top-right: restore sign-in button
             if (landingStatus) {
-                landingStatus.innerHTML = `<a href="/gallery" class="landing-gallery-link">Gallery</a><button class="landing-signin-link" id="landingSignInBtn">Sign in</button>`;
+                landingStatus.innerHTML = `<a href="/gallery" class="landing-gallery-link">🖼 Gallery</a><button class="landing-signin-link" id="landingSignInBtn">Sign in</button>`;
                 document.getElementById('landingSignInBtn')?.addEventListener('click', openAuthModal);
             }
             if (authState === 'signed-out' && appState === 'chat') goToLanding();
@@ -936,7 +931,7 @@
 
     function openAuthModal() {
         authMode = 'signin';
-        document.getElementById('authModalTitle').textContent = 'Sign in to Charthawk';
+        document.getElementById('authModalTitle').textContent = 'Sign in to ChartHawk';
         document.getElementById('authSubmitBtn').textContent = 'Sign in';
         document.getElementById('authToggleText').textContent = "Don't have an account?";
         document.getElementById('authToggleLink').textContent = ' Sign up';
@@ -1165,7 +1160,7 @@
     document.getElementById('authToggleLink').addEventListener('click', () => {
         authMode = authMode === 'signin' ? 'signup' : 'signin';
         const isSignup = authMode === 'signup';
-        document.getElementById('authModalTitle').textContent = isSignup ? 'Create an account' : 'Sign in to Charthawk';
+        document.getElementById('authModalTitle').textContent = isSignup ? 'Create an account' : 'Sign in to ChartHawk';
         document.getElementById('authSubmitBtn').textContent = isSignup ? 'Create account' : 'Sign in';
         document.getElementById('authToggleText').textContent = isSignup ? 'Already have an account?' : "Don't have an account?";
         document.getElementById('authToggleLink').textContent = isSignup ? ' Sign in' : ' Sign up';
@@ -1671,7 +1666,7 @@
         if (chart.conversation && chart.conversation.length > 0) {
             md += `\n---\n\n## Conversation\n\n`;
             chart.conversation.forEach(m => {
-                const label = m.role === 'user' ? '**You:**' : '**Charthawk audit:**';
+                const label = m.role === 'user' ? '**You:**' : '**ChartHawk:**';
                 md += `${label} ${m.content}\n\n`;
             });
         }
