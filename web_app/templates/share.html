@@ -3,7 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChartHawk — Chart Audit</title>
+    <!-- Open Graph / Social (updated dynamically by JS after chart loads) -->
+    <meta property="og:title" content="Charthawk — Chart Audit">
+    <meta property="og:description" content="See this chart audit on Charthawk — AI-powered chart analysis that spots misleading axes, cherry-picked ranges, and distorted scales.">
+    <meta property="og:image" content="https://charthawk.info/static/og-image.png">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Charthawk">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://charthawk.info/static/og-image.png">
+    <meta name="description" content="AI-powered chart audit on Charthawk.">
+    <meta name="description" content="AI-powered chart audit on Charthawk — see what the data is really hiding.">
+    <meta property="og:title" content="Chart Audit — Charthawk">
+    <meta property="og:description" content="An AI-powered audit flagging misleading chart patterns. Audit your own charts free.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://charthawk.info/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Chart Audit — Charthawk">
+    <meta name="twitter:description" content="AI-powered chart forensics. See what this chart is really hiding.">
+    <meta name="twitter:image" content="https://charthawk.info/og-image.png">
+    <title>Charthawk — Chart Audit</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -105,9 +123,40 @@
         .auth-error { color: var(--danger); font-size: 0.8em; margin-top: 6px; min-height: 1em; }
 
         /* CTA */
-        .cta-box { margin-top: 48px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; text-align: center; }
-        .cta-box h3 { font-size: 1em; font-weight: 700; margin-bottom: 6px; }
-        .cta-box p  { font-size: 0.85em; color: var(--text-muted); margin-bottom: 16px; }
+        .cta-box {
+            margin-top: 56px; background: var(--bg-surface);
+            border: 1px solid var(--border); border-top: 3px solid var(--accent);
+            border-radius: 12px; padding: 32px 28px; text-align: center;
+        }
+        .cta-eyebrow { font-size: 0.7em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+        .cta-box h3 { font-size: 1.4em; font-weight: 700; margin-bottom: 10px; line-height: 1.25; color: var(--text-primary); }
+        .cta-box p  { font-size: 0.88em; color: var(--text-muted); margin-bottom: 22px; line-height: 1.6; max-width: 360px; margin-left: auto; margin-right: auto; }
+        .cta-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .btn-accent-lg {
+            display: inline-block; background: var(--accent); color: #0b0c0e;
+            padding: 12px 28px; border-radius: 8px; font-size: 0.95em; font-weight: 700;
+            text-decoration: none; transition: opacity 0.15s;
+        }
+        .btn-accent-lg:hover { opacity: 0.88; }
+        .btn-ghost-sm {
+            display: inline-block; background: transparent; color: var(--text-muted);
+            border: 1px solid var(--border); padding: 12px 20px; border-radius: 8px;
+            font-size: 0.88em; text-decoration: none; transition: color 0.15s, border-color 0.15s;
+        }
+        .btn-ghost-sm:hover { color: var(--accent); border-color: var(--accent); }
+        .cta-proof { margin-top: 16px; font-size: 0.75em; color: var(--text-muted); }
+
+        /* Mobile share */
+        @media (max-width: 600px) {
+            .header { padding: 14px 16px; }
+            .header-brand span { display: inline; }
+            .page-body { padding: 24px 16px 60px; }
+            .chart-meta { flex-direction: column; align-items: flex-start; }
+            .msg-bubble { max-width: 100%; }
+            .cta-box { padding: 24px 20px; }
+            .cta-box h3 { font-size: 1.2em; }
+            .btn-accent-lg, .btn-ghost-sm { width: 100%; text-align: center; }
+        }
 
         /* States */
         .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 80px auto; }
@@ -115,15 +164,53 @@
         .error-state { text-align: center; padding: 80px 24px; }
         .error-state h2 { font-size: 1.2em; margin-bottom: 8px; color: var(--text-muted); }
         .error-state p  { font-size: 0.9em; color: var(--text-muted); }
+
+        /* Sticky acquisition banner for non-signed-in visitors */
+        .acquisition-banner {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(to right, #111316, #181b1f);
+            border-top: 1px solid #2a2e35;
+            padding: 16px 32px;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 20px; z-index: 50;
+            animation: slideUp 0.4s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .acq-text h3 { font-size: 1.05em; font-weight: 700; color: #f0ece4; margin-bottom: 2px; }
+        .acq-text p  { font-size: 0.8em; color: #7a7670; }
+        .acq-actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+        .acq-dismiss { background: transparent; border: none; color: #7a7670; font-size: 1.2em; cursor: pointer; padding: 4px 8px; line-height: 1; transition: color 0.15s; }
+        .acq-dismiss:hover { color: #f0ece4; }
+        .acq-cta {
+            background: #e8a830; color: #0b0c0e; border: none;
+            padding: 10px 22px; border-radius: 8px;
+            font-size: 0.88em; font-weight: 700; cursor: pointer;
+            font-family: inherit; text-decoration: none; display: inline-block;
+            transition: opacity 0.15s; white-space: nowrap;
+        }
+        .acq-cta:hover { opacity: 0.88; }
+
+        @media (max-width: 640px) {
+            .header { padding: 14px 16px; }
+            .header-brand { font-size: 1em; }
+            .page-body { padding: 24px 16px 120px; }
+            .chart-meta { flex-direction: column; align-items: flex-start; gap: 6px; }
+            .header-actions { gap: 6px; }
+            .btn-ghost { display: none; }
+            .btn-accent { font-size: 0.8em; padding: 7px 12px; }
+            .msg-bubble { max-width: 100%; }
+            .acquisition-banner { padding: 16px; }
+            .acq-text h3 { font-size: 1em; }
+        }
     </style>
 </head>
 <body>
 
 <header class="header">
-    <a href="/" class="header-brand" style="display:flex;align-items:center;gap:8px;"><svg width="20" height="20" viewBox="0 0 28 28" fill="none"><path d="M14 2L26 8.5V19.5L14 26L2 19.5V8.5L14 2Z" stroke="#e8a830" stroke-width="1.5" fill="none"/><circle cx="14" cy="14" r="3" fill="#e8a830"/></svg>Chart<span>Hawk</span></a>
+    <a href="/" class="header-brand" style="display:flex;align-items:center;gap:8px;"><svg width="20" height="20" viewBox="0 0 28 28" fill="none"><path d="M14 2L26 8.5V19.5L14 26L2 19.5V8.5L14 2Z" stroke="#e8a830" stroke-width="1.5" fill="none"/><circle cx="14" cy="14" r="3" fill="#e8a830"/></svg>Chart<span>hawk</span></a>
     <div class="header-actions">
         <a href="/gallery" class="btn-ghost">← Gallery</a>
-        <a href="/" class="btn-accent">Audit your own chart</a>
+        <a href="/" class="btn-accent" style="font-weight:700;">Audit a chart →</a>
     </div>
 </header>
 
@@ -236,10 +323,15 @@
                 <div id="commentsList"></div>
                 <div id="commentInput"></div>
             </div>
-            <div class="cta-box" style="border-left: 3px solid #e8a830;">
-                <h3>Want to understand your own charts?</h3>
-                <p>Upload any chart and get an instant AI-powered breakdown — free to try.</p>
-                <a href="/" class="btn-accent">Try Charthawk →</a>
+            <div class="cta-box">
+                <div class="cta-eyebrow">Free · No credit card</div>
+                <h3>Audit your own charts<br>in seconds</h3>
+                <p>See what's misleading, what's missing, and what you should push back on — in any chart you upload.</p>
+                <div class="cta-actions">
+                    <a href="/" class="btn-accent-lg">Audit a chart free →</a>
+                    <a href="/gallery" class="btn-ghost-sm">Browse the gallery</a>
+                </div>
+                <p class="cta-proof">Detects truncated axes · Cherry-picked ranges · Misleading chart types · More</p>
             </div>
         `;
 
@@ -443,6 +535,32 @@
 
     // ── Init ──────────────────────────────────────────────────────────────────
     loadChart();
+</script>
+
+<!-- Sticky acquisition banner — shown to anonymous visitors -->
+<div class="acquisition-banner" id="acquisitionBanner" style="display:none;">
+    <div class="acq-text">
+        <h3>Like what you see?</h3>
+        <p>Audit your own charts free — no credit card needed.</p>
+    </div>
+    <div class="acq-actions">
+        <a href="/" class="acq-cta">Audit a chart →</a>
+        <button class="acq-dismiss" id="acqDismiss" title="Dismiss">×</button>
+    </div>
+</div>
+<script>
+    // Show acquisition banner after 4 seconds if not signed in
+    setTimeout(function() {
+        const banner = document.getElementById('acquisitionBanner');
+        if (!banner) return;
+        try {
+            const session = JSON.parse(localStorage.getItem('sb-csjiymeycevxqmlmqcwc-auth-token') || 'null');
+            if (!session) { banner.style.display = 'flex'; }
+        } catch(e) { banner.style.display = 'flex'; }
+    }, 4000);
+    document.getElementById('acqDismiss')?.addEventListener('click', function() {
+        document.getElementById('acquisitionBanner').style.display = 'none';
+    });
 </script>
 </body>
 </html>

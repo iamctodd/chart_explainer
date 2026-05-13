@@ -3,6 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Open Graph / Social -->
+    <meta property="og:title" content="Gallery — Charthawk">
+    <meta property="og:description" content="See chart audits shared by the Charthawk community. AI-powered analysis spotting misleading axes, cherry-picked ranges, and distorted scales.">
+    <meta property="og:image" content="https://charthawk.info/static/og-image.png">
+    <meta property="og:url" content="https://charthawk.info/gallery">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Charthawk">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="description" content="Browse chart audits from the Charthawk community.">
     <title>Gallery — Charthawk</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -64,6 +73,13 @@
 
         .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin: 60px auto; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 560px) {
+            .header { padding: 14px 16px; }
+            .header-title { display: none; }
+            .page-body { padding: 24px 14px 60px; }
+            .page-heading { font-size: 1.3em; }
+        }
     </style>
 </head>
 <body>
