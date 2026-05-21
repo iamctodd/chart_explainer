@@ -3,28 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Open Graph / Social -->
-    <meta property="og:title" content="Charthawk — See What the Data's Hiding">
-    <meta property="og:description" content="AI-powered chart auditing. Detects truncated axes, cherry-picked date ranges, misleading chart types, and more.">
-    <meta property="og:image" content="https://charthawk.info/static/og-image.png">
-    <meta property="og:url" content="https://charthawk.info/">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Charthawk">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Charthawk — See What the Data's Hiding">
-    <meta name="twitter:description" content="AI-powered chart auditing. Spot misleading axes, cherry-picked ranges, and distorted scales instantly.">
-    <meta name="twitter:image" content="https://charthawk.info/static/og-image.png">
-    <meta name="description" content="AI-powered chart auditing. Detects truncated axes, cherry-picked date ranges, misleading chart types, and more. Free to use.">
-    <meta name="description" content="Charthawk audits any chart — detecting truncated axes, cherry-picked timeframes, misleading chart types, and more. See what the data is really hiding.">
-    <meta property="og:title" content="Charthawk — See What the Data's Hiding">
-    <meta property="og:description" content="AI-powered chart forensics. Upload any chart and get an instant audit — misleading patterns flagged, plain-English verdict delivered.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://charthawk.info/">
-    <meta property="og:image" content="https://charthawk.info/og-image.png">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Charthawk — See What the Data's Hiding">
-    <meta name="twitter:description" content="AI-powered chart forensics. Upload any chart and get an instant audit.">
-    <meta name="twitter:image" content="https://charthawk.info/og-image.png">
     <title>ChartHawk — See What the Data's Hiding</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><polygon points='14,2 26,8.5 26,19.5 14,26 2,19.5 2,8.5' fill='none' stroke='%23e8a830' stroke-width='2'/><circle cx='14' cy='14' r='3' fill='%23e8a830'/></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -73,9 +51,12 @@
         .landing-view {
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            min-height: 100vh; padding: 80px 24px 24px; position: relative;
+            min-height: 100vh; padding: 24px; position: relative;
         }
-        /* .landing-brand now inside .landing-nav */
+        .landing-brand {
+            position: absolute; top: 24px; left: 32px;
+            font-size: 1em; font-weight: 700; color: var(--text-muted); letter-spacing: -0.01em;
+        }
         .landing-headline { font-family: "Playfair Display", Georgia, serif;
             font-size: clamp(2em, 5vw, 3.2em); font-weight: 700; text-align: center;
             line-height: 1.15; letter-spacing: -0.03em; color: var(--text-primary); margin-bottom: 32px;
@@ -399,19 +380,11 @@
         .tos-check-row { display: flex; align-items: flex-start; gap: 10px; font-size: 0.88em; color: var(--text-muted); margin-bottom: 20px; cursor: pointer; }
         .tos-check-row input { margin-top: 2px; flex-shrink: 0; accent-color: var(--accent); }
 
-        /* Landing nav bar */
-        .landing-nav {
-            position: absolute; top: 0; left: 0; right: 0;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 20px 28px; z-index: 5;
-        }
-        .landing-brand {
+        /* Landing auth status (top-right) */
+        .landing-auth-status {
+            position: absolute; top: 20px; right: 28px;
             display: flex; align-items: center; gap: 8px;
-            font-size: 1em; font-weight: 700; color: var(--text-muted);
-            letter-spacing: -0.01em; text-decoration: none;
         }
-        .landing-brand span { color: var(--accent); }
-        .landing-auth-status { display: flex; align-items: center; gap: 8px; }
         .landing-signin-link {
             background: transparent; border: 1px solid var(--border); border-radius: 7px;
             color: var(--text-muted); font-size: 0.82em; padding: 6px 14px;
@@ -426,47 +399,7 @@
             border-radius: 20px; padding: 4px 12px 4px 4px;
         }
         .landing-user-chip img { width: 22px; height: 22px; border-radius: 50%; }
-        .landing-user-chip span { font-size: 0.8em; color: var(--text-muted); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        /* Sample charts */
-        .sample-charts-wrap {
-            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-            justify-content: center; margin-top: 20px; max-width: 620px;
-        }
-        .sample-label { font-size: 0.78em; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
-        .sample-chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
-        .sample-chip {
-            font-size: 0.78em; color: var(--text-muted); background: var(--bg-input);
-            border: 1px solid var(--border); border-radius: 20px;
-            padding: 5px 12px; text-decoration: none; white-space: nowrap;
-            transition: color 0.15s, border-color 0.15s;
-        }
-        .sample-chip:hover { color: var(--accent); border-color: var(--accent); }
-
-        /* Newsletter */
-        .newsletter-wrap {
-            margin-top: 28px; text-align: center; max-width: 420px;
-            padding-top: 24px; border-top: 1px solid var(--border);
-        }
-        .newsletter-label { font-size: 0.82em; color: var(--text-muted); margin-bottom: 10px; line-height: 1.5; }
-        .newsletter-label strong { color: var(--text-primary); }
-        .newsletter-form { display: flex; }
-        .newsletter-input {
-            flex: 1; background: var(--bg-input); border: 1px solid var(--border);
-            border-right: none; border-radius: 8px 0 0 8px; padding: 9px 14px;
-            font-size: 0.85em; color: var(--text-primary); font-family: inherit; outline: none;
-            transition: border-color 0.2s; min-width: 0;
-        }
-        .newsletter-input:focus { border-color: var(--accent); }
-        .newsletter-input::placeholder { color: var(--text-muted); }
-        .newsletter-btn {
-            background: var(--accent); color: #0b0c0e; border: none;
-            border-radius: 0 8px 8px 0; padding: 9px 18px; font-size: 0.85em;
-            font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap;
-            transition: background 0.2s; flex-shrink: 0;
-        }
-        .newsletter-btn:hover { background: var(--accent-hover); }
-        .newsletter-confirm { font-size: 0.82em; color: var(--success); margin-top: 8px; }
+        .landing-user-chip span { font-size: 0.8em; color: var(--text-muted); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         /* Sidebar collapse (desktop) */
         .sidebar { transition: width 0.22s ease, padding 0.22s ease, border-color 0.22s ease; }
@@ -503,110 +436,12 @@
         .drawer-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 499; }
         .drawer-backdrop.visible { display: block; }
         @media (max-width: 640px) {
-            /* App shell mobile */
             .hamburger-btn { display: block; }
             .main-panel { position: relative; }
             .sidebar { position: fixed; top: 0; left: 0; height: 100%; z-index: 500; transform: translateX(-100%); transition: transform 0.26s ease; }
             .sidebar.drawer-open { transform: translateX(0); }
-            .main-content { padding: 24px 16px; }
-            .main-input-bar { padding: 8px 12px 16px; }
-            .chat-bubble { max-width: 95%; }
-
-            /* Landing nav on mobile — proper sticky bar, no absolute overlap */
-            .landing-view { padding: 72px 16px 24px; justify-content: flex-start; gap: 0; }
-            .landing-nav {
-                position: fixed; top: 0; left: 0; right: 0;
-                padding: 12px 16px;
-                background: rgba(11,12,14,0.92);
-                backdrop-filter: blur(12px);
-                -webkit-backdrop-filter: blur(12px);
-                border-bottom: 1px solid var(--border);
-                z-index: 50;
-            }
-            .landing-user-chip span { display: none; }
-            .landing-user-chip { padding: 3px 3px; }
-            .landing-headline {
-                font-size: clamp(1.9em, 9vw, 2.6em);
-                margin-top: 28px;
-                margin-bottom: 24px;
-            }
-            .landing-upload-box {
-                padding: 14px 12px 14px 16px;
-                border-radius: 12px;
-            }
-            .upload-placeholder { font-size: 0.9em; }
-            .landing-hint { font-size: 0.78em; padding: 0 8px; }
-            .sample-charts-wrap { flex-direction: column; gap: 8px; margin-top: 16px; }
-            .sample-chips { gap: 6px; }
-            .newsletter-wrap { max-width: 100%; padding: 20px 0 0; }
-            .newsletter-form { flex-direction: column; gap: 8px; }
-            .newsletter-input { border-right: 1px solid var(--border); border-radius: 8px; }
-            .newsletter-btn { border-radius: 8px; width: 100%; padding: 11px; }
-            .app-footer { padding: 20px 16px 16px; }
-            .footer-nav { gap: 12px; }
-            .sign-in-nudge { margin-top: 16px; }
-        }
-
-        /* Sample audit chips */
-        .landing-examples { margin-top: 22px; text-align: center; }
-        .landing-examples-label {
-            font-size: 0.76em; color: var(--text-muted); margin-bottom: 10px;
-            letter-spacing: 0.06em; text-transform: uppercase;
-        }
-        .landing-examples-row {
-            display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
-        }
-        .example-chip {
-            display: inline-flex; align-items: center; gap: 5px;
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 20px; padding: 6px 14px;
-            font-size: 0.79em; color: var(--text-muted);
-            text-decoration: none; transition: border-color 0.15s, color 0.15s;
-            white-space: nowrap;
-        }
-        .example-chip:hover { border-color: var(--accent); color: var(--accent); }
-        .example-chip svg { flex-shrink: 0; opacity: 0.6; }
-
-        /* ── MOBILE LANDING ─────────────────────────────────────────── */
-        @media (max-width: 640px) {
-            html, body { overflow: auto; }
-            .landing-view {
-                justify-content: flex-start;
-                padding-top: 80px;
-                padding-bottom: 60px;
-                min-height: 100vh;
-                overflow-y: auto;
-            }
-            .landing-brand {
-                top: 18px; left: 16px;
-                font-size: 0.9em;
-            }
-            .landing-auth-status {
-                top: 16px; right: 12px;
-                gap: 4px;
-            }
-            /* hide name in user chip — just show avatar */
-            .landing-user-chip span { display: none; }
-            .landing-user-chip { padding: 4px 8px 4px 4px; }
-            /* hide gallery link — accessible via footer */
-            .landing-gallery-link { display: none; }
-            .landing-headline {
-                font-size: clamp(1.9em, 9vw, 2.6em);
-                margin-bottom: 20px;
-                padding: 0 4px;
-            }
-            .landing-upload-box {
-                padding: 14px 12px 14px 16px;
-            }
-            .upload-placeholder { font-size: 0.88em; }
-            .landing-send-btn { width: 40px; height: 40px; }
-            .landing-hint { font-size: 0.78em; padding: 0 8px; }
-            .landing-examples-row { gap: 6px; }
-            .example-chip { font-size: 0.76em; padding: 5px 11px; }
-            /* chat view on mobile */
-            .main-content { padding: 20px 14px; }
-            .main-input-bar { padding: 8px 12px 20px; }
-            .main-chart-img { border-radius: 8px; }
+            .main-content { padding: 24px 20px; }
+            .main-input-bar { padding: 8px 16px 16px; }
         }
     </style>
 </head>
@@ -614,71 +449,32 @@
 
 <!-- ── LANDING VIEW ──────────────────────────────────────────────────────── -->
 <div id="landingView" class="landing-view">
-    <nav class="landing-nav" id="landingNav">
-        <a href="/" class="landing-brand"><svg width="20" height="20" viewBox="0 0 28 28" fill="none"><path d="M14 2L26 8.5V19.5L14 26L2 19.5V8.5L14 2Z" stroke="#e8a830" stroke-width="1.5" fill="none"/><circle cx="14" cy="14" r="3" fill="#e8a830"/></svg>Chart<span>hawk</span></a>
-        <div class="landing-auth-status" id="landingAuthStatus">
-            <a href="/gallery" class="landing-gallery-link">Gallery</a>
-            <button class="landing-signin-link" id="landingSignInBtn">Sign in</button>
-        </div>
-    </nav>
+    <div class="landing-brand" style="display:flex;align-items:center;gap:8px;"><svg width="20" height="20" viewBox="0 0 28 28" fill="none"><path d="M14 2L26 8.5V19.5L14 26L2 19.5V8.5L14 2Z" stroke="#e8a830" stroke-width="1.5" fill="none"/><circle cx="14" cy="14" r="3" fill="#e8a830"/></svg>Chart<span style="color:#e8a830">Hawk</span></div>
+    <!-- Auth status: top-right of landing -->
+    <div class="landing-auth-status" id="landingAuthStatus">
+        <a href="/gallery" class="landing-gallery-link">Gallery</a>
+        <button class="landing-signin-link" id="landingSignInBtn">Sign in</button>
+    </div>
     <h1 class="landing-headline">What chart do you<br>need to <em style="font-style:italic;color:#e8a830;">audit?</em></h1>
     <div class="landing-upload-box" id="uploadArea">
-        <span class="landing-upload-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);opacity:0.55"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+        <span class="landing-upload-icon">📁</span>
         <span class="upload-placeholder">Drag a chart or <span>click to upload</span> — PNG, JPG, GIF</span>
         <button class="landing-send-btn" tabindex="-1" aria-label="Analyze">↑</button>
     </div>
     <p class="landing-hint">Detects truncated axes, cherry-picked ranges, misleading chart types, and more</p>
-    <div class="landing-examples" id="landingExamples">
-        <p class="landing-examples-label">See real audits</p>
-        <div class="landing-examples-row">
-            <a href="/share/02f31405-4249-4be7-a18d-d8c6060d890b" class="example-chip" target="_blank">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                Hockey Stick Climate Chart
-            </a>
-            <a href="/share/f74ec907-a09c-4493-9bbe-de5a47270f7b" class="example-chip" target="_blank">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                John Snow Cholera Map
-            </a>
-            <a href="/share/6a1ece87-02ba-4b7b-9aa1-a1f0895e1ee0" class="example-chip" target="_blank">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                Napoleon's March (Minard)
-            </a>
-        </div>
-    </div>
     <div class="landing-loading" id="loading"><div class="spinner"></div><span>Auditing your chart…</span></div>
     <div class="landing-error" id="error"></div>
-
-    <!-- Sample charts -->
-    <div class="sample-charts-wrap">
-        <span class="sample-label">Try an example:</span>
-        <div class="sample-chips">
-            <a href="/share/02f31405-4249-4be7-a18d-d8c6060d890b" class="sample-chip">🏒 Hockey Stick</a>
-            <a href="/share/f74ec907-a09c-4493-9bbe-de5a47270f7b" class="sample-chip">❄ Snow Cholera Map</a>
-            <a href="/share/6a1ece87-02ba-4b7b-9aa1-a1f0895e1ee0" class="sample-chip">🗺 Minard's March</a>
-        </div>
-    </div>
-
-    <!-- Newsletter CTA -->
-    <div class="newsletter-wrap" id="newsletterWrap">
-        <p class="newsletter-label">Get the <strong>Misleading Chart of the Week</strong> — free in your inbox</p>
-        <form class="newsletter-form" id="newsletterForm" onsubmit="submitNewsletter(event)">
-            <input type="email" class="newsletter-input" id="newsletterEmail" placeholder="your@email.com" required autocomplete="email">
-            <button type="submit" class="newsletter-btn">Subscribe</button>
-        </form>
-        <p class="newsletter-confirm" id="newsletterConfirm" style="display:none;">✓ You're in — first issue arrives soon.</p>
-    </div>
-
     <!-- Optional sign-in nudge — hidden when already signed in -->
     <div id="signInNudge" class="sign-in-nudge">
         <button id="openAuthModalBtn" class="google-signin-btn-small">Sign in to save history</button>
     </div>
     <!-- View history button — shown when signed in -->
     <div id="viewHistoryNudge" style="display:none; margin-top:12px; text-align:center;">
-        <button id="viewHistoryBtn" class="google-signin-btn-small" style="background:var(--bg-card); border:1px solid var(--border); color:var(--text-primary);">View my history →</button>
+        <button id="viewHistoryBtn" class="google-signin-btn-small" style="background:var(--bg-card); border:1px solid var(--border); color:var(--text-primary);">📂 View my history</button>
     </div>
     <input type="file" id="fileInput" accept="image/*" style="display:none;">
     <footer class="app-footer">
-        © 2026 Charthawk
+        © 2026 ChartHawk
         <span class="footer-sep">·</span>
         <a href="#" id="footerPrivacyLink">Privacy Policy</a>
         <span class="footer-sep">·</span>
@@ -711,10 +507,10 @@
                 <span class="user-name" id="userName"></span>
                 <button class="sign-out-btn" id="signOutBtn">Sign out</button>
             </div>
-            <a href="/admin" target="_blank" id="adminLink" style="display:none;" class="sidebar-footer-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg> Admin dashboard</a>
-            <button class="sidebar-footer-btn" id="apiKeysBtn" style="display:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="8" cy="15" r="4"/><path d="M12 11.343l9.707-9.707M18 8l-2-2M22 4l-2 2"/></svg> API Keys</button>
-            <button class="sidebar-footer-btn danger" id="clearHistoryBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg> Clear history</button>
-            <button class="sidebar-footer-btn" id="feedbackBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Send feedback</button>
+            <a href="/admin" target="_blank" id="adminLink" style="display:none;" class="sidebar-footer-btn">⚙️ Admin dashboard</a>
+            <button class="sidebar-footer-btn" id="apiKeysBtn" style="display:none;">🔑 API Keys</button>
+            <button class="sidebar-footer-btn danger" id="clearHistoryBtn">🗑 Clear history</button>
+            <button class="sidebar-footer-btn" id="feedbackBtn">💬 Send feedback</button>
         </div>
     </aside>
 
@@ -727,8 +523,8 @@
         <div class="main-input-bar">
             <div class="main-input-inner">
                 <div class="chat-input-area">
-                    <button class="attach-btn" id="attachBtn" title="Analyze another chart"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></button>
-                    <textarea class="chat-textarea" id="mainChatInput" placeholder="What do you want to challenge or dig into?" rows="1"></textarea>
+                    <button class="attach-btn" id="attachBtn" title="Analyze another chart">📎</button>
+                    <textarea class="chat-textarea" id="mainChatInput" placeholder="Ask a follow-up question about this chart…" rows="1"></textarea>
                     <button class="chat-send-btn" id="mainSendBtn" title="Send">↑</button>
                 </div>
                 <div class="chat-error" id="chatError" style="display:none;"></div>
@@ -861,7 +657,7 @@
 <!-- ── API KEYS MODAL ────────────────────────────────────────────────────────── -->
 <div class="modal-overlay" id="apiKeysModal">
     <div class="modal" style="max-width:560px;">
-        <h2><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="8" cy="15" r="4"/><path d="M12 11.343l9.707-9.707M18 8l-2-2M22 4l-2 2"/></svg> API Keys</h2>
+        <h2>🔑 API Keys</h2>
         <p>Use these to call Charthawk from scripts or Claude Code skills. A key is shown once — save it somewhere safe.</p>
         <div id="apiKeysList" style="margin-bottom:18px;"></div>
         <div id="apiKeyReveal" style="display:none; background:var(--bg-input); border:1px solid var(--accent); border-radius:8px; padding:14px; margin-bottom:18px;">
@@ -2344,23 +2140,35 @@
     window.openChartMenu      = openChartMenu;
     window.retryLoadHistory   = retryLoadHistory;
 
-    // Newsletter signup
-    async function submitNewsletter(e) {
-        e.preventDefault();
-        const email = document.getElementById('newsletterEmail').value.trim();
-        const btn   = document.querySelector('.newsletter-btn');
-        const confirm = document.getElementById('newsletterConfirm');
-        btn.disabled = true; btn.textContent = '…';
+    // ── Browser extension bridge ──────────────────────────────────────────────
+    // Receives image data posted by the Charthawk browser extension injector.js
+    // and calls handleFile() directly — the most reliable possible path.
+    window.addEventListener('message', function(evt) {
+        if (!evt.data || evt.data.type !== 'CHARTHAWK_EXT_IMAGE') return;
+        const p = evt.data.payload;
+        if (!p) return;
         try {
-            await fetch('/api/newsletter', {
-                method: 'POST',
-                headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({ email })
-            });
-        } catch(_) {}
-        document.getElementById('newsletterForm').style.display = 'none';
-        confirm.style.display = 'block';
-    }
+            if (p.type === 'base64') {
+                const binary = atob(p.value);
+                const bytes  = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                const blob = new Blob([bytes], { type: p.mimeType || 'image/png' });
+                const file = new File([blob], p.filename || 'chart.png', { type: p.mimeType || 'image/png' });
+                handleFile(file);
+            } else if (p.type === 'url') {
+                fetch(p.value)
+                    .then(r => r.blob())
+                    .then(blob => {
+                        const name = (p.value.split('/').pop().split('?')[0]) || 'chart.png';
+                        handleFile(new File([blob], name, { type: blob.type || 'image/png' }));
+                    })
+                    .catch(err => console.error('[Charthawk ext bridge] fetch failed:', err));
+            }
+        } catch(err) {
+            console.error('[Charthawk ext bridge]', err);
+        }
+    });
+    window.handleFile = handleFile; // Direct access for extension world:MAIN scripts
 </script>
 </body>
 </html>
