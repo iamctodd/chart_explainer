@@ -2149,6 +2149,7 @@
         if (!p) return;
         try {
             if (p.type === 'base64') {
+                // Background already fetched and encoded the image — just decode and go
                 const binary = atob(p.value);
                 const bytes  = new Uint8Array(binary.length);
                 for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -2156,13 +2157,29 @@
                 const file = new File([blob], p.filename || 'chart.png', { type: p.mimeType || 'image/png' });
                 handleFile(file);
             } else if (p.type === 'url') {
-                fetch(p.value)
-                    .then(r => r.blob())
-                    .then(blob => {
+                // URL fallback (background fetch was blocked, e.g. by ad blocker).
+                // Load via <img> element — the browser already has it in cache,
+                // so this works even when fetch() is blocked by content blockers.
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width  = img.naturalWidth  || 800;
+                    canvas.height = img.naturalHeight || 600;
+                    canvas.getContext('2d').drawImage(img, 0, 0);
+                    canvas.toBlob(function(blob) {
+                        if (!blob) {
+                            console.error('[Charthawk ext bridge] canvas toBlob failed — CORS?');
+                            return;
+                        }
                         const name = (p.value.split('/').pop().split('?')[0]) || 'chart.png';
-                        handleFile(new File([blob], name, { type: blob.type || 'image/png' }));
-                    })
-                    .catch(err => console.error('[Charthawk ext bridge] fetch failed:', err));
+                        handleFile(new File([blob], name, { type: 'image/png' }));
+                    }, 'image/png');
+                };
+                img.onerror = function() {
+                    console.error('[Charthawk ext bridge] Image load failed for URL:', p.value);
+                };
+                img.src = p.value;
             }
         } catch(err) {
             console.error('[Charthawk ext bridge]', err);
