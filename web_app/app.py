@@ -57,7 +57,7 @@ def hash_api_key(raw_key):
 
 
 def calculate_cost(input_tokens, output_tokens):
-    """Cost in USD — claude-sonnet-4-20250514: $3/1M input, $15/1M output"""
+    """Cost in USD — claude-sonnet-4-6: $3/1M input, $15/1M output"""
     return round((input_tokens * 3.0 + output_tokens * 15.0) / 1_000_000, 6)
 
 def require_admin(f):
@@ -163,7 +163,7 @@ def analyze():
         media_type = 'image/png'
     try:
         message = claude.messages.create(
-            model="claude-sonnet-4-20250514", max_tokens=1500,
+            model="claude-sonnet-4-6", max_tokens=1500,
             messages=[make_image_message(image_data, media_type)],
         )
         raw_text = message.content[0].text
@@ -197,7 +197,7 @@ def followup():
     messages.append({"role": "user", "content": question})
     try:
         message = claude.messages.create(
-            model="claude-sonnet-4-20250514", max_tokens=1024, messages=messages,
+            model="claude-sonnet-4-6", max_tokens=1024, messages=messages,
         )
         answer_markdown = message.content[0].text
         answer_html     = markdown.markdown(answer_markdown, extensions=['extra', 'nl2br'])
@@ -228,7 +228,7 @@ def analyze_stream():
         try:
             yield sse_event('image', {'image': image_data_url})
             with claude.messages.stream(
-                model="claude-sonnet-4-20250514", max_tokens=1500,
+                model="claude-sonnet-4-6", max_tokens=1500,
                 messages=[make_image_message(image_base64, media_type)],
             ) as stream:
                 for text in stream.text_stream:
@@ -288,7 +288,7 @@ def followup_stream():
     def generate():
         try:
             with claude.messages.stream(
-                model="claude-sonnet-4-20250514", max_tokens=1024, messages=messages,
+                model="claude-sonnet-4-6", max_tokens=1024, messages=messages,
             ) as stream:
                 for text in stream.text_stream:
                     yield sse_event('text', {'chunk': text})
@@ -514,7 +514,7 @@ def api_v1_analyze():
         media_type = 'image/png'
     try:
         message = claude.messages.create(
-            model='claude-sonnet-4-20250514',
+            model='claude-sonnet-4-6',
             max_tokens=1500,
             messages=[make_image_message(image_base64, media_type)],
         )
@@ -570,7 +570,7 @@ def generate_gallery_summary(analysis_raw):
     )
     try:
         msg = claude.messages.create(
-            model='claude-sonnet-4-20250514',
+            model='claude-sonnet-4-6',
             max_tokens=300,
             messages=[{'role': 'user', 'content': prompt}],
         )

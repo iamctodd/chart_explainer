@@ -20,7 +20,7 @@ def get_image_from_slack(file_url, bot_token):
 def explain_chart(image_base64, file_type):
     """Send image to Claude for explanation"""
     message = claude.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-6",
         max_tokens=1024,
         messages=[{
             "role": "user",
