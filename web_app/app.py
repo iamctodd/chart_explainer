@@ -127,6 +127,17 @@ ANALYSIS_PROMPT = """Analyze this chart/graph and provide:
 Be clear and helpful, not condescending. If the axes are misleading or there are visual tricks, point them out."""
 
 
+def detect_media_type(image_bytes, fallback='image/png'):
+    """Anthropic's API rejects images whose declared media_type doesn't match
+    their actual encoding, so sniff the real format from the bytes instead of
+    trusting the browser-supplied content_type."""
+    try:
+        fmt = Image.open(io.BytesIO(image_bytes)).format
+    except Exception:
+        return fallback
+    return f"image/{fmt.lower()}" if fmt else fallback
+
+
 def make_image_message(image_base64, media_type):
     return {
         "role": "user",
@@ -158,9 +169,7 @@ def analyze():
         return jsonify({'error': 'No file selected'}), 400
     image_bytes = file.read()
     image_data  = base64.b64encode(image_bytes).decode('utf-8')
-    media_type  = file.content_type
-    if not media_type or not media_type.startswith('image/'):
-        media_type = 'image/png'
+    media_type  = detect_media_type(image_bytes)
     try:
         message = claude.messages.create(
             model="claude-sonnet-4-6", max_tokens=1500,
@@ -219,9 +228,7 @@ def analyze_stream():
 
     image_bytes   = file.read()
     image_base64  = base64.b64encode(image_bytes).decode('utf-8')
-    media_type    = file.content_type
-    if not media_type or not media_type.startswith('image/'):
-        media_type = 'image/png'
+    media_type    = detect_media_type(image_bytes)
     image_data_url = f"data:{media_type};base64,{image_base64}"
 
     def generate():
@@ -509,9 +516,7 @@ def api_v1_analyze():
         return jsonify({'error': 'No file selected'}), 400
     image_bytes  = file.read()
     image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-    media_type   = file.content_type
-    if not media_type or not media_type.startswith('image/'):
-        media_type = 'image/png'
+    media_type   = detect_media_type(image_bytes)
     try:
         message = claude.messages.create(
             model='claude-sonnet-4-6',
