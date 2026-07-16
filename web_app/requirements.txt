@@ -1,5 +1,7 @@
 flask
 anthropic
+openai
+google-genai
 gunicorn
 markdown
 supabase

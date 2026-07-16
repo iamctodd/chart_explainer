@@ -11,6 +11,7 @@ import hashlib
 import secrets
 from PIL import Image
 from supabase import create_client
+import providers
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5 MB upload limit
@@ -20,7 +21,8 @@ def too_large(e):
     return jsonify({'error': 'Image must be under 5MB. Please resize and try again.'}), 413
 
 # ── Clients ────────────────────────────────────────────────────────────────────
-
+# Used only by the internal/legacy paths below (api_v1_analyze, generate_gallery_summary)
+# that stay Anthropic-only. User-facing chat routes go through providers.py instead.
 claude = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 SUPABASE_URL      = os.environ.get('SUPABASE_URL',      'https://csjiymeycevxqmlmqcwc.supabase.co')
@@ -55,10 +57,6 @@ def require_auth(f):
 def hash_api_key(raw_key):
     return hashlib.sha256(raw_key.encode()).hexdigest()
 
-
-def calculate_cost(input_tokens, output_tokens):
-    """Cost in USD — claude-sonnet-4-6: $3/1M input, $15/1M output"""
-    return round((input_tokens * 3.0 + output_tokens * 15.0) / 1_000_000, 6)
 
 def require_admin(f):
     @wraps(f)
@@ -115,16 +113,8 @@ def require_api_key(f):
 
 
 # ── Shared prompt + helpers ────────────────────────────────────────────────────
-
-ANALYSIS_PROMPT = """Analyze this chart/graph and provide:
-
-1. **What this shows**: Explain what data is being presented (2-3 sentences)
-2. **What this chart is really saying**: What are the main takeaways or patterns?
-3. **What this does NOT show**: Important limitations or what's missing
-4. **What people often misread here**: Common ways people might misread this
-5. **What could be improved**: How to make this chart easier to understand
-
-Be clear and helpful, not condescending. If the axes are misleading or there are visual tricks, point them out."""
+# ANALYSIS_PROMPT lives in providers.py — imported here so the legacy Anthropic-only
+# path below stays in sync with the multi-provider chat routes' prompt wording.
 
 
 def detect_media_type(image_bytes, fallback='image/png'):
@@ -143,7 +133,7 @@ def make_image_message(image_base64, media_type):
         "role": "user",
         "content": [
             {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": image_base64}},
-            {"type": "text", "text": ANALYSIS_PROMPT},
+            {"type": "text", "text": providers.ANALYSIS_PROMPT},
         ],
     }
 
@@ -155,7 +145,7 @@ def sse_event(event, data):
 
 @app.route('/')
 def index():
-    return render_template('index.html', posthog_key=POSTHOG_KEY)
+    return render_template('index.html', posthog_key=POSTHOG_KEY, providers=providers.available_providers(), default_provider=providers.DEFAULT_PROVIDER)
 
 
 # Non-streaming endpoints kept for backwards compatibility (no auth required)
@@ -167,15 +157,15 @@ def analyze():
     file = request.files['chart']
     if file.filename == '':
         return jsonify({'error': 'No file selected'}), 400
+    # Unauthenticated route — always use the default provider regardless of client
+    # input, so anonymous traffic can't be used to spend non-default provider keys.
+    provider = providers.DEFAULT_PROVIDER
     image_bytes = file.read()
     image_data  = base64.b64encode(image_bytes).decode('utf-8')
     media_type  = detect_media_type(image_bytes)
+    turns = providers.build_turns(image_data, media_type, '', [], '')
     try:
-        message = claude.messages.create(
-            model="claude-sonnet-4-6", max_tokens=1500,
-            messages=[make_image_message(image_data, media_type)],
-        )
-        raw_text = message.content[0].text
+        raw_text, _usage = providers.complete(provider, turns, max_tokens=1500)
         explanation_html = markdown.markdown(raw_text, extensions=['extra', 'nl2br'])
         return jsonify({'explanation': explanation_html, 'analysis_raw': raw_text, 'image': f"data:{media_type};base64,{image_data}"})
     except Exception as e:
@@ -187,6 +177,9 @@ def followup():
     data = request.get_json()
     if not data:
         return jsonify({'error': 'Invalid request'}), 400
+    # Unauthenticated route — always use the default provider regardless of client
+    # input, so anonymous traffic can't be used to spend non-default provider keys.
+    provider = providers.DEFAULT_PROVIDER
     question             = data.get('question', '').strip()
     image_data_url       = data.get('image', '')
     conversation_history = data.get('conversation_history', [])
@@ -198,17 +191,9 @@ def followup():
         media_type = header.split(':')[1].split(';')[0] if ':' in header else 'image/png'
     else:
         image_base64, media_type = image_data_url, 'image/png'
-    messages = [make_image_message(image_base64, media_type)]
-    if analysis_raw:
-        messages.append({"role": "assistant", "content": analysis_raw})
-    for turn in conversation_history:
-        messages.append({"role": turn["role"], "content": turn["content"]})
-    messages.append({"role": "user", "content": question})
+    turns = providers.build_turns(image_base64, media_type, analysis_raw, conversation_history, question)
     try:
-        message = claude.messages.create(
-            model="claude-sonnet-4-6", max_tokens=1024, messages=messages,
-        )
-        answer_markdown = message.content[0].text
+        answer_markdown, _usage = providers.complete(provider, turns, max_tokens=1024)
         answer_html     = markdown.markdown(answer_markdown, extensions=['extra', 'nl2br'])
         return jsonify({'answer': answer_html, 'answer_raw': answer_markdown})
     except Exception as e:
@@ -225,37 +210,37 @@ def analyze_stream():
     file = request.files['chart']
     if file.filename == '':
         return jsonify({'error': 'No file selected'}), 400
+    try:
+        provider = providers.resolve_provider(request.form.get('provider'))
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
 
     image_bytes   = file.read()
     image_base64  = base64.b64encode(image_bytes).decode('utf-8')
     media_type    = detect_media_type(image_bytes)
     image_data_url = f"data:{media_type};base64,{image_base64}"
+    turns = providers.build_turns(image_base64, media_type, '', [], '')
 
     def generate():
         try:
             yield sse_event('image', {'image': image_data_url})
-            with claude.messages.stream(
-                model="claude-sonnet-4-6", max_tokens=1500,
-                messages=[make_image_message(image_base64, media_type)],
-            ) as stream:
-                for text in stream.text_stream:
-                    yield sse_event('text', {'chunk': text})
-                # After text stream exhausted, capture usage
-                try:
-                    final_msg = stream.get_final_message()
-                    usage = final_msg.usage
-                    user_id = getattr(request, 'user_id', None)
-                    if user_id and admin_client:
-                        admin_client.table('usage').insert({
-                            'user_id': user_id,
-                            'chart_id': None,
-                            'event': 'analyze',
-                            'input_tokens': usage.input_tokens,
-                            'output_tokens': usage.output_tokens,
-                            'cost_usd': calculate_cost(usage.input_tokens, usage.output_tokens)
-                        }).execute()
-                except Exception as ue:
-                    print(f'Usage tracking error: {ue}')
+            for kind, payload in providers.stream_completion(provider, turns, max_tokens=1500):
+                if kind == 'text':
+                    yield sse_event('text', {'chunk': payload})
+                elif kind == 'usage':
+                    try:
+                        user_id = getattr(request, 'user_id', None)
+                        if user_id and admin_client:
+                            admin_client.table('usage').insert({
+                                'user_id': user_id,
+                                'chart_id': None,
+                                'event': 'analyze',
+                                'input_tokens': payload['input_tokens'],
+                                'output_tokens': payload['output_tokens'],
+                                'cost_usd': providers.calculate_cost(provider, payload['input_tokens'], payload['output_tokens'])
+                            }).execute()
+                    except Exception as ue:
+                        print(f'Usage tracking error: {ue}')
             yield sse_event('done', {})
         except Exception as e:
             yield sse_event('error', {'error': str(e)})
@@ -273,6 +258,10 @@ def followup_stream():
     data = request.get_json()
     if not data:
         return jsonify({'error': 'Invalid request'}), 400
+    try:
+        provider = providers.resolve_provider(data.get('provider'))
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
     question             = data.get('question', '').strip()
     image_data_url       = data.get('image', '')
     conversation_history = data.get('conversation_history', [])
@@ -285,36 +274,27 @@ def followup_stream():
     else:
         image_base64, media_type = image_data_url, 'image/png'
 
-    messages = [make_image_message(image_base64, media_type)]
-    if analysis_raw:
-        messages.append({"role": "assistant", "content": analysis_raw})
-    for turn in conversation_history:
-        messages.append({"role": turn["role"], "content": turn["content"]})
-    messages.append({"role": "user", "content": question})
+    turns = providers.build_turns(image_base64, media_type, analysis_raw, conversation_history, question)
 
     def generate():
         try:
-            with claude.messages.stream(
-                model="claude-sonnet-4-6", max_tokens=1024, messages=messages,
-            ) as stream:
-                for text in stream.text_stream:
-                    yield sse_event('text', {'chunk': text})
-                # After text stream exhausted, capture usage
-                try:
-                    final_msg = stream.get_final_message()
-                    usage = final_msg.usage
-                    user_id = getattr(request, 'user_id', None)
-                    if user_id and admin_client:
-                        admin_client.table('usage').insert({
-                            'user_id': user_id,
-                            'chart_id': data.get('chart_id'),
-                            'event': 'followup',
-                            'input_tokens': usage.input_tokens,
-                            'output_tokens': usage.output_tokens,
-                            'cost_usd': calculate_cost(usage.input_tokens, usage.output_tokens)
-                        }).execute()
-                except Exception as ue:
-                    print(f'Usage tracking error: {ue}')
+            for kind, payload in providers.stream_completion(provider, turns, max_tokens=1024):
+                if kind == 'text':
+                    yield sse_event('text', {'chunk': payload})
+                elif kind == 'usage':
+                    try:
+                        user_id = getattr(request, 'user_id', None)
+                        if user_id and admin_client:
+                            admin_client.table('usage').insert({
+                                'user_id': user_id,
+                                'chart_id': data.get('chart_id'),
+                                'event': 'followup',
+                                'input_tokens': payload['input_tokens'],
+                                'output_tokens': payload['output_tokens'],
+                                'cost_usd': providers.calculate_cost(provider, payload['input_tokens'], payload['output_tokens'])
+                            }).execute()
+                    except Exception as ue:
+                        print(f'Usage tracking error: {ue}')
             yield sse_event('done', {})
         except Exception as e:
             yield sse_event('error', {'error': str(e)})
@@ -533,7 +513,7 @@ def api_v1_analyze():
                     'event':         'analyze',
                     'input_tokens':  message.usage.input_tokens,
                     'output_tokens': message.usage.output_tokens,
-                    'cost_usd':      calculate_cost(message.usage.input_tokens, message.usage.output_tokens),
+                    'cost_usd':      providers.calculate_cost('anthropic', message.usage.input_tokens, message.usage.output_tokens),
                 }).execute()
         except Exception as ue:
             print(f'Usage tracking error: {ue}')

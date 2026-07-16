@@ -323,6 +323,20 @@
         .chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .chat-error { color: var(--danger); font-size: 0.82em; margin-top: 6px; padding: 0 4px; }
 
+        /* Model selector */
+        .model-select-row { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+        .model-select {
+            background: var(--bg-input); border: 1px solid var(--border); color: var(--text-muted);
+            font-family: inherit; font-size: 0.78em; padding: 5px 10px; border-radius: 8px;
+            cursor: pointer; outline: none; transition: border-color 0.15s, color 0.15s;
+        }
+        .model-select:hover, .model-select:focus { border-color: var(--accent); color: var(--text-primary); }
+        .model-badge {
+            display: inline-block; font-size: 0.72em; font-weight: 600; color: var(--text-muted);
+            background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px;
+            padding: 2px 7px; margin-bottom: 4px; letter-spacing: 0.02em;
+        }
+
         /* ── MODALS ── */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; }
         .modal-overlay.active { display: flex; }
@@ -456,6 +470,9 @@
         <button class="landing-signin-link" id="landingSignInBtn">Sign in</button>
     </div>
     <h1 class="landing-headline">What chart do you<br>need to <em style="font-style:italic;color:#e8a830;">audit?</em></h1>
+    <div class="model-select-row">
+        <select class="model-select" id="landingModelSelect" title="Model used for this analysis"></select>
+    </div>
     <div class="landing-upload-box" id="uploadArea">
         <span class="landing-upload-icon">📁</span>
         <span class="upload-placeholder">Drag a chart or <span>click to upload</span> — PNG, JPG, GIF</span>
@@ -522,6 +539,9 @@
         </div>
         <div class="main-input-bar">
             <div class="main-input-inner">
+                <div class="model-select-row">
+                    <select class="model-select" id="chatModelSelect" title="Model used for the next chart or follow-up"></select>
+                </div>
                 <div class="chat-input-area">
                     <button class="attach-btn" id="attachBtn" title="Analyze another chart">📎</button>
                     <textarea class="chat-textarea" id="mainChatInput" placeholder="Ask a follow-up question about this chart…" rows="1"></textarea>
@@ -836,6 +856,9 @@
     // ── Constants ──────────────────────────────────────────────
     const TOS_VERSION = 'v1';
     const MAX_HISTORY = 20;
+    const AVAILABLE_PROVIDERS = {{ providers | tojson }};
+    const DEFAULT_PROVIDER = {{ default_provider | tojson }};
+    const PROVIDER_LABELS = Object.fromEntries(AVAILABLE_PROVIDERS.map(p => [p.id, p.label]));
 
     // ── State ──────────────────────────────────────────────────
     let chartHistory   = [];
@@ -863,6 +886,8 @@
     const newChartBtn    = document.getElementById('newChartBtn');
     const clearHistoryBtn= document.getElementById('clearHistoryBtn');
     const attachBtn      = document.getElementById('attachBtn');
+    const landingModelSelect = document.getElementById('landingModelSelect');
+    const chatModelSelect    = document.getElementById('chatModelSelect');
     const sidebar        = document.getElementById('sidebar');
     const hamburgerBtn   = document.getElementById('hamburgerBtn');
     const drawerBackdrop = document.getElementById('drawerBackdrop');
@@ -971,6 +996,25 @@
         if (chartHistory.length === 0 && !sidebarHistory.querySelector('.sidebar-load-error')) {
             sidebarHistory.innerHTML = '<div class="sidebar-load-error">No saved charts yet.<br>Upload one to get started!</div>';
         }
+    });
+
+    // ── Model selector ────────────────────────────────────────
+    const storedModel = localStorage.getItem('selectedModel');
+    let selectedModel = AVAILABLE_PROVIDERS.some(p => p.id === storedModel)
+        ? storedModel
+        : (AVAILABLE_PROVIDERS.some(p => p.id === DEFAULT_PROVIDER) ? DEFAULT_PROVIDER : (AVAILABLE_PROVIDERS[0]?.id || DEFAULT_PROVIDER));
+
+    function setSelectedModel(id) {
+        selectedModel = id;
+        localStorage.setItem('selectedModel', id);
+        [landingModelSelect, chatModelSelect].forEach(el => { if (el) el.value = id; });
+    }
+
+    [landingModelSelect, chatModelSelect].forEach(select => {
+        if (!select) return;
+        select.innerHTML = AVAILABLE_PROVIDERS.map(p => `<option value="${p.id}">${escapeHtml(p.label)}</option>`).join('');
+        select.value = selectedModel;
+        select.addEventListener('change', (e) => setSelectedModel(e.target.value));
     });
 
     // ── Sidebar collapse (desktop) ─────────────────────────────
@@ -1522,6 +1566,8 @@
 
         const formData = new FormData();
         formData.append('chart', file);
+        formData.append('provider', selectedModel);
+        const analysisModel = selectedModel;
 
         let chartData = null;
         let accumulatedText = '';
@@ -1542,7 +1588,7 @@
                 for await (const { event, data } of readSSE(response)) {
                     if (event === 'image') {
                         analysisCount++;
-                        chartData = { id: analysisCount, timestamp: new Date(), image: data.image, explanation: '', analysisRaw: '', filename: file.name, displayName: null, starred: false, isPublic: false, conversation: [] };
+                        chartData = { id: analysisCount, timestamp: new Date(), image: data.image, explanation: '', analysisRaw: '', filename: file.name, displayName: null, starred: false, isPublic: false, conversation: [], model: analysisModel };
                         chartHistory.unshift(chartData);
                         loadingEl.classList.remove('visible');
                         switchToChatView(chartData.id);
@@ -1569,7 +1615,9 @@
                 if (!response.ok) { const err = await response.json().catch(() => ({ error: 'Upload failed' })); showError(err.error || 'Failed to analyze chart'); return; }
                 const result = await response.json();
                 analysisCount++;
-                chartData = { id: analysisCount, timestamp: new Date(), image: result.image, explanation: result.explanation, analysisRaw: result.analysis_raw || '', filename: file.name, displayName: null, starred: false, conversation: [] };
+                // Anonymous requests always run on the server's default provider regardless
+                // of the dropdown, so tag with that rather than the (ignored) selection.
+                chartData = { id: analysisCount, timestamp: new Date(), image: result.image, explanation: result.explanation, analysisRaw: result.analysis_raw || '', filename: file.name, displayName: null, starred: false, conversation: [], model: DEFAULT_PROVIDER };
                 chartHistory.unshift(chartData);
                 loadingEl.classList.remove('visible');
                 switchToChatView(chartData.id);
@@ -1634,6 +1682,7 @@
             <img src="${chart.image}" class="main-chart-img" alt="Chart">
             <div class="main-chart-meta">
                 ${escapeHtml(chart.displayName || chart.filename)} · ${formatTime(chart.timestamp)}
+                ${chart.model && PROVIDER_LABELS[chart.model] ? `<span class="model-badge">${escapeHtml(PROVIDER_LABELS[chart.model])}</span>` : ''}
                 <button class="copy-btn-inline" id="copy-${chart.id}" onclick="copyAnalysis('${chart.id}')">📋 Copy</button>
                 <button class="meta-action-btn" onclick="exportChart('${chart.id}')">⬇ Export</button>
                 <button class="meta-action-btn" id="share-btn-${chart.id}" onclick="handleShareBtn('${chart.id}')">${chart.isPublic ? '🔗 Share' : '🌐 Make Public'}</button>
@@ -1643,7 +1692,7 @@
             <div class="chat-label">Follow-up</div>
             <div class="chat-thread" id="thread-${chart.id}"></div>
         `;
-        chart.conversation.forEach(msg => appendMessageEl(id, msg.role, msg.html || escapeHtml(msg.content)));
+        chart.conversation.forEach(msg => appendMessageEl(id, msg.role, msg.html || escapeHtml(msg.content), msg.model));
         mainContent.scrollTop = mainContent.scrollHeight;
     }
 
@@ -1695,9 +1744,16 @@
 
     function autoResize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
 
-    function appendMessageEl(id, role, htmlContent) {
+    function appendMessageEl(id, role, htmlContent, model) {
         const thread = document.getElementById(`thread-${id}`);
         if (!thread) return null;
+        if (role === 'assistant' && model && PROVIDER_LABELS[model]) {
+            const badge = document.createElement('div');
+            badge.className = 'model-badge';
+            badge.style.alignSelf = 'flex-start';
+            badge.textContent = PROVIDER_LABELS[model];
+            thread.appendChild(badge);
+        }
         const div = document.createElement('div');
         div.className = `chat-bubble ${role}`;
         div.innerHTML = htmlContent;
@@ -1730,9 +1786,11 @@
 
         let accumulatedText = '';
         let streamStarted   = false;
+        const followupModel = selectedModel;
 
         const payload = {
             question,
+            provider:             followupModel,
             image:                chart.image,
             analysis_raw:         chart.analysisRaw || '',
             conversation_history: chart.conversation.map(m => ({ role: m.role, content: m.content })),
@@ -1753,7 +1811,16 @@
 
                 for await (const { event, data } of readSSE(response)) {
                     if (event === 'text') {
-                        if (!streamStarted) { typingEl.replaceWith(assistantBubble); streamStarted = true; }
+                        if (!streamStarted) {
+                            if (PROVIDER_LABELS[followupModel]) {
+                                const badge = document.createElement('div');
+                                badge.className = 'model-badge';
+                                badge.style.alignSelf = 'flex-start';
+                                badge.textContent = PROVIDER_LABELS[followupModel];
+                                typingEl.insertAdjacentElement('beforebegin', badge);
+                            }
+                            typingEl.replaceWith(assistantBubble); streamStarted = true;
+                        }
                         accumulatedText += data.chunk;
                         assistantBubble.textContent = accumulatedText;
                         mainContent.scrollTop = mainContent.scrollHeight;
@@ -1761,7 +1828,7 @@
                         const html = marked.parse(accumulatedText);
                         assistantBubble.innerHTML = html; assistantBubble.className = 'chat-bubble assistant';
                         chart.conversation.push({ role: 'user', content: question, html: escapeHtml(question) });
-                        chart.conversation.push({ role: 'assistant', content: accumulatedText, html });
+                        chart.conversation.push({ role: 'assistant', content: accumulatedText, html, model: followupModel });
                         await saveMessageToSupabase(id, 'user', question, escapeHtml(question));
                         await saveMessageToSupabase(id, 'assistant', accumulatedText, html);
                         mainContent.scrollTop = mainContent.scrollHeight;
@@ -1784,9 +1851,18 @@
                 const result = await response.json();
                 const html = result.answer; const raw = result.answer_raw;
                 assistantBubble.innerHTML = html; assistantBubble.className = 'chat-bubble assistant';
+                // Anonymous requests always run on the server's default provider regardless
+                // of the dropdown, so tag with that rather than the (ignored) selection.
+                if (PROVIDER_LABELS[DEFAULT_PROVIDER]) {
+                    const badge = document.createElement('div');
+                    badge.className = 'model-badge';
+                    badge.style.alignSelf = 'flex-start';
+                    badge.textContent = PROVIDER_LABELS[DEFAULT_PROVIDER];
+                    thread.appendChild(badge);
+                }
                 thread.appendChild(assistantBubble);
                 chart.conversation.push({ role: 'user', content: question, html: escapeHtml(question) });
-                chart.conversation.push({ role: 'assistant', content: raw, html });
+                chart.conversation.push({ role: 'assistant', content: raw, html, model: DEFAULT_PROVIDER });
                 mainContent.scrollTop = mainContent.scrollHeight;
             }
 

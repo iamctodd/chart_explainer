@@ -71,6 +71,12 @@ ChartHawk gives you:
    ```bash
    export ANTHROPIC_API_KEY="your-api-key-here"
    export PORT=5001  # Optional, defaults to 5000
+
+   # Optional — enables additional models in the model selector.
+   # Only providers with a key set will appear in the dropdown.
+   export OPENAI_API_KEY="your-openai-key"   # GPT-4o
+   export GOOGLE_API_KEY="your-google-key"   # Gemini
+   export XAI_API_KEY="your-xai-key"         # Grok
    ```
 
 5. **Run the app**
@@ -91,7 +97,7 @@ ChartHawk gives you:
 
 1. Fork this repository
 2. Connect your GitHub repo to Railway
-3. Set environment variable: `ANTHROPIC_API_KEY`
+3. Set environment variable: `ANTHROPIC_API_KEY` (optionally also `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `XAI_API_KEY` for additional models)
 4. Set root directory to `web_app`
 5. Deploy!
 
