@@ -1387,6 +1387,10 @@
             // Fetch charts via direct REST (no Supabase client lock involved)
             const chartsUrl = new URL(`${SUPABASE_URL}/rest/v1/charts`);
             chartsUrl.searchParams.set('select', 'id,filename,display_name,starred,is_public,image_data,explanation,analysis_raw,created_at');
+            // "History" is this user's own charts only — the RLS policy also allows any
+            // public chart through (for the separate /gallery page), so without this
+            // explicit filter every user's public charts would leak into everyone's sidebar.
+            chartsUrl.searchParams.set('user_id', `eq.${currentUser.id}`);
             chartsUrl.searchParams.set('order', 'created_at.desc');
             chartsUrl.searchParams.set('limit', String(MAX_HISTORY));
             const chartsRes = await fetch(chartsUrl, { headers });
