@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChartHawk — See What the Data's Hiding</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'><polygon points='14,2 26,8.5 26,19.5 14,26 2,19.5 2,8.5' fill='none' stroke='%23e8a830' stroke-width='2'/><circle cx='14' cy='14' r='3' fill='%23e8a830'/></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect width='120' height='120' rx='26' fill='%231F3A5F'/><path d='M84 36A34 34 0 1 0 84 84' fill='none' stroke='%23F2E35B' stroke-width='16' stroke-linecap='round'/></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     {% if posthog_key %}
@@ -20,20 +20,22 @@
 {% endif %}
     <style>
         :root {
-            --bg-body:      #0b0c0e;
-            --bg-surface:   #111316;
-            --bg-card:      #181b1f;
-            --bg-input:     #1e2126;
-            --border:       #2a2e35;
-            --text-primary: #f0ece4;
-            --text-muted:   #7a7670;
-            --accent:       #e8a830;
-            --accent-hover: #c8922a;
-            --accent-dim:   rgba(232,168,48,0.13);
+            --navy:         #1F3A5F;
+            --bg-body:      #0F1E33;
+            --bg-surface:   #132744;
+            --bg-card:      #1A3256;
+            --bg-input:     #16294A;
+            --border:       #2C4A72;
+            --text-primary: #F2F5F9;
+            --text-muted:   #A9B7CA;
+            --accent:       #F2E35B;
+            --accent-hover: #E2D140;
+            --accent-ink:   #13243B;
+            --accent-dim:   rgba(242,227,91,0.12);
             --success:      #3FB950;
             --danger:       #F85149;
-            --font-display: 'Playfair Display', Georgia, serif;
-            --font-ui:      'Syne', system-ui, sans-serif;
+            --font-display: 'Oswald', 'Arial Narrow', sans-serif;
+            --font-ui:      'Inter', system-ui, sans-serif;
             --font-mono:    'JetBrains Mono', monospace;
         }
 
@@ -41,7 +43,7 @@
 
         html, body {
             height: 100%;
-            font-family: var(--font-ui, 'Syne', system-ui, sans-serif);
+            font-family: var(--font-ui, 'Inter', system-ui, sans-serif);
             background: var(--bg-body);
             color: var(--text-primary);
             overflow: hidden;
@@ -57,9 +59,9 @@
             position: absolute; top: 24px; left: 32px;
             font-size: 1em; font-weight: 700; color: var(--text-muted); letter-spacing: -0.01em;
         }
-        .landing-headline { font-family: "Playfair Display", Georgia, serif;
-            font-size: clamp(2em, 5vw, 3.2em); font-weight: 700; text-align: center;
-            line-height: 1.15; letter-spacing: -0.03em; color: var(--text-primary); margin-bottom: 32px;
+        .landing-headline { font-family: var(--font-display);
+            font-size: clamp(2.4em, 6vw, 4em); font-weight: 600; text-align: center;
+            line-height: 1.08; letter-spacing: 0; color: var(--text-primary); margin-bottom: 32px;
         }
 
         /* Auth modal */
@@ -75,7 +77,7 @@
         }
         .auth-field input:focus { border-color: var(--accent); }
         .auth-submit-btn {
-            width: 100%; background: var(--accent); color: white; border: none; border-radius: 8px;
+            width: 100%; background: var(--accent); color: var(--accent-ink); border: none; border-radius: 8px;
             padding: 11px; font-size: 0.95em; font-weight: 600; cursor: pointer; font-family: inherit;
             transition: background 0.2s; margin-bottom: 12px;
         }
@@ -107,14 +109,14 @@
             display: flex; align-items: center; gap: 12px;
             cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; margin-bottom: 12px;
         }
-        .landing-upload-box:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,168,48,0.12); }
-        .landing-upload-box.dragover { border-color: var(--accent); background: rgba(232,168,48,0.05); box-shadow: 0 0 0 3px rgba(232,168,48,0.15); }
+        .landing-upload-box:hover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(242,227,91,0.12); }
+        .landing-upload-box.dragover { border-color: var(--accent); background: rgba(242,227,91,0.05); box-shadow: 0 0 0 3px rgba(242,227,91,0.15); }
         .upload-placeholder { flex: 1; color: var(--text-muted); font-size: 1em; user-select: none; }
         .upload-placeholder span { color: var(--accent); font-weight: 500; }
         .landing-upload-icon { font-size: 1.4em; flex-shrink: 0; opacity: 0.6; }
         .landing-send-btn {
             width: 36px; height: 36px; background: var(--accent); border: none;
-            border-radius: 9px; color: white; font-size: 1.1em; cursor: pointer;
+            border-radius: 9px; color: var(--accent-ink); font-size: 1.1em; cursor: pointer;
             display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s;
         }
         .landing-send-btn:hover { background: var(--accent-hover); }
@@ -281,7 +283,7 @@
         .analysis-content h1, .analysis-content h2 { color: var(--accent); margin-top: 22px; margin-bottom: 8px; }
         .analysis-content h1 { font-size: 1.25em; } .analysis-content h2 { font-size: 1.1em; }
         .analysis-content p { margin-bottom: 14px; } .analysis-content p:last-child { margin-bottom: 0; }
-        .analysis-content strong { color: #f0c060; }
+        .analysis-content strong { color: #F7EE9E; }
         .analysis-content ul, .analysis-content ol { margin-left: 20px; margin-bottom: 14px; }
         .analysis-content li { margin-bottom: 6px; }
         .analysis-content.streaming { white-space: pre-wrap; color: var(--text-muted); font-size: 0.93em; }
@@ -291,14 +293,14 @@
         .chat-label { font-size: 0.75em; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 14px; }
         .chat-thread { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
         .chat-bubble { max-width: 88%; padding: 10px 14px; border-radius: 10px; font-size: 0.93em; line-height: 1.65; }
-        .chat-bubble.user { align-self: flex-end; background: var(--accent-dim); color: var(--text-primary); border: 1px solid rgba(232,168,48,0.3); border-bottom-right-radius: 3px; }
+        .chat-bubble.user { align-self: flex-end; background: var(--accent-dim); color: var(--text-primary); border: 1px solid rgba(242,227,91,0.3); border-bottom-right-radius: 3px; }
         .chat-bubble.assistant { align-self: flex-start; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-bottom-left-radius: 3px; }
         .chat-bubble.assistant.streaming { white-space: pre-wrap; color: var(--text-muted); }
         .chat-bubble.assistant h1, .chat-bubble.assistant h2, .chat-bubble.assistant h3 { color: var(--accent); margin: 10px 0 6px; font-size: 1em; }
         .chat-bubble.assistant p { margin-bottom: 8px; } .chat-bubble.assistant p:last-child { margin-bottom: 0; }
         .chat-bubble.assistant ul, .chat-bubble.assistant ol { margin-left: 16px; margin-bottom: 8px; }
         .chat-bubble.assistant li { margin-bottom: 4px; }
-        .chat-bubble.assistant strong { color: #f0c060; }
+        .chat-bubble.assistant strong { color: #F7EE9E; }
         .chat-typing { align-self: flex-start; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; border-bottom-left-radius: 3px; padding: 12px 16px; }
         .typing-dots span { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--text-muted); margin: 0 2px; animation: bounce 1.2s infinite ease-in-out; }
         .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
@@ -318,7 +320,7 @@
         .attach-btn:hover { color: var(--text-primary); }
         .chat-textarea { flex: 1; background: transparent; border: none; outline: none; color: var(--text-primary); font-family: inherit; font-size: 0.93em; line-height: 1.5; resize: none; max-height: 140px; overflow-y: auto; }
         .chat-textarea::placeholder { color: var(--text-muted); }
-        .chat-send-btn { background: var(--accent); color: white; border: none; border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 1em; transition: background 0.15s; }
+        .chat-send-btn { background: var(--accent); color: var(--accent-ink); border: none; border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 1em; transition: background 0.15s; }
         .chat-send-btn:hover { background: var(--accent-hover); }
         .chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .chat-error { color: var(--danger); font-size: 0.82em; margin-top: 6px; padding: 0 4px; }
@@ -352,7 +354,7 @@
         .modal-btn { padding: 9px 20px; border: none; border-radius: 7px; font-size: 0.93em; font-weight: 600; cursor: pointer; transition: all 0.15s; }
         .modal-btn.cancel { background: var(--bg-input); color: var(--text-muted); border: 1px solid var(--border); }
         .modal-btn.cancel:hover { background: var(--border); color: var(--text-primary); }
-        .modal-btn.submit { background: var(--accent); color: white; }
+        .modal-btn.submit { background: var(--accent); color: var(--accent-ink); }
         .modal-btn.submit:hover { background: var(--accent-hover); }
         .modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
         .feedback-success { background: rgba(63,185,80,0.1); color: var(--success); border: 1px solid rgba(63,185,80,0.3); padding: 11px 14px; border-radius: 8px; margin-bottom: 14px; display: none; font-size: 0.9em; }
@@ -428,7 +430,7 @@
         .sidebar-top-row .new-chart-btn { flex: 1; margin-bottom: 0; }
         /* Sidebar sign-in button for anonymous users */
         .sidebar-signin-btn {
-            display: none; width: 100%; background: var(--accent); color: white;
+            display: none; width: 100%; background: var(--accent); color: var(--accent-ink);
             border: none; border-radius: 8px; padding: 9px 14px; font-size: 0.85em;
             font-weight: 600; cursor: pointer; font-family: inherit; text-align: center;
             transition: background 0.2s; margin-bottom: 4px;
@@ -457,28 +459,68 @@
             .main-content { padding: 24px 20px; }
             .main-input-bar { padding: 8px 16px 16px; }
         }
+
+        /* ── 2026 brand refresh ── */
+        .brand-lockup { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-primary); }
+        .brand-lockup span { font-family: var(--font-display); font-weight: 500; font-size: 17px; letter-spacing: 0.22em; }
+        .landing-view { background: var(--navy); padding-top: 104px; }
+        .landing-brand { color: var(--text-primary); }
+        .landing-eyebrow { font-size: 0.78em; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-ink); background: var(--accent); padding: 6px 12px; border-radius: 999px; margin-bottom: 20px; }
+        .landing-headline { margin-bottom: 16px; }
+        .landing-headline em { font-style: normal; color: var(--accent); }
+        .landing-sub { max-width: 560px; text-align: center; color: #DCE3EC; font-size: 1.08em; line-height: 1.55; margin-bottom: 28px; }
+        .landing-upload-box { background: #19324F; border: 2px dashed #8FA3BC; border-radius: 16px; padding: 22px 18px 22px 24px; }
+        .landing-upload-box:hover, .landing-upload-box.dragover { border-style: solid; }
+        .upload-placeholder { color: #DCE3EC; }
+        .landing-upload-icon { opacity: 1; display: flex; }
+        .landing-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 6px; }
+        .landing-chips span { font-size: 0.8em; color: #DCE3EC; border: 1px solid #4A6A94; border-radius: 999px; padding: 6px 12px; }
+        .landing-signin-link { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); font-weight: 600; border-radius: 999px; padding: 8px 18px; }
+        .landing-signin-link:hover { color: var(--accent-ink); background: var(--accent-hover); border-color: var(--accent-hover); }
+        .landing-gallery-link { color: #DCE3EC; }
+        .google-signin-btn-small { color: #DCE3EC; border-color: #4A6A94; }
+        .landing-view .app-footer { border-top-color: #2C4A72; color: #C9D3E0; }
+        .landing-view .app-footer a, .landing-view .footer-nav a { color: #C9D3E0; }
+        .landing-view .model-select { background: #19324F; border-color: #4A6A94; color: #DCE3EC; }
+        .sidebar { background: var(--navy); }
+        .sidebar-brand { padding: 2px 6px 18px; }
+        .new-chart-btn { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); text-align: center; }
+        .new-chart-btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+        .gallery-nav-btn { background: transparent; color: #DCE3EC; border-color: #4A6A94; }
+        .main-chart-img { border-radius: 14px; }
+        .analysis-content h1 { font-family: var(--font-display); font-weight: 600; font-size: 1.9em; line-height: 1.15; color: var(--text-primary); margin-top: 8px; }
+        .analysis-content h2 { font-size: 1.15em; margin-top: 28px; }
+        .modal h2 { font-family: var(--font-display); font-weight: 600; letter-spacing: 0.01em; }
+        @media (max-width: 640px) {
+            .landing-view { padding-top: 88px; }
+            .landing-brand { left: 16px; top: 22px; }
+            .landing-brand span { display: none; }
+            .landing-auth-status { right: 16px; }
+        }
     </style>
 </head>
 <body>
 
 <!-- ── LANDING VIEW ──────────────────────────────────────────────────────── -->
 <div id="landingView" class="landing-view">
-    <div class="landing-brand" style="display:flex;align-items:center;gap:8px;"><svg width="20" height="20" viewBox="0 0 28 28" fill="none"><path d="M14 2L26 8.5V19.5L14 26L2 19.5V8.5L14 2Z" stroke="#e8a830" stroke-width="1.5" fill="none"/><circle cx="14" cy="14" r="3" fill="#e8a830"/></svg>Chart<span style="color:#e8a830">Hawk</span></div>
+    <a href="/" class="landing-brand brand-lockup" aria-label="ChartHawk home"><svg width="30" height="30" viewBox="0 0 120 120" fill="none" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" aria-hidden="true"><path d="M89.7 30.3A42 42 0 1 0 89.7 89.7"/><path d="M81.2 38.8A30 30 0 1 0 81.2 81.2"/><path d="M72.7 47.3A18 18 0 1 0 72.7 72.7"/></svg><span>CHARTHAWK</span></a>
     <!-- Auth status: top-right of landing -->
     <div class="landing-auth-status" id="landingAuthStatus">
         <a href="/gallery" class="landing-gallery-link">Gallery</a>
         <button class="landing-signin-link" id="landingSignInBtn">Sign in</button>
     </div>
-    <h1 class="landing-headline">What chart do you<br>need to <em style="font-style:italic;color:#e8a830;">audit?</em></h1>
+    <p class="landing-eyebrow">Free during beta</p>
+    <h1 class="landing-headline">What chart do you<br>need to <em>audit?</em></h1>
+    <p class="landing-sub">ChartHawk spots truncated axes, cherry-picked ranges and misleading chart types, then explains what it found in plain English.</p>
     <div class="model-select-row">
         <select class="model-select" id="landingModelSelect" title="Model used for this analysis"></select>
     </div>
     <div class="landing-upload-box" id="uploadArea">
-        <span class="landing-upload-icon">📁</span>
+        <span class="landing-upload-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
         <span class="upload-placeholder">Drag a chart or <span>click to upload</span> — PNG, JPG, GIF</span>
         <button class="landing-send-btn" tabindex="-1" aria-label="Analyze">↑</button>
     </div>
-    <p class="landing-hint">Detects truncated axes, cherry-picked ranges, misleading chart types, and more</p>
+    <div class="landing-chips" aria-label="What ChartHawk checks"><span>Truncated axes</span><span>Cherry-picked ranges</span><span>Misleading chart types</span><span>And more</span></div>
     <div class="landing-loading" id="loading"><div class="spinner"></div><span>Auditing your chart…</span></div>
     <div class="landing-error" id="error"></div>
     <!-- Optional sign-in nudge — hidden when already signed in -->
@@ -510,6 +552,7 @@
     <div class="drawer-backdrop" id="drawerBackdrop"></div>
 
     <aside class="sidebar" id="sidebar">
+        <a href="/" class="brand-lockup sidebar-brand" aria-label="ChartHawk home"><svg width="26" height="26" viewBox="0 0 120 120" fill="none" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" aria-hidden="true"><path d="M89.7 30.3A42 42 0 1 0 89.7 89.7"/><path d="M81.2 38.8A30 30 0 1 0 81.2 81.2"/><path d="M72.7 47.3A18 18 0 1 0 72.7 72.7"/></svg><span>CHARTHAWK</span></a>
         <div class="sidebar-top-row">
             <button class="new-chart-btn" id="newChartBtn">＋ New Audit</button>
             <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Collapse sidebar">‹</button>
