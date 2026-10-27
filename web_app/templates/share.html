@@ -23,63 +23,82 @@
     <meta name="twitter:image" content="https://charthawk.info/og-image.png">
     <title>Charthawk — Chart Audit</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect width='120' height='120' rx='26' fill='%231F3A5F'/><path d='M84 36A34 34 0 1 0 84 84' fill='none' stroke='%23F2E35B' stroke-width='16' stroke-linecap='round'/></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --bg-base:     #0b0c0e;
-            --bg-surface:  #111316;
-            --bg-card:     #181b1f;
-            --bg-input:    #1e2126;
-            --border:      #2a2e35;
-            --text-primary:#f0ece4;
-            --text-muted:  #7a7670;
-            --accent:      #e8a830;
-            --accent-dim:  rgba(232,168,48,0.12);
+            --navy:        #1F3A5F;
+            --bg-base:     #0F1E33;
+            --bg-surface:  #132744;
+            --bg-card:     #16294A;
+            --bg-input:    #1A3256;
+            --border:      #2C4A72;
+            --text-primary:#F2F5F9;
+            --text-muted:  #A9B7CA;
+            --accent:      #F2E35B;
+            --accent-ink:  #13243B;
+            --accent-dim:  rgba(242,227,91,0.12);
             --success:     #4ade80;
             --danger:      #f87171;
+            --font-display:'Oswald', 'Arial Narrow', sans-serif;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg-base); color: var(--text-primary); font-family: 'Syne', system-ui, sans-serif; min-height: 100vh; }
+        body { background: var(--bg-base); color: var(--text-primary); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
 
-        /* Header */
-        .header { display: flex; align-items: center; justify-content: space-between; padding: 18px 32px; border-bottom: 1px solid var(--border); background: var(--bg-surface); position: sticky; top: 0; z-index: 10; }
-        .header-brand { display: flex; align-items: center; gap: 10px; font-size: 1.1em; font-weight: 700; color: var(--text-primary); text-decoration: none; }
-        .header-brand span { color: var(--accent); }
-        .header-actions { display: flex; gap: 10px; }
-        .btn-ghost { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-muted); padding: 7px 14px; border-radius: 8px; font-size: 0.82em; text-decoration: none; cursor: pointer; transition: all 0.15s; }
+
+        /* Brand header (shared look with share page) */
+        .header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 32px; background: var(--navy); border-bottom: 0; position: sticky; top: 0; z-index: 10; }
+        .header-brand { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; }
+        .header-brand span { font-family: var(--font-display); font-weight: 500; font-size: 17px; letter-spacing: 0.22em; color: #fff; }
+        .header-actions { display: flex; align-items: center; gap: 10px; }
+        .btn-ghost { display: inline-flex; align-items: center; min-height: 40px; background: transparent; border: 1px solid #4A6A94; color: #DCE3EC; padding: 0 16px; border-radius: 999px; font-size: 0.85em; font-weight: 500; text-decoration: none; cursor: pointer; transition: all 0.15s; font-family: inherit; }
         .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-        .btn-accent { background: var(--accent); border: none; color: #fff; padding: 7px 14px; border-radius: 8px; font-size: 0.82em; text-decoration: none; cursor: pointer; transition: opacity 0.15s; }
-        .btn-accent:hover { opacity: 0.85; }
+        .btn-accent { display: inline-flex; align-items: center; min-height: 40px; background: var(--accent); border: none; color: var(--accent-ink); padding: 0 18px; border-radius: 999px; font-size: 0.85em; font-weight: 700; text-decoration: none; cursor: pointer; transition: background 0.15s; font-family: inherit; }
+        .btn-accent:hover { background: #E2D140; }
 
         /* Main layout */
         .page-body { max-width: 800px; margin: 0 auto; padding: 40px 24px 80px; }
 
         /* Chart image */
-        .chart-img { width: 100%; border-radius: 10px; border: 1px solid var(--border); display: block; margin-bottom: 24px; }
+        .chart-img { width: 100%; border-radius: 16px; border: 1px solid var(--border); display: block; margin-bottom: 28px; background: #fff; }
 
-        /* Chart meta */
-        .chart-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-        .chart-name { font-size: 1.1em; font-weight: 700; }
-        .chart-date { font-size: 0.82em; color: var(--text-muted); }
-        .copy-link-btn { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-muted); padding: 6px 12px; border-radius: 6px; font-size: 0.78em; cursor: pointer; transition: all 0.15s; }
+        /* Title block */
+        .chart-meta { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
+        .chart-meta-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .public-pill { font-size: 0.75em; font-weight: 600; color: var(--accent-ink); background: #E8EDF3; padding: 4px 10px; border-radius: 999px; }
+        .chart-name { font-family: var(--font-display); font-size: 2.4em; font-weight: 600; line-height: 1.1; }
+        .chart-subtitle { font-size: 1em; color: var(--text-muted); line-height: 1.5; }
+        .chart-date { font-size: 0.85em; color: var(--text-muted); }
+        .copy-link-btn { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary); padding: 0 16px; border-radius: 12px; font-size: 0.88em; font-weight: 600; font-family: inherit; cursor: pointer; transition: all 0.15s; }
         .copy-link-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+        /* Section jump links */
+        .jump-links { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+        .jump-links a { font-size: 0.82em; color: #C9D3E0; text-decoration: none; border: 1px solid var(--border); border-radius: 999px; padding: 8px 12px; transition: all 0.15s; }
+        .jump-links a:hover { border-color: var(--accent); color: var(--accent); }
+        .jump-links a.warn { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+
         /* Analysis */
-        .analysis-content { font-size: 0.93em; line-height: 1.7; color: var(--text-primary); }
-        .analysis-content h2 { font-size: 1em; font-weight: 700; color: var(--accent); margin: 20px 0 6px; }
-        .analysis-content h3 { font-size: 0.95em; font-weight: 600; margin: 16px 0 4px; }
-        .analysis-content p  { margin-bottom: 10px; }
-        .analysis-content ul, .analysis-content ol { padding-left: 20px; margin-bottom: 10px; }
-        .analysis-content li { margin-bottom: 4px; }
-        .analysis-content strong { color: var(--text-primary); }
+        .analysis-content { font-size: 1em; line-height: 1.65; color: #D3DCE7; }
+        .analysis-content > h1 { display: none; }
+        .analysis-content h2 { display: flex; align-items: center; gap: 10px; font-size: 1.2em; font-weight: 700; color: var(--text-primary); margin: 32px 0 10px; scroll-margin-top: 88px; }
+        .analysis-content h2 .sec-num { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 8px; background: #2C4A72; color: #fff; font-family: var(--font-display); font-size: 0.85em; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; }
+        .analysis-content h3 { font-size: 1em; font-weight: 600; margin: 16px 0 4px; color: var(--text-primary); }
+        .analysis-content p  { margin-bottom: 12px; }
+        .analysis-content ul, .analysis-content ol { padding-left: 22px; margin-bottom: 12px; }
+        .analysis-content li { margin-bottom: 6px; }
+        .analysis-content strong { color: #fff; }
+        .analysis-section.misread { background: #2A2A1A; border: 1px solid #6B6326; border-radius: 16px; padding: 4px 20px 10px; margin: 24px 0; color: #ECE7C8; }
+        .analysis-section.misread h2 { color: var(--accent); margin-top: 18px; }
+        .analysis-section.misread h2 .sec-num { background: var(--accent); color: var(--accent-ink); }
 
         /* Conversation thread */
         .section-divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
         .section-label { font-size: 0.75em; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 16px; }
         .msg-bubble { padding: 12px 16px; border-radius: 10px; font-size: 0.88em; line-height: 1.6; margin-bottom: 10px; max-width: 90%; }
-        .msg-bubble.user { background: var(--accent-dim); border: 1px solid rgba(232,168,48,0.28); color: var(--text-primary); margin-left: auto; }
+        .msg-bubble.user { background: var(--accent-dim); border: 1px solid rgba(242,227,91,0.3); color: var(--text-primary); margin-left: auto; }
         .msg-bubble.assistant { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary); }
         .msg-bubble p { margin: 0 0 6px; }
         .msg-bubble p:last-child { margin-bottom: 0; }
@@ -102,7 +121,7 @@
         .comment-textarea { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-family: inherit; font-size: 0.88em; padding: 12px 14px; resize: vertical; min-height: 80px; outline: none; transition: border-color 0.15s; }
         .comment-textarea:focus { border-color: var(--accent); }
         .comment-form-footer { display: flex; justify-content: flex-end; margin-top: 8px; }
-        .comment-submit-btn { background: var(--accent); border: none; color: #fff; padding: 8px 18px; border-radius: 8px; font-size: 0.85em; cursor: pointer; transition: opacity 0.15s; }
+        .comment-submit-btn { background: var(--accent); border: none; color: var(--accent-ink); font-weight: 600; padding: 8px 18px; border-radius: 8px; font-size: 0.85em; cursor: pointer; transition: opacity 0.15s; }
         .comment-submit-btn:hover { opacity: 0.85; }
         .comment-submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .sign-in-prompt { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; text-align: center; margin-top: 20px; }
@@ -118,33 +137,22 @@
         .google-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: #fff; color: #333; border: none; border-radius: 8px; padding: 10px; font-size: 0.9em; font-weight: 500; cursor: pointer; margin-bottom: 12px; transition: opacity 0.15s; }
         .google-btn:hover { opacity: 0.9; }
         .auth-divider { text-align: center; color: var(--text-muted); font-size: 0.8em; margin: 8px 0; }
-        .auth-submit-btn { width: 100%; background: var(--accent); border: none; color: #fff; padding: 10px; border-radius: 8px; font-size: 0.9em; cursor: pointer; margin-top: 4px; }
+        .auth-submit-btn { width: 100%; background: var(--accent); border: none; color: var(--accent-ink); font-weight: 600; padding: 10px; border-radius: 8px; font-size: 0.9em; cursor: pointer; margin-top: 4px; }
         .modal-close { float: right; background: none; border: none; color: var(--text-muted); font-size: 1.2em; cursor: pointer; line-height: 1; }
         .auth-error { color: var(--danger); font-size: 0.8em; margin-top: 6px; min-height: 1em; }
 
         /* CTA */
-        .cta-box {
-            margin-top: 56px; background: var(--bg-surface);
-            border: 1px solid var(--border); border-top: 3px solid var(--accent);
-            border-radius: 12px; padding: 32px 28px; text-align: center;
-        }
-        .cta-eyebrow { font-size: 0.7em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
-        .cta-box h3 { font-size: 1.4em; font-weight: 700; margin-bottom: 10px; line-height: 1.25; color: var(--text-primary); }
-        .cta-box p  { font-size: 0.88em; color: var(--text-muted); margin-bottom: 22px; line-height: 1.6; max-width: 360px; margin-left: auto; margin-right: auto; }
+        .cta-box { margin-top: 56px; background: var(--navy); border-radius: 20px; padding: 36px 28px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+        .cta-box svg { margin-bottom: 14px; }
+        .cta-eyebrow { font-size: 0.72em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #C9D3E0; margin-bottom: 10px; }
+        .cta-box h3 { font-family: var(--font-display); font-size: 2em; font-weight: 600; margin-bottom: 10px; line-height: 1.15; color: #fff; }
+        .cta-box p  { font-size: 0.95em; color: #DCE3EC; margin-bottom: 22px; line-height: 1.6; max-width: 400px; }
         .cta-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        .btn-accent-lg {
-            display: inline-block; background: var(--accent); color: #0b0c0e;
-            padding: 12px 28px; border-radius: 8px; font-size: 0.95em; font-weight: 700;
-            text-decoration: none; transition: opacity 0.15s;
-        }
-        .btn-accent-lg:hover { opacity: 0.88; }
-        .btn-ghost-sm {
-            display: inline-block; background: transparent; color: var(--text-muted);
-            border: 1px solid var(--border); padding: 12px 20px; border-radius: 8px;
-            font-size: 0.88em; text-decoration: none; transition: color 0.15s, border-color 0.15s;
-        }
+        .btn-accent-lg { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; background: var(--accent); color: var(--accent-ink); padding: 0 28px; border-radius: 14px; font-size: 1em; font-weight: 700; text-decoration: none; transition: background 0.15s; }
+        .btn-accent-lg:hover { background: #E2D140; }
+        .btn-ghost-sm { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; background: transparent; color: #fff; border: 1px solid #4A6A94; padding: 0 22px; border-radius: 14px; font-size: 0.95em; font-weight: 600; text-decoration: none; transition: color 0.15s, border-color 0.15s; }
         .btn-ghost-sm:hover { color: var(--accent); border-color: var(--accent); }
-        .cta-proof { margin-top: 16px; font-size: 0.75em; color: var(--text-muted); }
+        .cta-proof { margin: 18px 0 0 !important; font-size: 0.8em !important; color: #C9D3E0 !important; }
 
         /* Mobile share */
         @media (max-width: 600px) {
@@ -165,52 +173,27 @@
         .error-state h2 { font-size: 1.2em; margin-bottom: 8px; color: var(--text-muted); }
         .error-state p  { font-size: 0.9em; color: var(--text-muted); }
 
-        /* Sticky acquisition banner for non-signed-in visitors */
-        .acquisition-banner {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            background: linear-gradient(to right, #111316, #181b1f);
-            border-top: 1px solid #2a2e35;
-            padding: 16px 32px;
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 20px; z-index: 50;
-            animation: slideUp 0.4s ease;
-        }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .acq-text h3 { font-size: 1.05em; font-weight: 700; color: #f0ece4; margin-bottom: 2px; }
-        .acq-text p  { font-size: 0.8em; color: #7a7670; }
-        .acq-actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
-        .acq-dismiss { background: transparent; border: none; color: #7a7670; font-size: 1.2em; cursor: pointer; padding: 4px 8px; line-height: 1; transition: color 0.15s; }
-        .acq-dismiss:hover { color: #f0ece4; }
-        .acq-cta {
-            background: #e8a830; color: #0b0c0e; border: none;
-            padding: 10px 22px; border-radius: 8px;
-            font-size: 0.88em; font-weight: 700; cursor: pointer;
-            font-family: inherit; text-decoration: none; display: inline-block;
-            transition: opacity 0.15s; white-space: nowrap;
-        }
-        .acq-cta:hover { opacity: 0.88; }
 
         @media (max-width: 640px) {
             .header { padding: 14px 16px; }
             .header-brand { font-size: 1em; }
-            .page-body { padding: 24px 16px 120px; }
+            .page-body { padding: 24px 16px 60px; }
             .chart-meta { flex-direction: column; align-items: flex-start; gap: 6px; }
             .header-actions { gap: 6px; }
             .btn-ghost { display: none; }
-            .btn-accent { font-size: 0.8em; padding: 7px 12px; }
             .msg-bubble { max-width: 100%; }
-            .acquisition-banner { padding: 16px; }
-            .acq-text h3 { font-size: 1em; }
+            .header-brand span { display: none; }
+            .chart-name { font-size: 2em; }
         }
     </style>
 </head>
 <body>
 
 <header class="header">
-    <a href="/" class="header-brand" style="display:flex;align-items:center;gap:8px;"><svg width="20" height="20" viewBox="0 0 28 28" fill="none"><path d="M14 2L26 8.5V19.5L14 26L2 19.5V8.5L14 2Z" stroke="#e8a830" stroke-width="1.5" fill="none"/><circle cx="14" cy="14" r="3" fill="#e8a830"/></svg>Chart<span>hawk</span></a>
+    <a href="/" class="header-brand" aria-label="ChartHawk home"><svg width="28" height="28" viewBox="0 0 120 120" fill="none" stroke="#F2E35B" stroke-width="9" stroke-linecap="round" aria-hidden="true"><path d="M89.7 30.3A42 42 0 1 0 89.7 89.7"/><path d="M81.2 38.8A30 30 0 1 0 81.2 81.2"/><path d="M72.7 47.3A18 18 0 1 0 72.7 72.7"/></svg><span>CHARTHAWK</span></a>
     <div class="header-actions">
-        <a href="/gallery" class="btn-ghost">← Gallery</a>
-        <a href="/" class="btn-accent" style="font-weight:700;">Audit a chart →</a>
+        <a href="/gallery" class="btn-ghost">Gallery</a>
+        <a href="/" class="btn-accent">Audit a chart →</a>
     </div>
 </header>
 
@@ -298,12 +281,15 @@
         let html = `
             <img class="chart-img" src="${escapeHtml(chart.image_data)}" alt="${name}">
             <div class="chart-meta">
-                <div>
-                    <div class="chart-name">${name}</div>
-                    <div class="chart-date">${date}</div>
+                <div class="chart-meta-top">
+                    <span class="public-pill">Public</span>
+                    <span class="chart-date">${date}</span>
                 </div>
-                <button class="copy-link-btn" id="copyLinkBtn">🔗 Copy link</button>
+                <h1 class="chart-name">${name}</h1>
+                <p class="chart-subtitle" id="chartSubtitle" hidden></p>
+                <button class="copy-link-btn" id="copyLinkBtn">${LINK_ICON}Copy link</button>
             </div>
+            <nav class="jump-links" id="jumpLinks" aria-label="Sections" hidden></nav>
             <div class="analysis-content" id="analysisContent">${chart.explanation || ''}</div>
         `;
 
@@ -324,6 +310,7 @@
                 <div id="commentInput"></div>
             </div>
             <div class="cta-box">
+                <svg width="44" height="44" viewBox="0 0 120 120" fill="none" stroke="#F2E35B" stroke-width="9" stroke-linecap="round" aria-hidden="true"><path d="M89.7 30.3A42 42 0 1 0 89.7 89.7"/><path d="M81.2 38.8A30 30 0 1 0 81.2 81.2"/><path d="M72.7 47.3A18 18 0 1 0 72.7 72.7"/></svg>
                 <div class="cta-eyebrow">Free · No credit card</div>
                 <h3>Audit your own charts<br>in seconds</h3>
                 <p>See what's misleading, what's missing, and what you should push back on — in any chart you upload.</p>
@@ -336,14 +323,63 @@
         `;
 
         pageBody.innerHTML = html;
+        enhanceAnalysis();
 
         document.getElementById('copyLinkBtn').addEventListener('click', () => {
             navigator.clipboard.writeText(location.href).then(() => {
                 const btn = document.getElementById('copyLinkBtn');
                 btn.textContent = '✓ Copied!';
-                setTimeout(() => { btn.textContent = '🔗 Copy link'; }, 2000);
+                setTimeout(() => { btn.innerHTML = LINK_ICON + 'Copy link'; }, 2000);
             });
         });
+    }
+
+    const LINK_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>';
+
+    // Turn the analysis HTML into numbered sections with jump links,
+    // and highlight the "misread" section. Pure presentation: no data changes.
+    function enhanceAnalysis() {
+        const root = document.getElementById('analysisContent');
+        if (!root) return;
+        const h1 = root.querySelector(':scope > h1');
+        if (h1) {
+            const sub = document.getElementById('chartSubtitle');
+            sub.textContent = h1.textContent.trim();
+            sub.hidden = false;
+        }
+        const heads = Array.from(root.querySelectorAll(':scope > h2'));
+        if (heads.length === 0) return;
+        const nav = document.getElementById('jumpLinks');
+        heads.forEach((h, i) => {
+            const section = document.createElement('section');
+            section.className = 'analysis-section';
+            h.parentNode.insertBefore(section, h);
+            let node = h;
+            while (node && !(node !== h && node.tagName === 'H2')) {
+                const next = node.nextSibling;
+                section.appendChild(node);
+                node = next;
+            }
+            const raw = h.textContent.trim();
+            const m = raw.match(/^(\d+)[.)]\s*(.*)$/);
+            const num = m ? m[1] : String(i + 1);
+            const label = m ? m[2] : raw;
+            const id = 'section-' + num;
+            h.id = id;
+            h.innerHTML = '';
+            const badge = document.createElement('span');
+            badge.className = 'sec-num'; badge.textContent = num;
+            h.appendChild(badge);
+            h.appendChild(document.createTextNode(label));
+            const isMisread = /misread|misinterpret/i.test(label);
+            if (isMisread) section.classList.add('misread');
+            const a = document.createElement('a');
+            a.href = '#' + id;
+            a.textContent = label;
+            if (isMisread) a.className = 'warn';
+            nav.appendChild(a);
+        });
+        nav.hidden = false;
     }
 
     function renderNotFound() {
@@ -537,30 +573,5 @@
     loadChart();
 </script>
 
-<!-- Sticky acquisition banner — shown to anonymous visitors -->
-<div class="acquisition-banner" id="acquisitionBanner" style="display:none;">
-    <div class="acq-text">
-        <h3>Like what you see?</h3>
-        <p>Audit your own charts free — no credit card needed.</p>
-    </div>
-    <div class="acq-actions">
-        <a href="/" class="acq-cta">Audit a chart →</a>
-        <button class="acq-dismiss" id="acqDismiss" title="Dismiss">×</button>
-    </div>
-</div>
-<script>
-    // Show acquisition banner after 4 seconds if not signed in
-    setTimeout(function() {
-        const banner = document.getElementById('acquisitionBanner');
-        if (!banner) return;
-        try {
-            const session = JSON.parse(localStorage.getItem('sb-csjiymeycevxqmlmqcwc-auth-token') || 'null');
-            if (!session) { banner.style.display = 'flex'; }
-        } catch(e) { banner.style.display = 'flex'; }
-    }, 4000);
-    document.getElementById('acqDismiss')?.addEventListener('click', function() {
-        document.getElementById('acquisitionBanner').style.display = 'none';
-    });
-</script>
 </body>
 </html>
