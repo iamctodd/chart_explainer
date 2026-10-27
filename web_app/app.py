@@ -543,8 +543,22 @@ def make_thumbnail(image_base64, max_width=400):
         return None
 
 
+def _summary_is_empty(summary):
+    """True when a stored gallery summary is missing or has no bullets (e.g. a failed earlier attempt)."""
+    if not summary or not isinstance(summary, dict):
+        return True
+    return not (summary.get('insights') or summary.get('improvements'))
+
+
 def generate_gallery_summary(analysis_raw):
-    """Ask Claude to extract 3 insights + 3 improvements as JSON."""
+    """Ask Claude to extract 3 insights + 3 improvements as JSON.
+
+    Returns None on failure so callers don't store an empty summary
+    (which would stop it from ever being retried).
+    """
+    if not analysis_raw or not analysis_raw.strip():
+        print('Summary generation skipped: no analysis text')
+        return None
     prompt = (
         'From this chart analysis, extract exactly:\n'
         '- 3 key insights (1 sentence each)\n'
@@ -556,15 +570,25 @@ def generate_gallery_summary(analysis_raw):
     try:
         msg = claude.messages.create(
             model='claude-sonnet-4-6',
-            max_tokens=300,
+            max_tokens=1000,
             messages=[{'role': 'user', 'content': prompt}],
         )
         raw_text = msg.content[0].text.strip()
-        raw_text = re.sub(r'^```[a-z]*\n?', '', raw_text, flags=re.MULTILINE).strip('`').strip()
-        return json.loads(raw_text)
+        # Pull out the JSON object even if the model wraps it in fences or prose
+        match = re.search(r'\{.*\}', raw_text, flags=re.DOTALL)
+        if not match:
+            raise ValueError(f'no JSON object in response: {raw_text[:200]!r}')
+        parsed = json.loads(match.group(0))
+        summary = {
+            'insights':     [str(x) for x in (parsed.get('insights') or [])][:3],
+            'improvements': [str(x) for x in (parsed.get('improvements') or [])][:3],
+        }
+        if _summary_is_empty(summary):
+            raise ValueError('summary came back empty')
+        return summary
     except Exception as e:
         print(f'Summary generation failed: {e}')
-        return {'insights': [], 'improvements': []}
+        return None
 
 
 # ── Gallery & share routes ─────────────────────────────────────────────────────
@@ -613,19 +637,23 @@ def toggle_publish(chart_id):
     try:
         existing = (
             admin_client.from_('charts')
-            .select('gallery_summary,thumbnail_data,analysis_raw,image_data')
+            .select('gallery_summary,thumbnail_data,analysis_raw,explanation,image_data')
             .eq('id', chart_id)
             .eq('user_id', request.user_id)
-            .single()
+            .limit(1)
             .execute()
         )
         if not existing.data:
             return jsonify({'error': 'Chart not found'}), 404
 
         if is_public:
-            row = existing.data
-            if not row.get('gallery_summary'):
-                update['gallery_summary'] = generate_gallery_summary(row.get('analysis_raw', ''))
+            row = existing.data[0]
+            # (Re)generate when missing or when an earlier attempt stored an empty summary
+            if _summary_is_empty(row.get('gallery_summary')):
+                source = row.get('analysis_raw') or re.sub(r'<[^>]+>', ' ', row.get('explanation') or '')
+                summary = generate_gallery_summary(source)
+                if summary:
+                    update['gallery_summary'] = summary
             if not row.get('thumbnail_data') and row.get('image_data'):
                 thumb = make_thumbnail(row['image_data'])
                 if thumb:
