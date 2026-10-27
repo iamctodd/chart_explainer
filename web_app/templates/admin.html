@@ -181,6 +181,14 @@
       </div>
       <div class="promote-msg" id="promoteMsg"></div>
     </div>
+
+    <!-- Gallery maintenance -->
+    <div class="section-title" style="margin-top:36px;">Gallery</div>
+    <div class="promote-card">
+      <p>Fill in the Key findings and Watch out for summaries on any public chart that's missing them. This runs in small batches and can take a minute.</p>
+      <button class="btn btn-sm btn-success" id="regenBtn">Fill in missing summaries</button>
+      <div class="promote-msg" id="regenMsg" aria-live="polite"></div>
+    </div>
   </main>
 </div>
 
@@ -256,6 +264,41 @@
       `).join('');
     } catch(e) { showError('Failed to load users: ' + e.message); tbody.innerHTML = '<tr><td colspan="9" style="color:var(--danger)">Error loading users.</td></tr>'; }
   }
+
+  // ── Gallery summaries backfill ───────────────────────────────────────────
+  document.getElementById('regenBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('regenBtn');
+    const msg = document.getElementById('regenMsg');
+    btn.disabled = true;
+    msg.className = 'promote-msg';
+    const fixed = [], failed = [];
+    try {
+      for (let round = 0; round < 50; round++) {
+        msg.textContent = `Working… ${fixed.length} done so far.`;
+        const res = await fetch('/admin/api/regenerate-summaries', {
+          method: 'POST',
+          headers: { Authorization: await authHeader(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ skip: failed.map(f => f.id) })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        fixed.push(...data.fixed);
+        failed.push(...data.failed);
+        if (data.remaining === 0) break;
+      }
+      if (!fixed.length && !failed.length) {
+        msg.className = 'promote-msg ok'; msg.textContent = '✓ Every public chart already has a summary.';
+      } else {
+        msg.className = failed.length ? 'promote-msg err' : 'promote-msg ok';
+        msg.textContent = `✓ Filled in ${fixed.length} chart${fixed.length === 1 ? '' : 's'}.`
+          + (failed.length ? ` ${failed.length} failed: ${failed.map(f => f.name).join(', ')}. Check the server logs for "Summary generation failed".` : '');
+      }
+    } catch (e) {
+      msg.className = 'promote-msg err'; msg.textContent = 'Failed: ' + e.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
 
   async function promote(email, grant) {
     const res  = await fetch('/admin/api/promote', {
