@@ -426,6 +426,58 @@ def admin_promote():
         return jsonify({'error': str(e)}), 500
 
 
+
+@app.route('/admin/api/regenerate-summaries', methods=['POST'])
+@require_admin
+def admin_regenerate_summaries():
+    """Fill in gallery summaries for public charts that are missing one.
+
+    Works in small batches so each request stays well under the server timeout;
+    the admin page calls this repeatedly until nothing is left. Chart ids that
+    already failed in this run are passed back in `skip` so they aren't retried
+    in a loop.
+    """
+    if not admin_client:
+        return jsonify({'error': 'Server misconfigured'}), 500
+    body  = request.get_json() or {}
+    skip  = set(body.get('skip') or [])
+    BATCH = 3
+    try:
+        rows = (
+            admin_client.from_('charts')
+            .select('id,display_name,filename,gallery_summary,analysis_raw,explanation,thumbnail_data')
+            .eq('is_public', True)
+            .execute()
+        ).data or []
+        todo = [r for r in rows if _summary_is_empty(r.get('gallery_summary')) and r['id'] not in skip]
+
+        fixed, failed = [], []
+        for row in todo[:BATCH]:
+            name   = row.get('display_name') or row.get('filename') or row['id']
+            source = row.get('analysis_raw') or re.sub(r'<[^>]+>', ' ', row.get('explanation') or '')
+            summary = generate_gallery_summary(source)
+            if not summary:
+                failed.append({'id': row['id'], 'name': name})
+                continue
+            update = {'gallery_summary': summary}
+            if not row.get('thumbnail_data'):
+                img = (admin_client.from_('charts').select('image_data')
+                       .eq('id', row['id']).limit(1).execute()).data
+                if img and img[0].get('image_data'):
+                    thumb = make_thumbnail(img[0]['image_data'])
+                    if thumb:
+                        update['thumbnail_data'] = thumb
+            admin_client.from_('charts').update(update).eq('id', row['id']).execute()
+            fixed.append({'id': row['id'], 'name': name})
+
+        return jsonify({
+            'fixed':     fixed,
+            'failed':    failed,
+            'remaining': max(len(todo) - BATCH, 0),
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ── API Key management routes ─────────────────────────────────────────────────
 
 @app.route('/api/keys', methods=['GET'])
