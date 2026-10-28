@@ -557,6 +557,14 @@
         const t = $('toast'); t.textContent = msg; t.classList.add('show');
         clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200);
     }
+    // First name for greetings. Skips a leading initial ("C. Todd Lombardo" → "Todd")
+    // and drops trailing punctuation so sentences don't end in "..".
+    function greetingName(name) {
+        const words = String(name || '').trim().split(/\s+/).filter(Boolean);
+        const isInitial = (w) => /^[A-Za-z]\.?$/.test(w);
+        const pick = words.find(w => !isInitial(w)) || words[0] || 'there';
+        return pick.replace(/[.,;:!]+$/, '') || 'there';
+    }
     function displayName() { return user?.user_metadata?.full_name || (user?.email || '').split('@')[0] || 'there'; }
     function initials(name) {
         const parts = String(name || '?').trim().split(/\s+/);
@@ -670,7 +678,7 @@
     function renderUser() {
         const name = displayName();
         const avatar = user.user_metadata?.avatar_url || '';
-        const first = name.split(' ')[0];
+        const first = greetingName(name);
         $('helloName').textContent = `Hi, ${first}`;
         $('welcomeLine').textContent = `Welcome back, ${first}. Here's everything you've analyzed.`;
         const since = user.created_at ? new Date(user.created_at) : null;
