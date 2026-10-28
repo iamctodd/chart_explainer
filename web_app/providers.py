@@ -69,6 +69,7 @@ IMPROVE_PROMPT = """Redesign the original chart so it fixes the problems identif
 
 Data fidelity rules (these override any design idea):
 - Plot exactly the data shown in the original: the same series, categories, tasks, time periods and data points. Do not add, invent, remove, merge or rename any of them.
+- Copy every title, label, series name, date and category exactly as written in the original. Do not infer, correct or rename them, and do not let a label from one part of the chart (e.g. a date range in the subtitle) leak onto another. Any annotation you add must agree with the original's labels.
 - Do not drop information the original conveys (e.g. dependencies, groupings, annotations, targets). If you simplify how it is shown, it must still be shown in another way.
 - Ideas that would require new or different data (an extra task, a missing year, a comparison series) go in <suggestions>, never into the drawing.
 
