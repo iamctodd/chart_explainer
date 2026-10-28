@@ -521,6 +521,16 @@
         .analysis-content h1 { font-family: var(--font-display); font-weight: 600; font-size: 1.9em; line-height: 1.15; color: var(--text-primary); margin-top: 8px; }
         .analysis-content h2 { font-size: 1.15em; margin-top: 28px; }
         .modal h2 { font-family: var(--font-display); font-weight: 600; letter-spacing: 0.01em; }
+        /* Deep link (/?chart=<id>) or OAuth return: hide the landing until we know where to go */
+        .deeplink-loader { display: none; position: fixed; inset: 0; z-index: 40; background: var(--bg-body); flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--text-muted); font-size: 0.9em; }
+        html.deep-link .deeplink-loader { display: flex; }
+        html.deep-link #landingView { visibility: hidden; }
+        .landing-dashboard-link { color: var(--accent-ink); background: var(--accent); font-weight: 600; font-size: 0.82em; text-decoration: none; border-radius: 999px; padding: 8px 16px; transition: background 0.15s; }
+        .landing-dashboard-link:hover { background: var(--accent-hover); }
+        .landing-user-chip { text-decoration: none; cursor: pointer; }
+        .landing-user-chip .chip-initial { width: 22px; height: 22px; border-radius: 50%; background: var(--bg-input); color: var(--accent); font-size: 0.72em; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+        .dashboard-nudge-link { display: inline-flex; align-items: center; gap: 8px; color: var(--text-primary); background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 18px; font-size: 0.85em; font-weight: 500; text-decoration: none; transition: border-color 0.15s, color 0.15s; }
+        .dashboard-nudge-link:hover { border-color: var(--accent); color: var(--accent); }
         @media (max-width: 640px) {
             .landing-view { padding-top: 88px; }
             .landing-brand { left: 16px; top: 22px; }
@@ -530,6 +540,16 @@
     </style>
 </head>
 <body>
+<script>
+    // Decide before first paint whether the landing should be hidden: an "Open analysis"
+    // link from the dashboard (?chart=<id>) or a Google sign-in returning here (#access_token).
+    (function () {
+        if (new URLSearchParams(location.search).has('chart') || location.hash.indexOf('access_token') !== -1) {
+            document.documentElement.classList.add('deep-link');
+        }
+    })();
+</script>
+<div class="deeplink-loader" id="deeplinkLoader"><div class="spinner"></div><span>Opening your analysis…</span></div>
 
 <!-- ── LANDING VIEW ──────────────────────────────────────────────────────── -->
 <div id="landingView" class="landing-view">
@@ -540,7 +560,7 @@
         <button class="landing-signin-link" id="landingSignInBtn">Sign in</button>
     </div>
     <p class="landing-eyebrow">Free during beta</p>
-    <h1 class="landing-headline">What chart do you<br>need to <em>audit?</em></h1>
+    <h1 class="landing-headline">What chart do you<br>need to <em>analyze?</em></h1>
     <p class="landing-sub">ChartHawk spots truncated axes, cherry-picked ranges and misleading chart types, then explains what it found in plain English.</p>
     <div class="model-select-row">
         <select class="model-select" id="landingModelSelect" title="Model used for this analysis"></select>
@@ -551,15 +571,15 @@
         <button class="landing-send-btn" tabindex="-1" aria-label="Analyze"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg></button>
     </div>
     <div class="landing-chips" aria-label="What ChartHawk checks"><span>Truncated axes</span><span>Cherry-picked ranges</span><span>Misleading chart types</span><span>And more</span></div>
-    <div class="landing-loading" id="loading"><div class="spinner"></div><span>Auditing your chart…</span></div>
+    <div class="landing-loading" id="loading"><div class="spinner"></div><span>Analyzing your chart…</span></div>
     <div class="landing-error" id="error"></div>
     <!-- Optional sign-in nudge — hidden when already signed in -->
     <div id="signInNudge" class="sign-in-nudge">
         <button id="openAuthModalBtn" class="google-signin-btn-small">Sign in to save history</button>
     </div>
-    <!-- View history button — shown when signed in -->
-    <div id="viewHistoryNudge" style="display:none; margin-top:12px; text-align:center;">
-        <button id="viewHistoryBtn" class="google-signin-btn-small" style="background:var(--bg-card); border:1px solid var(--border); color:var(--text-primary);">📂 View my history</button>
+    <!-- Dashboard link — shown when signed in -->
+    <div id="viewHistoryNudge" style="display:none; margin-top:16px; text-align:center;">
+        <a href="/dashboard" class="dashboard-nudge-link">Go to my charts &amp; analyses →</a>
     </div>
     <input type="file" id="fileInput" accept="image/*" style="display:none;">
     <footer class="app-footer">
@@ -584,9 +604,10 @@
     <aside class="sidebar" id="sidebar">
         <a href="/" class="brand-lockup sidebar-brand" aria-label="ChartHawk home"><svg width="26" height="26" viewBox="0 0 120 120" fill="none" stroke="var(--accent)" stroke-width="9" stroke-linecap="round" aria-hidden="true"><path d="M89.7 30.3A42 42 0 1 0 89.7 89.7"/><path d="M81.2 38.8A30 30 0 1 0 81.2 81.2"/><path d="M72.7 47.3A18 18 0 1 0 72.7 72.7"/></svg><span>CHARTHAWK</span></a>
         <div class="sidebar-top-row">
-            <button class="new-chart-btn" id="newChartBtn">+ New Audit</button>
+            <button class="new-chart-btn" id="newChartBtn">+ New Analysis</button>
             <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Collapse sidebar">‹</button>
         </div>
+        <a href="/dashboard" class="gallery-nav-btn" id="sidebarDashboardLink" style="display:none;">My dashboard</a>
         <a href="/gallery" class="gallery-nav-btn">Gallery</a>
         <div class="sidebar-section-label">History</div>
         <div class="sidebar-history" id="sidebarHistory"></div>
@@ -796,7 +817,7 @@
         <p>Please read and accept these terms before continuing.</p>
         <div class="tos-scroll">
             <strong>
-            Charthawk lets you upload any chart image and get an AI-powered audit — detecting misleading design choices, flagging truncated axes, cherry-picked date ranges, and distorted scales, and telling you what the data actually shows.<br><br>
+            Charthawk lets you upload any chart image and get an AI-powered analysis — detecting misleading design choices, flagging truncated axes, cherry-picked date ranges, and distorted scales, and telling you what the data actually shows.<br><br>
             <strong>What happens to your uploaded images</strong><br>
             Images you upload are sent to <a href="https://www.anthropic.com" target="_blank" rel="noopener">Anthropic's Claude API</a> for analysis. They are also stored in your Charthawk account so you can revisit previous analyses. By using Charthawk you agree to <a href="https://www.anthropic.com/legal/usage-policy" target="_blank" rel="noopener">Anthropic's usage policies</a>.<br><br>
             <strong>Data storage</strong><br>
@@ -804,7 +825,7 @@
             <strong>Deleting your data</strong><br>
             You can delete individual charts at any time using the Delete option in the sidebar. To delete your account and all data, use the feedback button and request account deletion. We will remove your data within 30 days.<br><br>
             <strong>No warranties</strong><br>
-            Charthawk is provided as-is. AI audits may contain errors. Always apply your own judgment. Charthawk is a tool to support critical thinking, not replace it.
+            Charthawk is provided as-is. AI analyses may contain errors. Always apply your own judgment. Charthawk is a tool to support critical thinking, not replace it.
         </div>
         <label class="tos-check-row">
             <input type="checkbox" id="tosCheckbox">
@@ -943,6 +964,28 @@
     let currentUser    = null;
     let authInitialized = false;
 
+    // Post-login routing: a sign-in the user starts from the landing page ends on
+    // /dashboard (a separate page) instead of the landing flipping into the chat view.
+    // A Google sign-in that returns here (#access_token…) is treated the same way.
+    const OAUTH_RETURN   = location.hash.includes('access_token');
+    let redirectAfterLogin = OAUTH_RETURN;
+    // "Open analysis" links from the dashboard arrive as /?chart=<uuid>.
+    let deepLinkChartId  = new URLSearchParams(location.search).get('chart');
+
+    function goToDashboard() { window.location.replace('/dashboard'); }
+
+    // Show the landing again if a deep link / OAuth return can't be completed.
+    function clearDeepLink() {
+        deepLinkChartId = null;
+        document.documentElement.classList.remove('deep-link');
+        if (location.search.includes('chart=')) history.replaceState(null, '', '/');
+    }
+
+    function setChartUrl(id) {
+        // Only saved (UUID) charts get a shareable-to-yourself URL; temp integer IDs don't.
+        if (authState === 'signed-in' && typeof id === 'string') history.replaceState(null, '', `/?chart=${encodeURIComponent(id)}`);
+    }
+
     // ── Element refs ───────────────────────────────────────────
     const landingView    = document.getElementById('landingView');
     const chatView       = document.getElementById('chatView');
@@ -996,11 +1039,11 @@
                 const name = currentUser.user_metadata?.full_name || currentUser.email || '';
                 const avatar = currentUser.user_metadata?.avatar_url || '';
                 landingStatus.innerHTML = `<a href="/gallery" class="landing-gallery-link">Gallery</a>
-                    <div class="landing-user-chip" id="landingUserChip" title="Edit profile">
-                        ${avatar ? `<img src="${avatar}" alt="">` : ''}
+                    <a href="/dashboard" class="landing-dashboard-link">My dashboard</a>
+                    <a href="/dashboard#profile" class="landing-user-chip" id="landingUserChip" title="Your profile">
+                        ${avatar ? `<img src="${escapeHtml(avatar)}" alt="">` : `<span class="chip-initial">${escapeHtml((name || '?').trim().charAt(0).toUpperCase())}</span>`}
                         <span>${escapeHtml(name)}</span>
-                    </div>`;
-                document.getElementById('landingUserChip')?.addEventListener('click', openProfileModal);
+                    </a>`;
             }
             // Show admin link if admin
             const adminLink = document.getElementById('adminLink');
@@ -1010,15 +1053,19 @@
             // Show API Keys button for all signed-in users
             const apiKeysBtnEl = document.getElementById('apiKeysBtn');
             if (apiKeysBtnEl) apiKeysBtnEl.style.display = '';
-            // Show "View History" button
+            // Show "Go to my dashboard" link on the landing and in the chat sidebar
             const vh = document.getElementById('viewHistoryNudge');
             if (vh) vh.style.display = '';
+            const sdl = document.getElementById('sidebarDashboardLink');
+            if (sdl) sdl.style.display = '';
         } else {
             userProfile.style.display = 'none';
             if (sidebarSignIn) sidebarSignIn.style.display = '';
             if (nudge) nudge.style.display = '';
             const vhEl = document.getElementById('viewHistoryNudge');
             if (vhEl) vhEl.style.display = 'none';
+            const sdlEl = document.getElementById('sidebarDashboardLink');
+            if (sdlEl) sdlEl.style.display = 'none';
             const apiKeysBtnEl2 = document.getElementById('apiKeysBtn');
             if (apiKeysBtnEl2) apiKeysBtnEl2.style.display = 'none';
             // Landing top-right: restore sign-in button
@@ -1055,23 +1102,6 @@
     document.getElementById('openAuthModalBtn')?.addEventListener('click', openAuthModal);
     document.getElementById('landingSignInBtn')?.addEventListener('click', openAuthModal);
     document.getElementById('sidebarSignInBtn')?.addEventListener('click', openAuthModal);
-    document.getElementById('viewHistoryBtn')?.addEventListener('click', async () => {
-        landingView.style.display = 'none';
-        chatView.style.display = 'flex';
-        appState = 'chat';
-        if (chartHistory.length > 0) {
-            renderSidebar();
-            renderMainPanel(chartHistory[0].id);
-            return;
-        }
-        // Show spinner while loading
-        sidebarHistory.innerHTML = '<div class="sidebar-loading"><div class="spin"></div><span>Loading history…</span></div>';
-        await loadHistory();
-        if (chartHistory.length === 0 && !sidebarHistory.querySelector('.sidebar-load-error')) {
-            sidebarHistory.innerHTML = '<div class="sidebar-load-error">No saved charts yet.<br>Upload one to get started!</div>';
-        }
-    });
-
     // ── Model selector ────────────────────────────────────────
     const storedModel = localStorage.getItem('selectedModel');
     let selectedModel = AVAILABLE_PROVIDERS.some(p => p.id === storedModel)
@@ -1301,6 +1331,9 @@
         errEl.style.display = 'none'; okEl.style.display = 'none';
         if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; errEl.style.display = 'block'; return; }
         btn.disabled = true; btn.textContent = authMode === 'signup' ? 'Creating…' : 'Signing in…';
+        // Signing in from the landing page goes to the dashboard. Signing in mid-chat
+        // (e.g. to unlock "Improve chart") keeps the person where they are.
+        redirectAfterLogin = appState === 'landing';
         try {
             let result;
             if (authMode === 'signup') {
@@ -1331,9 +1364,13 @@
     });
 
     async function signInWithGoogle() {
+        // Land straight on the dashboard after Google. If /dashboard isn't in Supabase's
+        // redirect allow-list, Supabase falls back to the site URL and OAUTH_RETURN above
+        // forwards to the dashboard instead.
+        const target = appState === 'landing' ? `${window.location.origin}/dashboard` : window.location.origin;
         await sb.auth.signInWithOAuth({
             provider: 'google',
-            options: { redirectTo: window.location.origin },
+            options: { redirectTo: target },
         });
     }
 
@@ -1358,6 +1395,7 @@
             authState = 'signed-in';
             if (window.posthog) posthog.identify(user.id, { email: user.email, name: user.user_metadata?.full_name || '' });
             updateAuthUI();
+            if (redirectAfterLogin && appState === 'landing' && !deepLinkChartId) { goToDashboard(); return; }
             await loadHistory();
         } else {
             authState = 'tos-pending';
@@ -1388,6 +1426,7 @@
         authInitialized = true;
         authState = 'signed-in';
         updateAuthUI();
+        if (redirectAfterLogin && appState === 'landing' && !deepLinkChartId) { goToDashboard(); return; }
         await loadHistory();
     });
 
@@ -1414,7 +1453,10 @@
                 }
             } else if (event === 'INITIAL_SESSION') {
                 authState = 'signed-out';
+                const wantedChart = !!deepLinkChartId;
+                clearDeepLink();
                 updateAuthUI();
+                if (wantedChart) openAuthModal();   // e.g. an old "Open analysis" link after signing out
             }
         } else if (event === 'SIGNED_OUT') {
             currentUser = null; authState = 'signed-out'; authInitialized = false;
@@ -1471,8 +1513,19 @@
             if (!chartsRes.ok) throw new Error(`charts ${chartsRes.status}`);
             const charts = await chartsRes.json();
 
+            // A dashboard link can point at a chart older than the newest MAX_HISTORY.
+            if (deepLinkChartId && !charts.some(c => c.id === deepLinkChartId)) {
+                const oneUrl = new URL(`${SUPABASE_URL}/rest/v1/charts`);
+                oneUrl.searchParams.set('select', chartsUrl.searchParams.get('select'));
+                oneUrl.searchParams.set('user_id', `eq.${currentUser.id}`);
+                oneUrl.searchParams.set('id', `eq.${deepLinkChartId}`);
+                const oneRes = await fetch(oneUrl, { headers });
+                if (oneRes.ok) charts.push(...await oneRes.json());
+            }
+
             if (!charts || charts.length === 0) {
                 renderSidebar();
+                if (deepLinkChartId) clearDeepLink();
                 return;
             }
 
@@ -1486,7 +1539,10 @@
             if (!msgsRes.ok) throw new Error(`messages ${msgsRes.status}`);
             const messages = await msgsRes.json();
 
-            chartHistory = charts.map(c => ({
+            // Keep anything analyzed before signing in (temp integer IDs) so a mid-chat
+            // sign-in doesn't drop the chart that's on screen.
+            const unsaved = chartHistory.filter(c => typeof c.id === 'number');
+            chartHistory = unsaved.concat(charts.map(c => ({
                 id:          c.id,
                 timestamp:   new Date(c.created_at),
                 image:       c.image_data,
@@ -1499,11 +1555,22 @@
                 conversation: (messages || [])
                     .filter(m => m.chart_id === c.id)
                     .map(m => ({ role: m.role, content: m.content, html: m.html || '' })),
-            }));
+            })));
 
-            if (chartHistory.length > 0) switchToChatView(chartHistory[0].id);
+            // Signed-in visitors to "/" stay on the landing page (no jarring jump into the
+            // chat view). The chat view opens only when the user asked for a specific chart.
+            if (deepLinkChartId) {
+                const target = chartHistory.find(c => c.id === deepLinkChartId);
+                const id = deepLinkChartId;
+                clearDeepLink();
+                if (target) { switchToChatView(id); setChartUrl(id); }
+                else showError("We couldn't find that analysis. It may have been deleted.");
+            } else if (appState === 'chat') {
+                renderSidebar();
+            }
         } catch (err) {
             console.error('loadHistory failed:', err.message);
+            if (deepLinkChartId) { clearDeepLink(); showError("Couldn't open that analysis. Please try again."); }
             authInitialized = false;
             sidebarHistory.innerHTML = `<div class="sidebar-load-error">
                 Couldn't load history.<br>
@@ -1544,6 +1611,7 @@
             });
             if (window.posthog) posthog.capture('chart_analyzed', { filename: chartData.filename });
             renderSidebar();
+            if (activeChartId === data.id && appState === 'chat') setChartUrl(data.id);
         } catch (err) {
             console.error('saveChart failed:', err.message);
         }
@@ -1625,6 +1693,8 @@
 
     function goToLanding() {
         appState = 'landing';
+        document.documentElement.classList.remove('deep-link');
+        if (location.search.includes('chart=')) history.replaceState(null, '', '/');
         chatView.style.display    = 'none';
         landingView.style.display = 'flex';
         loadingEl.classList.remove('visible');
@@ -1749,6 +1819,7 @@
         mainChatInput.value = ''; mainChatInput.style.height = 'auto';
         chatErrorEl.style.display = 'none';
         renderSidebar(); renderMainPanel(id);
+        setChartUrl(id);
     }
 
     // ── Main panel ─────────────────────────────────────────────
@@ -1801,7 +1872,7 @@
         if (chart.conversation && chart.conversation.length > 0) {
             md += `\n---\n\n## Conversation\n\n`;
             chart.conversation.forEach(m => {
-                const label = m.role === 'user' ? '**You:**' : '**Charthawk audit:**';
+                const label = m.role === 'user' ? '**You:**' : '**Charthawk analysis:**';
                 md += `${label} ${m.content}\n\n`;
             });
         }

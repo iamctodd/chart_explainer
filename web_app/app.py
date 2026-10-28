@@ -150,6 +150,14 @@ def index():
     return render_template('index.html', posthog_key=POSTHOG_KEY, providers=providers.available_providers(), default_provider=providers.DEFAULT_PROVIDER)
 
 
+@app.route('/dashboard')
+def dashboard():
+    """Signed-in home: the user's charts and analyses, profile, API keys and admin link.
+    Auth is checked client-side (Supabase session in localStorage); signed-out visitors
+    are sent back to /."""
+    return render_template('dashboard.html', posthog_key=POSTHOG_KEY)
+
+
 # Non-streaming endpoints kept for backwards compatibility (no auth required)
 
 @app.route('/analyze', methods=['POST'])

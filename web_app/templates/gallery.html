@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Open Graph / Social -->
     <meta property="og:title" content="Gallery — Charthawk">
-    <meta property="og:description" content="See chart audits shared by the Charthawk community. AI-powered analysis spotting misleading axes, cherry-picked ranges, and distorted scales.">
+    <meta property="og:description" content="See chart analyses shared by the Charthawk community. AI-powered analysis spotting misleading axes, cherry-picked ranges, and distorted scales.">
     <meta property="og:image" content="https://charthawk.info/static/og-image.png">
     <meta property="og:url" content="https://charthawk.info/gallery">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Charthawk">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="description" content="Browse chart audits from the Charthawk community.">
+    <meta name="description" content="Browse chart analyses from the Charthawk community.">
     <title>Gallery — Charthawk</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect width='120' height='120' rx='26' fill='%231F3A5F'/><path d='M84 36A34 34 0 1 0 84 84' fill='none' stroke='%23F2E35B' stroke-width='16' stroke-linecap='round'/></svg>">
@@ -103,8 +103,8 @@
 <header class="header">
     <a href="/" class="header-brand" aria-label="ChartHawk home"><svg width="28" height="28" viewBox="0 0 120 120" fill="none" stroke="#F2E35B" stroke-width="9" stroke-linecap="round" aria-hidden="true"><path d="M89.7 30.3A42 42 0 1 0 89.7 89.7"/><path d="M81.2 38.8A30 30 0 1 0 81.2 81.2"/><path d="M72.7 47.3A18 18 0 1 0 72.7 72.7"/></svg><span>CHARTHAWK</span></a>
     <div class="header-actions">
-        <a href="/" class="btn-ghost">My audits</a>
-        <a href="/" class="btn-accent">Audit a chart →</a>
+        <a href="/dashboard" class="btn-ghost">My analyses</a>
+        <a href="/" class="btn-accent">Analyze a chart →</a>
     </div>
 </header>
 
@@ -112,7 +112,7 @@
     <div class="page-top">
         <div>
             <h1 class="page-heading">Public Gallery</h1>
-            <p class="page-subhead">Chart audits shared by the ChartHawk community</p>
+            <p class="page-subhead">Chart analyses shared by the ChartHawk community</p>
         </div>
         <div class="search-box">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9B7CA" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
@@ -123,10 +123,10 @@
 
     <div id="loadingSpinner"><div class="spinner"></div></div>
     <div class="gallery-grid" id="galleryGrid"></div>
-    <p class="no-results" id="noResults">No audits match that search.</p>
+    <p class="no-results" id="noResults">No analyses match that search.</p>
     <div id="emptyState" class="empty-state" style="display:none;">
         <h2>Nothing here yet</h2>
-        <p>Be the first to share a chart audit with the community.</p>
+        <p>Be the first to share a chart analysis with the community.</p>
     </div>
     <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
         <button class="load-more-btn" id="loadMoreBtn">Load more</button>
@@ -190,7 +190,7 @@
                     <div class="card-section-label warn">Watch out for</div>
                     <ul class="card-bullets warn">${improvItems}</ul>
                 </div>
-                <span class="card-open">Open audit →</span>
+                <span class="card-open">Open analysis →</span>
             </div>
         `;
         return card;
@@ -232,7 +232,7 @@
         }
     }
 
-    // Client-side search over the audits loaded so far
+    // Client-side search over the analyses loaded so far
     const searchInput = document.getElementById('gallerySearch');
     const noResults   = document.getElementById('noResults');
     function applySearch() {

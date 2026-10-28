@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>My Dashboard — ChartHawk</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect width='120' height='120' rx='26' fill='%231F3A5F'/><path d='M84 36A34 34 0 1 0 84 84' fill='none' stroke='%23F2E35B' stroke-width='16' stroke-linecap='round'/></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    {% if posthog_key %}
+<script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]);t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+" (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('{{ posthog_key }}', { api_host: 'https://us.i.posthog.com', person_profiles: 'identified_only' });
+</script>
+{% endif %}
+    <style>
+        :root {
+            --navy:         #1F3A5F;
+            --bg-body:      #0F1E33;
+            --bg-surface:   #132744;
+            --bg-card:      #16294A;
+            --bg-input:     #1A3256;
+            --border:       #2C4A72;
+            --border-soft:  #22395E;
+            --text-primary: #F2F5F9;
+            --text-soft:    #DCE3EC;
+            --text-muted:   #A9B7CA;
+            --accent:       #F2E35B;
+            --accent-hover: #E2D140;
+            --accent-ink:   #13243B;
+            --accent-dim:   rgba(242,227,91,0.12);
+            --success:      #3FB950;
+            --danger:       #F85149;
+            --font-display: 'Oswald', 'Arial Narrow', sans-serif;
+            --font-ui:      'Inter', system-ui, sans-serif;
+            --font-mono:    'JetBrains Mono', monospace;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { background: var(--bg-body); color: var(--text-primary); font-family: var(--font-ui); min-height: 100%; }
+        a { color: inherit; }
+        button { font-family: inherit; }
+        .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+        /* ── Boot screen: shown until we know who the user is, so nothing flashes ── */
+        .boot { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: var(--bg-body); color: var(--text-muted); font-size: 0.9em; z-index: 50; }
+        .boot.hidden { display: none; }
+        .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Header ── */
+        .header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 32px; background: var(--navy); position: sticky; top: 0; z-index: 20; }
+        .header-brand { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; }
+        .header-brand span { font-family: var(--font-display); font-weight: 500; font-size: 17px; letter-spacing: 0.22em; }
+        .header-actions { display: flex; align-items: center; gap: 10px; }
+        .btn-ghost, .btn-accent, .btn-outline, .btn-danger {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 18px;
+            border-radius: 999px; font-size: 0.86em; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+        }
+        .btn-ghost { background: transparent; border: 1px solid #4A6A94; color: var(--text-soft); font-weight: 500; }
+        .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-accent { background: var(--accent); border: 1px solid var(--accent); color: var(--accent-ink); font-weight: 700; }
+        .btn-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+        .btn-accent:disabled, .btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-outline { background: transparent; border: 1.5px solid var(--accent); color: var(--accent); }
+        .btn-outline:hover { background: var(--accent-dim); }
+        .btn-danger { background: transparent; border: 1px solid rgba(248,81,73,0.6); color: var(--danger); min-height: 34px; padding: 0 14px; font-size: 0.8em; }
+        .btn-danger:hover { background: rgba(248,81,73,0.1); }
+        .avatar-btn { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.06); border: 1px solid #4A6A94; border-radius: 999px; padding: 3px 14px 3px 3px; color: var(--text-soft); cursor: pointer; font-size: 0.85em; text-decoration: none; }
+        .avatar-btn:hover { border-color: var(--accent); }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--bg-input); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85em; color: var(--accent); flex-shrink: 0; overflow: hidden; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-btn .name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* ── Page shell ── */
+        .page { max-width: 1240px; margin: 0 auto; padding: 18px 32px 72px; }
+        .crumbs { font-size: 0.82em; color: var(--text-muted); margin-bottom: 22px; }
+        .crumbs a { color: var(--accent); text-decoration: none; }
+        .crumbs a:hover { text-decoration: underline; }
+        .layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 32px; align-items: start; }
+
+        /* ── Left column ── */
+        .side { display: flex; flex-direction: column; gap: 18px; position: sticky; top: 86px; }
+        .hello-card { border-radius: 16px; overflow: hidden; background: var(--bg-card); border: 1px solid var(--border-soft); }
+        .hello-top { padding: 22px 22px 20px; background: linear-gradient(140deg, #2C4A72 0%, var(--navy) 70%); position: relative; }
+        .hello-top::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--accent); }
+        .hello-name { font-family: var(--font-display); font-size: 1.8em; font-weight: 600; line-height: 1.1; margin-bottom: 6px; word-break: break-word; }
+        .hello-since { font-size: 0.84em; color: var(--text-soft); font-weight: 600; margin-bottom: 12px; }
+        .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+        .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.74em; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: rgba(15,30,51,0.55); color: var(--text-soft); border: 1px solid rgba(255,255,255,0.12); }
+        .badge.accent { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+        .hello-stats { display: grid; grid-template-columns: repeat(3, 1fr); padding: 16px 10px; }
+        .hello-stat { text-align: center; padding: 0 4px; }
+        .hello-stat + .hello-stat { border-left: 1px solid var(--border-soft); }
+        .hello-stat b { display: block; font-family: var(--font-display); font-size: 1.6em; font-weight: 600; color: var(--accent); line-height: 1.1; }
+        .hello-stat span { font-size: 0.72em; color: var(--text-muted); }
+
+        .side-nav { display: flex; flex-direction: column; border-top: 1px solid var(--border-soft); }
+        .side-nav a, .side-nav button { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: transparent; border: 0; border-bottom: 1px solid var(--border-soft); color: var(--text-soft); text-decoration: none; font-size: 0.95em; font-weight: 600; cursor: pointer; text-align: left; transition: background 0.12s, color 0.12s; }
+        .side-nav a:hover, .side-nav button:hover { background: var(--bg-card); color: var(--text-primary); }
+        .side-nav a.active { background: var(--accent); color: var(--accent-ink); border-radius: 0; }
+        .side-nav svg { flex-shrink: 0; }
+        .side-nav .ext { margin-left: auto; opacity: 0.6; font-size: 0.8em; }
+        .side-nav .signout:hover { color: var(--danger); }
+
+        .help-card { border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+        .help-card h3 { font-size: 0.95em; margin-bottom: 6px; }
+        .help-card p { font-size: 0.86em; color: var(--text-muted); line-height: 1.55; margin-bottom: 10px; }
+        .help-card a, .help-card button.link { color: var(--accent); font-weight: 600; font-size: 0.88em; text-decoration: none; background: none; border: 0; cursor: pointer; padding: 0; display: block; margin-top: 4px; text-align: left; }
+        .help-card a:hover, .help-card button.link:hover { text-decoration: underline; }
+
+        /* ── Main column ── */
+        .main-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+        .page-title { font-family: var(--font-display); font-size: 2.8em; font-weight: 600; line-height: 1.05; }
+        .page-sub { color: var(--text-muted); margin-top: 6px; }
+        .view { display: none; }
+        .view.active { display: block; }
+
+        .panel { background: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 16px; padding: 24px 26px; margin-bottom: 22px; }
+        .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+        .panel-title { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 1.5em; font-weight: 600; }
+        .panel-title svg { color: var(--accent); }
+        .panel-link { color: var(--accent); font-size: 0.86em; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; background: none; border: 0; cursor: pointer; }
+
+        /* Start-a-new-analysis band */
+        .start-band { display: flex; align-items: center; gap: 22px; background: var(--navy); border: 2px dashed #8FA3BC; border-radius: 16px; padding: 22px 26px; margin-bottom: 22px; text-decoration: none; color: inherit; transition: border-color 0.15s, box-shadow 0.15s; }
+        .start-band:hover { border-color: var(--accent); border-style: solid; box-shadow: 0 0 0 3px var(--accent-dim); }
+        .start-icon { width: 54px; height: 54px; border-radius: 14px; background: var(--accent); color: var(--accent-ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .start-text { flex: 1; min-width: 0; }
+        .start-text h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.45em; margin-bottom: 2px; }
+        .start-text p { color: var(--text-soft); font-size: 0.92em; }
+
+        /* Chart cards */
+        .chart-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
+        .chart-card { background: var(--bg-surface); border: 1px solid var(--border-soft); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; transition: border-color 0.15s, transform 0.15s; }
+        .chart-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .chart-thumb-link { display: block; position: relative; }
+        .chart-thumb { width: 100%; aspect-ratio: 16/10; object-fit: cover; display: block; background: #F1ECDF; }
+        .chart-thumb-ph { width: 100%; aspect-ratio: 16/10; background: var(--bg-input); display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
+        .chart-flags { position: absolute; top: 8px; left: 8px; display: flex; gap: 6px; }
+        .flag { font-size: 0.68em; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: rgba(15,30,51,0.85); color: var(--text-soft); border: 1px solid rgba(255,255,255,0.15); }
+        .flag.public { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+        .chart-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+        .chart-name { font-weight: 600; font-size: 0.95em; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .chart-meta { font-size: 0.78em; color: var(--text-muted); }
+        .chart-actions { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 10px; }
+        .chart-open { color: var(--accent); font-weight: 600; font-size: 0.86em; text-decoration: none; margin-right: auto; }
+        .chart-open:hover { text-decoration: underline; }
+        .icon-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; }
+        .icon-btn:hover { color: var(--accent); border-color: var(--accent); }
+        .icon-btn.on { color: var(--accent); border-color: rgba(242,227,91,0.5); background: var(--accent-dim); }
+
+        .empty { text-align: center; padding: 36px 20px; color: var(--text-muted); }
+        .empty-icon { width: 96px; height: 96px; border-radius: 50%; background: var(--accent-dim); color: var(--accent); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+        .empty h3 { color: var(--text-primary); font-size: 1.05em; margin-bottom: 6px; }
+        .empty p { font-size: 0.9em; margin-bottom: 16px; }
+        .error-text { color: var(--danger); font-size: 0.88em; }
+
+        /* Account tiles */
+        .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+        .tile { background: var(--bg-card); border: 1px solid var(--border-soft); border-radius: 16px; padding: 22px 24px; display: flex; flex-direction: column; gap: 10px; min-height: 200px; }
+        .tile h3 { font-family: var(--font-display); font-size: 1.35em; font-weight: 600; }
+        .tile p, .tile dl { color: var(--text-soft); font-size: 0.9em; line-height: 1.55; }
+        .tile dt { color: var(--text-muted); font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-top: 8px; }
+        .tile dd { overflow: hidden; text-overflow: ellipsis; }
+        .tile .btn-outline { margin-top: auto; align-self: stretch; }
+        .tile .big-num { font-family: var(--font-display); font-size: 2.4em; color: var(--accent); line-height: 1; }
+
+        /* Toolbar for all analyses */
+        .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 18px; }
+        .search-box { display: flex; align-items: center; gap: 8px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 0 14px; min-height: 42px; flex: 1 1 260px; }
+        .search-box:focus-within { border-color: var(--accent); }
+        .search-box input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--text-primary); font: inherit; font-size: 0.92em; }
+        .search-box input::placeholder { color: var(--text-muted); }
+        .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+        .chip { background: transparent; border: 1px solid var(--border); color: var(--text-soft); border-radius: 999px; padding: 8px 14px; font-size: 0.82em; font-weight: 600; cursor: pointer; }
+        .chip:hover { border-color: var(--accent); }
+        .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+        .select { background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-soft); border-radius: 10px; padding: 9px 12px; font: inherit; font-size: 0.84em; }
+
+        /* Forms */
+        .form-grid { display: grid; gap: 14px; max-width: 520px; }
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        .field label { font-size: 0.8em; color: var(--text-muted); font-weight: 600; }
+        .field input { background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); padding: 11px 13px; font: inherit; font-size: 0.93em; outline: none; }
+        .field input:focus { border-color: var(--accent); }
+        .field input[readonly] { opacity: 0.6; }
+        .sub-head { font-size: 0.78em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); padding-top: 16px; margin-top: 6px; border-top: 1px solid var(--border-soft); }
+        .avatar-edit { display: flex; align-items: center; gap: 16px; }
+        .avatar-edit .avatar { width: 72px; height: 72px; font-size: 1.5em; border: 2px solid var(--border); }
+        .msg { font-size: 0.86em; display: none; }
+        .msg.ok { color: var(--success); }
+        .msg.err { color: var(--danger); }
+        .form-actions { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
+
+        /* API keys */
+        .key-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border-soft); }
+        .key-row:last-child { border-bottom: 0; }
+        .key-name { font-weight: 600; font-size: 0.92em; }
+        .key-prefix { font-family: var(--font-mono); font-size: 0.8em; color: var(--text-muted); margin: 2px 0; }
+        .key-dates { font-size: 0.76em; color: var(--text-muted); }
+        .key-reveal { display: none; background: var(--bg-input); border: 1px solid var(--accent); border-radius: 12px; padding: 14px 16px; margin: 16px 0; }
+        .key-reveal .warn { font-size: 0.78em; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
+        .key-reveal code { flex: 1; font-family: var(--font-mono); font-size: 0.82em; word-break: break-all; }
+        .key-new { display: flex; gap: 10px; flex-wrap: wrap; }
+        .key-new input { flex: 1 1 240px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 999px; color: var(--text-primary); padding: 0 16px; min-height: 40px; font: inherit; font-size: 0.9em; outline: none; }
+        .key-new input:focus { border-color: var(--accent); }
+        pre.snippet { background: var(--bg-body); border: 1px solid var(--border-soft); border-radius: 10px; padding: 14px 16px; font-family: var(--font-mono); font-size: 0.8em; color: var(--text-soft); overflow-x: auto; line-height: 1.6; }
+
+        /* Feedback modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 16px; padding: 26px; width: 100%; max-width: 480px; }
+        .modal h2 { font-family: var(--font-display); font-weight: 600; margin-bottom: 8px; }
+        .modal p { color: var(--text-muted); font-size: 0.9em; margin-bottom: 16px; }
+        .modal textarea { width: 100%; min-height: 110px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; color: var(--text-primary); padding: 12px; font: inherit; font-size: 0.92em; margin-bottom: 14px; resize: vertical; outline: none; }
+        .modal textarea:focus { border-color: var(--accent); }
+        .tos-scroll { max-height: 260px; overflow-y: auto; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; font-size: 0.86em; line-height: 1.7; color: var(--text-muted); margin-bottom: 14px; }
+        .tos-scroll strong { color: var(--text-primary); }
+        .tos-scroll a { color: var(--accent); }
+        .check-row { display: flex; gap: 10px; align-items: flex-start; font-size: 0.88em; color: var(--text-muted); margin-bottom: 18px; cursor: pointer; }
+        .check-row input { margin-top: 3px; accent-color: var(--accent); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--bg-surface); border: 1px solid var(--accent); color: var(--text-primary); padding: 10px 18px; border-radius: 999px; font-size: 0.86em; opacity: 0; pointer-events: none; transition: all 0.2s; z-index: 120; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        .footer { border-top: 1px solid var(--border-soft); margin-top: 40px; padding: 24px 32px; text-align: center; font-size: 0.8em; color: var(--text-muted); }
+        .footer a { color: var(--text-muted); margin: 0 8px; }
+        .footer a:hover { color: var(--text-primary); }
+
+        /* ── Responsive ── */
+        @media (max-width: 960px) {
+            .layout { grid-template-columns: minmax(0, 1fr); }
+            .layout > * { min-width: 0; }
+            .side { position: static; }
+            .side-nav { flex-direction: row; overflow-x: auto; border-top: 0; border: 1px solid var(--border-soft); border-radius: 12px; }
+            .side-nav a, .side-nav button { border-bottom: 0; white-space: nowrap; padding: 12px 14px; font-size: 0.88em; }
+            .side-nav a.active { border-radius: 0; }
+            .help-card.desktop-only { display: none; }
+        }
+        @media (max-width: 640px) {
+            .header { padding: 12px 16px; }
+            .header-brand span, .avatar-btn .name, .hide-sm { display: none; }
+            .avatar-btn { padding: 3px; }
+            .page { padding: 14px 16px 56px; }
+            .page-title { font-size: 2.1em; }
+            .tiles { grid-template-columns: 1fr; }
+            .panel { padding: 20px 18px; }
+            .start-band { padding: 18px; gap: 14px; }
+            .start-band .btn-accent { display: none; }
+            .start-icon { width: 44px; height: 44px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="boot" id="boot"><div class="spinner"></div><span>Loading your dashboard…</span></div>
+
+<header class="header">
+    <a href="/" class="header-brand" aria-label="ChartHawk home"><svg width="28" height="28" viewBox="0 0 120 120" fill="none" stroke="#F2E35B" stroke-width="9" stroke-linecap="round" aria-hidden="true"><path d="M89.7 30.3A42 42 0 1 0 89.7 89.7"/><path d="M81.2 38.8A30 30 0 1 0 81.2 81.2"/><path d="M72.7 47.3A18 18 0 1 0 72.7 72.7"/></svg><span>CHARTHAWK</span></a>
+    <div class="header-actions">
+        <a href="/gallery" class="btn-ghost hide-sm">Gallery</a>
+        <a href="/" class="btn-accent">Analyze a chart</a>
+        <a href="#profile" class="avatar-btn" id="headerUser" aria-label="Your profile"><span class="avatar" id="headerAvatar"></span><span class="name" id="headerName"></span></a>
+    </div>
+</header>
+
+<div class="page">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> / <span id="crumbCurrent">My Dashboard</span></nav>
+
+    <div class="layout">
+        <!-- ── Left column ── -->
+        <aside class="side">
+            <div class="hello-card">
+                <div class="hello-top">
+                    <div class="hello-name" id="helloName">Hi there</div>
+                    <div class="hello-since" id="helloSince"></div>
+                    <div class="badges" id="helloBadges"><span class="badge accent">Beta member · Free</span></div>
+                </div>
+                <div class="hello-stats">
+                    <div class="hello-stat"><b id="statCharts">–</b><span>Analyses</span></div>
+                    <div class="hello-stat"><b id="statPublic">–</b><span>Public</span></div>
+                    <div class="hello-stat"><b id="statFollowups">–</b><span>Follow-ups</span></div>
+                </div>
+            </div>
+
+            <nav class="side-nav" aria-label="Account">
+                <a href="#overview" data-view="overview"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Dashboard</a>
+                <a href="#analyses" data-view="analyses"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3v18h17"/><path d="M8 17v-5M13 17V8M18 17v-9"/></svg>My charts &amp; analyses</a>
+                <a href="#profile" data-view="profile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Profile</a>
+                <a href="#api-keys" data-view="api-keys"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L20 3M16 7l3 3M14 9l2 2"/></svg>API keys</a>
+                <a href="/admin" id="navAdmin" style="display:none;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/></svg>Admin dashboard<span class="ext">↗</span></a>
+                <button type="button" class="signout" id="signOutBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>Sign out</button>
+            </nav>
+
+            <div class="help-card desktop-only">
+                <h3>Questions or ideas?</h3>
+                <p>Tell us what's working and what isn't. It goes straight to the ChartHawk team.</p>
+                <button type="button" class="link" id="feedbackOpen">Send feedback</button>
+                <a href="/gallery">Browse the public gallery</a>
+            </div>
+        </aside>
+
+        <!-- ── Main column ── -->
+        <main>
+            <!-- OVERVIEW -->
+            <section class="view" id="view-overview" aria-labelledby="t-overview">
+                <div class="main-top">
+                    <div>
+                        <h1 class="page-title" id="t-overview">My Dashboard</h1>
+                        <p class="page-sub" id="welcomeLine">Welcome back.</p>
+                    </div>
+                </div>
+
+                <a href="/" class="start-band">
+                    <span class="start-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
+                    <span class="start-text">
+                        <h2>Analyze a new chart</h2>
+                        <p>Upload a PNG, JPG or GIF. ChartHawk checks axes, ranges and chart types, then explains what it found.</p>
+                    </span>
+                    <span class="btn-accent">Start →</span>
+                </a>
+
+                <div class="panel">
+                    <div class="panel-head">
+                        <div class="panel-title"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 3v18h17"/><path d="M8 17v-5M13 17V8M18 17v-9"/></svg>Recent analyses</div>
+                        <a href="#analyses" class="panel-link" id="viewAllLink">View all</a>
+                    </div>
+                    <div id="recentGrid" class="chart-grid"></div>
+                    <div id="recentState"></div>
+                </div>
+
+                <div class="tiles">
+                    <div class="tile">
+                        <h3>Profile</h3>
+                        <dl>
+                            <dt>Name</dt><dd id="tileName">—</dd>
+                            <dt>Email</dt><dd id="tileEmail">—</dd>
+                            <dt>Sign-in method</dt><dd id="tileProvider">—</dd>
+                        </dl>
+                        <a href="#profile" class="btn-outline">Edit profile</a>
+                    </div>
+                    <div class="tile">
+                        <h3>API keys</h3>
+                        <div class="big-num" id="tileKeyCount">–</div>
+                        <p id="tileKeyText">Use keys to call ChartHawk from scripts and Claude Code skills.</p>
+                        <a href="#api-keys" class="btn-outline">Manage API keys</a>
+                    </div>
+                    <div class="tile">
+                        <h3>Public gallery</h3>
+                        <p id="tileGalleryText">Make an analysis public to share it with a link and list it in the community gallery.</p>
+                        <a href="/gallery" class="btn-outline">Browse the gallery</a>
+                    </div>
+                    <div class="tile" id="tileAdmin" style="display:none;">
+                        <h3>Admin</h3>
+                        <p>Usage, costs and user management for ChartHawk.</p>
+                        <a href="/admin" class="btn-outline">Open admin dashboard</a>
+                    </div>
+                    <div class="tile" id="tileHelp">
+                        <h3>Help &amp; feedback</h3>
+                        <p>Found a bug or have an idea? Send it straight to the ChartHawk team.</p>
+                        <button type="button" class="btn-outline" id="feedbackOpen2">Send feedback</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ALL ANALYSES -->
+            <section class="view" id="view-analyses" aria-labelledby="t-analyses">
+                <div class="main-top">
+                    <div>
+                        <h1 class="page-title" id="t-analyses">My charts &amp; analyses</h1>
+                        <p class="page-sub" id="analysesCount"></p>
+                    </div>
+                    <a href="/" class="btn-accent">+ New analysis</a>
+                </div>
+                <div class="toolbar">
+                    <div class="search-box">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A9B7CA" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+                        <label for="searchInput" class="sr-only">Search your charts</label>
+                        <input id="searchInput" type="search" placeholder="Search your charts">
+                    </div>
+                    <div class="chips" role="group" aria-label="Filter">
+                        <button type="button" class="chip" data-filter="all" aria-pressed="true">All</button>
+                        <button type="button" class="chip" data-filter="starred" aria-pressed="false">Starred</button>
+                        <button type="button" class="chip" data-filter="public" aria-pressed="false">Public</button>
+                    </div>
+                    <label for="sortSelect" class="sr-only">Sort</label>
+                    <select id="sortSelect" class="select">
+                        <option value="new">Newest first</option>
+                        <option value="old">Oldest first</option>
+                        <option value="name">Name A–Z</option>
+                    </select>
+                </div>
+                <div id="allGrid" class="chart-grid"></div>
+                <div id="allState"></div>
+            </section>
+
+            <!-- PROFILE -->
+            <section class="view" id="view-profile" aria-labelledby="t-profile">
+                <div class="main-top">
+                    <div>
+                        <h1 class="page-title" id="t-profile">Profile</h1>
+                        <p class="page-sub" id="profileSub">Update your name or photo.</p>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="form-grid">
+                        <div class="avatar-edit">
+                            <span class="avatar" id="profileAvatar"></span>
+                            <div>
+                                <button type="button" class="btn-ghost" id="avatarPickBtn">Change photo</button>
+                                <input type="file" id="avatarInput" accept="image/*" hidden>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label for="profileEmail">Email</label>
+                            <input id="profileEmail" type="email" readonly tabindex="-1">
+                            <span id="providerNote" style="font-size:0.8em;color:var(--text-muted);display:none;">Signed in with Google. Your password is managed by Google.</span>
+                        </div>
+                        <div class="field">
+                            <label for="profileName">Display name</label>
+                            <input id="profileName" type="text" placeholder="Your name" autocomplete="name">
+                        </div>
+                        <div id="pwSection" style="display:none;" class="form-grid">
+                            <div class="sub-head">Change password</div>
+                            <div class="field"><label for="pwCurrent">Current password</label><input id="pwCurrent" type="password" autocomplete="current-password"></div>
+                            <div class="field"><label for="pwNew">New password</label><input id="pwNew" type="password" placeholder="At least 6 characters" autocomplete="new-password"></div>
+                            <div class="field"><label for="pwConfirm">Confirm new password</label><input id="pwConfirm" type="password" autocomplete="new-password"></div>
+                        </div>
+                        <div class="msg err" id="profileErr"></div>
+                        <div class="msg ok" id="profileOk"></div>
+                        <div class="form-actions">
+                            <button type="button" class="btn-accent" id="profileSave">Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- API KEYS -->
+            <section class="view" id="view-api-keys" aria-labelledby="t-keys">
+                <div class="main-top">
+                    <div>
+                        <h1 class="page-title" id="t-keys">API keys</h1>
+                        <p class="page-sub">Call ChartHawk from scripts or Claude Code skills. A new key is shown once, so save it somewhere safe.</p>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><div class="panel-title">Your keys</div></div>
+                    <div id="keysList"></div>
+                    <div class="key-reveal" id="keyReveal">
+                        <div class="warn">Copy this key now. It won't be shown again.</div>
+                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                            <code id="keyValue"></code>
+                            <button type="button" class="btn-accent" id="keyCopy">Copy</button>
+                        </div>
+                    </div>
+                    <div class="sub-head" style="margin-bottom:12px;">Create a key</div>
+                    <div class="key-new">
+                        <label for="keyName" class="sr-only">Key name</label>
+                        <input id="keyName" type="text" placeholder="Key name (e.g. Claude Code skill)">
+                        <button type="button" class="btn-accent" id="keyGenerate">Generate key</button>
+                    </div>
+                    <div class="msg err" id="keysErr" style="margin-top:10px;"></div>
+                </div>
+                <div class="panel">
+                    <div class="panel-head"><div class="panel-title">Quick start</div></div>
+                    <pre class="snippet" id="curlSnippet">curl -X POST {{ request.host_url }}api/v1/analyze \
+  -H "Authorization: Bearer sk-hawk-YOUR_KEY" \
+  -F "chart=@my_chart.png"</pre>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+
+<footer class="footer">© 2026 ChartHawk<a href="/">Home</a><a href="/gallery">Gallery</a></footer>
+
+<!-- Terms (shown only if this account hasn't accepted the current version yet) -->
+<div class="modal-overlay" id="tosModal" role="dialog" aria-modal="true" aria-labelledby="tosTitle">
+    <div class="modal" style="max-width:540px;">
+        <h2 id="tosTitle">Welcome to ChartHawk</h2>
+        <p>Please read and accept these terms before continuing.</p>
+        <div class="tos-scroll">
+            ChartHawk lets you upload any chart image and get an AI-powered analysis that detects misleading design choices, flags truncated axes, cherry-picked date ranges and distorted scales, and tells you what the data actually shows.<br><br>
+            <strong>What happens to your uploaded images</strong><br>
+            Images you upload are sent to an AI model provider for analysis. They are also stored in your ChartHawk account so you can revisit previous analyses. By using ChartHawk you agree to <a href="https://www.anthropic.com/legal/usage-policy" target="_blank" rel="noopener">Anthropic's usage policies</a>.<br><br>
+            <strong>Data storage</strong><br>
+            Your charts and conversation history are stored in a database linked to your account. Only you can access your data unless you make an analysis public. We use <a href="https://supabase.com/privacy" target="_blank" rel="noopener">Supabase</a> for data storage.<br><br>
+            <strong>Deleting your data</strong><br>
+            You can delete individual charts at any time. To delete your account and all data, send us feedback requesting account deletion. We will remove your data within 30 days.<br><br>
+            <strong>No warranties</strong><br>
+            ChartHawk is provided as-is. AI analyses may contain errors. Always apply your own judgment.
+        </div>
+        <label class="check-row"><input type="checkbox" id="tosCheck"> I have read and agree to these terms.</label>
+        <div class="modal-actions">
+            <button type="button" class="btn-ghost" id="tosDecline">Decline &amp; sign out</button>
+            <button type="button" class="btn-accent" id="tosAccept" disabled>Accept &amp; continue</button>
+        </div>
+    </div>
+</div>
+
+<!-- Feedback -->
+<div class="modal-overlay" id="feedbackModal" role="dialog" aria-modal="true" aria-labelledby="fbTitle">
+    <div class="modal">
+        <h2 id="fbTitle">Send feedback</h2>
+        <p>Bug reports, ideas, or anything on your mind.</p>
+        <form id="feedbackForm">
+            <label for="feedbackText" class="sr-only">Your feedback</label>
+            <textarea id="feedbackText" name="message" required placeholder="What's on your mind?"></textarea>
+            <input type="hidden" name="email" id="feedbackEmail">
+            <div class="msg ok" id="fbOk" style="margin-bottom:10px;">Thanks for your feedback!</div>
+            <div class="msg err" id="fbErr" style="margin-bottom:10px;">Something went wrong. Please try again.</div>
+            <div class="modal-actions">
+                <button type="button" class="btn-ghost" id="fbCancel">Cancel</button>
+                <button type="submit" class="btn-accent" id="fbSend">Send feedback</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+    const SUPABASE_URL      = 'https://csjiymeycevxqmlmqcwc.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzaml5bWV5Y2V2eHFtbG1xY3djIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTc1MDUsImV4cCI6MjA4OTY3MzUwNX0.JwUVn-NHrRCmuI8QDe_GEOJfTcT7lcHbh0Fhadrg4h0';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'implicit' } });
+    const TOS_VERSION = 'v1';
+    const MAX_CHARTS  = 200;
+    const VIEWS = ['overview', 'analyses', 'profile', 'api-keys'];
+    const VIEW_LABELS = { overview: 'My Dashboard', analyses: 'My charts & analyses', profile: 'Profile', 'api-keys': 'API keys' };
+
+    let user = null;
+    let charts = [];         // [{id, name, created, starred, isPublic, image, followups}]
+    let chartsLoaded = false;
+    let chartsError = false;
+    let apiKeys = null;
+    let filter = 'all';
+    let started = false;
+
+    const $ = (id) => document.getElementById(id);
+
+    // ── Helpers ──────────────────────────────────────────────
+    function escapeHtml(s) {
+        return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+    function fmtDate(d) {
+        if (!(d instanceof Date) || isNaN(d)) return '';
+        const diff = (Date.now() - d) / 1000;
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    function toast(msg) {
+        const t = $('toast'); t.textContent = msg; t.classList.add('show');
+        clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+    function displayName() { return user?.user_metadata?.full_name || (user?.email || '').split('@')[0] || 'there'; }
+    function initials(name) {
+        const parts = String(name || '?').trim().split(/\s+/);
+        return ((parts[0]?.[0] || '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase() || '?';
+    }
+    function setAvatar(el, url, name) {
+        el.textContent = '';
+        if (url) {
+            const img = document.createElement('img');
+            img.src = url; img.alt = '';
+            img.onerror = () => { el.textContent = initials(name); };
+            el.appendChild(img);
+        } else {
+            el.textContent = initials(name);
+        }
+    }
+    function storedToken() {
+        try {
+            const ref = SUPABASE_URL.split('//')[1].split('.')[0];
+            const raw = localStorage.getItem(`sb-${ref}-auth-token`);
+            if (raw) { const p = JSON.parse(raw); return p?.access_token || p?.session?.access_token || null; }
+        } catch (e) {}
+        return null;
+    }
+    async function token() {
+        try { const { data } = await sb.auth.getSession(); return data?.session?.access_token || storedToken(); }
+        catch { return storedToken(); }
+    }
+    function restHeaders(t) {
+        return { 'Authorization': `Bearer ${t}`, 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' };
+    }
+
+    // ── Auth gate ────────────────────────────────────────────
+    // The page only renders for a signed-in user who has accepted the terms.
+    // Anyone else goes back to the home page; nothing else flashes on screen.
+    sb.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+            if (!session?.user) { if (event === 'INITIAL_SESSION') location.replace('/'); return; }
+            user = session.user;
+            if (user.user_metadata?.tos_accepted_version !== TOS_VERSION) {
+                $('boot').classList.add('hidden');
+                $('tosModal').classList.add('active');
+                return;
+            }
+            if (event === 'SIGNED_IN' && window.posthog) posthog.capture('user_signed_in', { provider: user.app_metadata?.provider || 'unknown' });
+            start();
+        } else if (event === 'SIGNED_OUT') {
+            location.replace('/');
+        } else if (event === 'USER_UPDATED' && session?.user) {
+            user = session.user;
+            renderUser();
+        }
+    });
+
+    function start() {
+        if (started) { renderUser(); return; }
+        started = true;
+        // Strip OAuth tokens from the address bar after a Google sign-in redirect.
+        if (location.hash.includes('access_token')) history.replaceState(null, '', '/dashboard');
+        if (window.posthog) posthog.identify(user.id, { email: user.email, name: user.user_metadata?.full_name || '' });
+        renderUser();
+        route();
+        $('boot').classList.add('hidden');
+        loadCharts();
+        loadKeys();
+    }
+
+    // ── Terms ────────────────────────────────────────────────
+    $('tosCheck').addEventListener('change', e => { $('tosAccept').disabled = !e.target.checked; });
+    $('tosAccept').addEventListener('click', async () => {
+        const btn = $('tosAccept'); btn.disabled = true; btn.textContent = 'Saving…';
+        try {
+            await Promise.race([
+                sb.auth.updateUser({ data: { tos_accepted_version: TOS_VERSION } }),
+                new Promise(r => setTimeout(r, 4000)),
+            ]);
+        } catch (e) { console.warn('Could not save terms acceptance:', e.message); }
+        if (window.posthog) posthog.capture('tos_accepted');
+        $('tosModal').classList.remove('active');
+        start();
+    });
+    $('tosDecline').addEventListener('click', signOut);
+
+    async function signOut() {
+        if (window.posthog) { posthog.capture('signed_out'); posthog.reset(); }
+        try { await sb.auth.signOut(); } catch (e) {}
+        location.replace('/');
+    }
+    $('signOutBtn').addEventListener('click', signOut);
+
+    // ── Routing (hash-based sections) ────────────────────────
+    function route() {
+        if (!started) return;
+        let view = location.hash.replace('#', '');
+        if (!VIEWS.includes(view)) view = 'overview';
+        VIEWS.forEach(v => $(`view-${v}`).classList.toggle('active', v === view));
+        document.querySelectorAll('.side-nav a[data-view]').forEach(a => {
+            const on = a.dataset.view === view;
+            a.classList.toggle('active', on);
+            if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+        });
+        $('crumbCurrent').textContent = VIEW_LABELS[view];
+        document.title = `${VIEW_LABELS[view]} — ChartHawk`;
+        if (view === 'profile') fillProfileForm();
+        if (view === 'api-keys' && apiKeys === null) loadKeys();
+        window.scrollTo({ top: 0 });
+    }
+    window.addEventListener('hashchange', route);
+
+    // ── User chrome ──────────────────────────────────────────
+    function renderUser() {
+        const name = displayName();
+        const avatar = user.user_metadata?.avatar_url || '';
+        const first = name.split(' ')[0];
+        $('helloName').textContent = `Hi, ${first}`;
+        $('welcomeLine').textContent = `Welcome back, ${first}. Here's everything you've analyzed.`;
+        const since = user.created_at ? new Date(user.created_at) : null;
+        $('helloSince').textContent = since ? `Member since ${since.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}` : '';
+        const isAdmin = !!user.user_metadata?.is_admin;
+        $('helloBadges').innerHTML = `<span class="badge accent">Beta member · Free</span>${isAdmin ? '<span class="badge">Admin</span>' : ''}`;
+        $('navAdmin').style.display = isAdmin ? '' : 'none';
+        $('tileAdmin').style.display = isAdmin ? '' : 'none';
+        $('tileHelp').style.display = isAdmin ? 'none' : '';   // keep the tile grid even
+        setAvatar($('headerAvatar'), avatar, name);
+        $('headerName').textContent = name;
+        $('tileName').textContent = user.user_metadata?.full_name || 'Not set';
+        $('tileEmail').textContent = user.email || '—';
+        const provider = user.app_metadata?.provider || 'email';
+        $('tileProvider').textContent = provider === 'google' ? 'Google' : provider === 'email' ? 'Email and password' : provider;
+        $('feedbackEmail').value = user.email || '';
+    }
+
+    // ── Charts ───────────────────────────────────────────────
+    async function loadCharts() {
+        $('recentState').innerHTML = '<div class="empty"><div class="spinner" style="margin:0 auto;"></div></div>';
+        const t = await token();
+        try {
+            const url = new URL(`${SUPABASE_URL}/rest/v1/charts`);
+            url.searchParams.set('select', 'id,filename,display_name,starred,is_public,image_data,thumbnail_data,created_at');
+            // Own charts only: RLS also lets every public chart through for the gallery.
+            url.searchParams.set('user_id', `eq.${user.id}`);
+            url.searchParams.set('order', 'created_at.desc');
+            url.searchParams.set('limit', String(MAX_CHARTS));
+            const res = await fetch(url, { headers: restHeaders(t) });
+            if (!res.ok) throw new Error(`charts ${res.status}`);
+            const rows = await res.json();
+
+            let counts = {};
+            if (rows.length) {
+                const mu = new URL(`${SUPABASE_URL}/rest/v1/messages`);
+                mu.searchParams.set('select', 'chart_id');
+                mu.searchParams.set('role', 'eq.user');
+                mu.searchParams.set('chart_id', `in.(${rows.map(r => r.id).join(',')})`);
+                const mr = await fetch(mu, { headers: restHeaders(t) });
+                if (mr.ok) (await mr.json()).forEach(m => { counts[m.chart_id] = (counts[m.chart_id] || 0) + 1; });
+            }
+
+            charts = rows.map(r => ({
+                id: r.id,
+                name: r.display_name || r.filename || 'Untitled chart',
+                created: new Date(r.created_at),
+                starred: !!r.starred,
+                isPublic: !!r.is_public,
+                image: r.thumbnail_data || r.image_data || '',
+                followups: counts[r.id] || 0,
+            }));
+            chartsLoaded = true; chartsError = false;
+        } catch (err) {
+            console.error('loadCharts failed:', err.message);
+            chartsError = true;
+        }
+        renderCharts();
+    }
+
+    function chartCard(c) {
+        const open = `/?chart=${encodeURIComponent(c.id)}`;
+        const thumb = c.image
+            ? `<img class="chart-thumb" src="${escapeHtml(c.image)}" alt="" loading="lazy">`
+            : `<div class="chart-thumb-ph"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 3v18h17"/><path d="M8 17v-5M13 17V8M18 17v-9"/></svg></div>`;
+        const flags = [c.starred ? '<span class="flag">★ Starred</span>' : '', c.isPublic ? '<span class="flag public">Public</span>' : ''].join('');
+        const fu = c.followups ? ` · ${c.followups} follow-up${c.followups === 1 ? '' : 's'}` : '';
+        return `<article class="chart-card">
+            <a class="chart-thumb-link" href="${open}" tabindex="-1" aria-hidden="true">${thumb}<span class="chart-flags">${flags}</span></a>
+            <div class="chart-body">
+                <div class="chart-name" title="${escapeHtml(c.name)}">${escapeHtml(c.name)}</div>
+                <div class="chart-meta">${escapeHtml(fmtDate(c.created))}${fu}</div>
+                <div class="chart-actions">
+                    <a class="chart-open" href="${open}">Open analysis →</a>
+                    <button type="button" class="icon-btn ${c.starred ? 'on' : ''}" data-act="star" data-id="${escapeHtml(c.id)}" aria-label="${c.starred ? 'Unstar' : 'Star'} ${escapeHtml(c.name)}" title="${c.starred ? 'Unstar' : 'Star'}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="${c.starred ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>
+                    </button>
+                    ${c.isPublic ? `<button type="button" class="icon-btn" data-act="share" data-id="${escapeHtml(c.id)}" aria-label="Copy share link" title="Copy share link">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+                    </button>` : ''}
+                </div>
+            </div>
+        </article>`;
+    }
+
+    function emptyHtml() {
+        return `<div class="empty">
+            <div class="empty-icon"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 3v18h17"/><path d="M8 17v-5M13 17V8M18 17v-9"/></svg></div>
+            <h3>No analyses yet</h3>
+            <p>Upload your first chart and it will show up here.</p>
+            <a href="/" class="btn-accent">Analyze a chart</a>
+        </div>`;
+    }
+    const errorHtml = `<div class="empty"><p class="error-text">Couldn't load your charts.</p><button type="button" class="btn-ghost" onclick="loadCharts()">Try again</button></div>`;
+
+    function renderCharts() {
+        // Stats
+        $('statCharts').textContent = chartsLoaded ? charts.length : '–';
+        $('statPublic').textContent = chartsLoaded ? charts.filter(c => c.isPublic).length : '–';
+        $('statFollowups').textContent = chartsLoaded ? charts.reduce((n, c) => n + c.followups, 0) : '–';
+        const pub = charts.filter(c => c.isPublic).length;
+        $('tileGalleryText').textContent = pub
+            ? `${pub} of your analyses ${pub === 1 ? 'is' : 'are'} public and listed in the community gallery.`
+            : 'Make an analysis public to share it with a link and list it in the community gallery.';
+
+        // Recent (overview)
+        if (chartsError) { $('recentGrid').innerHTML = ''; $('recentState').innerHTML = errorHtml; }
+        else if (!charts.length) { $('recentGrid').innerHTML = ''; $('recentState').innerHTML = emptyHtml(); }
+        else { $('recentGrid').innerHTML = charts.slice(0, 6).map(chartCard).join(''); $('recentState').innerHTML = ''; }
+        $('viewAllLink').style.display = charts.length ? '' : 'none';
+
+        renderAll();
+    }
+
+    function renderAll() {
+        if (chartsError) { $('allGrid').innerHTML = ''; $('allState').innerHTML = errorHtml; $('analysesCount').textContent = ''; return; }
+        if (!chartsLoaded) { $('allState').innerHTML = '<div class="empty"><div class="spinner" style="margin:0 auto;"></div></div>'; return; }
+        const q = $('searchInput').value.trim().toLowerCase();
+        let list = charts.filter(c =>
+            (filter === 'all' || (filter === 'starred' && c.starred) || (filter === 'public' && c.isPublic)) &&
+            (!q || c.name.toLowerCase().includes(q)));
+        const sort = $('sortSelect').value;
+        list = [...list].sort((a, b) => sort === 'old' ? a.created - b.created : sort === 'name' ? a.name.localeCompare(b.name) : b.created - a.created);
+        $('analysesCount').textContent = `${charts.length} chart${charts.length === 1 ? '' : 's'} analyzed`;
+        $('allGrid').innerHTML = list.map(chartCard).join('');
+        $('allState').innerHTML = !charts.length ? emptyHtml()
+            : !list.length ? '<div class="empty"><p>No charts match those filters.</p></div>' : '';
+    }
+
+    $('searchInput').addEventListener('input', renderAll);
+    $('sortSelect').addEventListener('change', renderAll);
+    document.querySelectorAll('.chip').forEach(ch => ch.addEventListener('click', () => {
+        filter = ch.dataset.filter;
+        document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c === ch)));
+        renderAll();
+    }));
+
+    document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-act]');
+        if (!btn) return;
+        const c = charts.find(x => x.id === btn.dataset.id);
+        if (!c) return;
+        if (btn.dataset.act === 'star') {
+            c.starred = !c.starred; renderCharts();
+            try {
+                const { error } = await sb.from('charts').update({ starred: c.starred }).eq('id', c.id);
+                if (error) throw error;
+            } catch (err) { c.starred = !c.starred; renderCharts(); toast("Couldn't update that chart."); }
+        } else if (btn.dataset.act === 'share') {
+            try { await navigator.clipboard.writeText(`${location.origin}/share/${c.id}`); toast('Share link copied'); }
+            catch { toast("Couldn't copy the link"); }
+        }
+    });
+
+    // ── Profile ──────────────────────────────────────────────
+    let pendingAvatar = null;
+    function fillProfileForm() {
+        if (!user) return;
+        const isEmail = (user.app_metadata?.provider || '') === 'email';
+        $('profileSub').textContent = isEmail ? 'Update your name, photo or password.' : 'Update your name or photo.';
+        $('profileEmail').value = user.email || '';
+        $('profileName').value = user.user_metadata?.full_name || '';
+        $('pwSection').style.display = isEmail ? '' : 'none';
+        $('providerNote').style.display = isEmail ? 'none' : '';
+        ['pwCurrent', 'pwNew', 'pwConfirm'].forEach(id => $(id).value = '');
+        $('profileErr').style.display = 'none'; $('profileOk').style.display = 'none';
+        pendingAvatar = null;
+        setAvatar($('profileAvatar'), user.user_metadata?.avatar_url || '', displayName());
+    }
+    $('avatarPickBtn').addEventListener('click', () => $('avatarInput').click());
+    $('avatarInput').addEventListener('change', async (e) => {
+        const f = e.target.files[0]; if (!f) return;
+        pendingAvatar = await resizeAvatar(f);
+        setAvatar($('profileAvatar'), pendingAvatar, displayName());
+        e.target.value = '';
+    });
+    function resizeAvatar(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+                    const s = Math.min(img.width, img.height);
+                    c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 64, 64);
+                    resolve(c.toDataURL('image/jpeg', 0.85));
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    $('profileSave').addEventListener('click', async () => {
+        const err = $('profileErr'), ok = $('profileOk'), btn = $('profileSave');
+        err.style.display = 'none'; ok.style.display = 'none';
+        const isEmail = (user.app_metadata?.provider || '') === 'email';
+        const name = $('profileName').value.trim();
+        const cur = $('pwCurrent').value, nw = $('pwNew').value, cf = $('pwConfirm').value;
+        const fail = (m) => { err.textContent = m; err.style.display = 'block'; };
+        if (isEmail && (cur || nw || cf)) {
+            if (!cur) return fail('Enter your current password.');
+            if (nw.length < 6) return fail('New password must be at least 6 characters.');
+            if (nw !== cf) return fail('New passwords do not match.');
+        }
+        btn.disabled = true; btn.textContent = 'Saving…';
+        try {
+            if (isEmail && cur && nw) {
+                const { error } = await sb.auth.signInWithPassword({ email: user.email, password: cur });
+                if (error) return fail('Current password is incorrect.');
+            }
+            const meta = {};
+            if (name && name !== (user.user_metadata?.full_name || '')) meta.full_name = name;
+            if (pendingAvatar) meta.avatar_url = pendingAvatar;
+            const payload = {};
+            if (Object.keys(meta).length) payload.data = meta;
+            if (isEmail && nw) payload.password = nw;
+            if (!Object.keys(payload).length) { ok.textContent = 'No changes to save.'; ok.style.display = 'block'; return; }
+            const { data, error } = await sb.auth.updateUser(payload);
+            if (error) throw error;
+            user = data.user; pendingAvatar = null;
+            ['pwCurrent', 'pwNew', 'pwConfirm'].forEach(id => $(id).value = '');
+            renderUser();
+            ok.textContent = 'Profile updated.'; ok.style.display = 'block';
+        } catch (e) {
+            fail(e.message || 'Could not save changes.');
+        } finally {
+            btn.disabled = false; btn.textContent = 'Save changes';
+        }
+    });
+
+    // ── API keys ─────────────────────────────────────────────
+    async function loadKeys() {
+        $('keysList').innerHTML = '<p style="color:var(--text-muted);font-size:0.88em;">Loading…</p>';
+        try {
+            const res = await fetch('/api/keys', { headers: { 'Authorization': `Bearer ${await token()}` } });
+            if (!res.ok) throw new Error();
+            apiKeys = (await res.json()).keys || [];
+        } catch {
+            apiKeys = null;
+            $('keysList').innerHTML = '<p class="error-text">Couldn\'t load your keys.</p>';
+            $('tileKeyCount').textContent = '–';
+            return;
+        }
+        renderKeys();
+    }
+    function renderKeys() {
+        const n = apiKeys.length;
+        $('tileKeyCount').textContent = n;
+        $('tileKeyText').textContent = n
+            ? `Active key${n === 1 ? '' : 's'} for calling ChartHawk from scripts and Claude Code skills.`
+            : 'No keys yet. Create one to call ChartHawk from scripts and Claude Code skills.';
+        $('keysList').innerHTML = n ? apiKeys.map(k => `
+            <div class="key-row">
+                <div style="min-width:0;">
+                    <div class="key-name">${escapeHtml(k.name)}</div>
+                    <div class="key-prefix">${escapeHtml(k.key_prefix)}</div>
+                    <div class="key-dates">Created ${new Date(k.created_at).toLocaleDateString()} · ${k.last_used_at ? 'Last used ' + new Date(k.last_used_at).toLocaleDateString() : 'Never used'}</div>
+                </div>
+                <button type="button" class="btn-danger" data-revoke="${escapeHtml(k.id)}">Revoke</button>
+            </div>`).join('')
+            : '<p style="color:var(--text-muted);font-size:0.9em;">You don\'t have any keys yet.</p>';
+    }
+    $('keysList').addEventListener('click', async (e) => {
+        const b = e.target.closest('[data-revoke]'); if (!b) return;
+        if (!confirm('Revoke this key? Any scripts using it will stop working.')) return;
+        b.disabled = true;
+        try {
+            const res = await fetch(`/api/keys/${encodeURIComponent(b.dataset.revoke)}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${await token()}` } });
+            if (!res.ok) throw new Error();
+            $('keyReveal').style.display = 'none';
+            toast('Key revoked');
+            await loadKeys();
+        } catch { b.disabled = false; toast("Couldn't revoke that key"); }
+    });
+    $('keyGenerate').addEventListener('click', async () => {
+        const btn = $('keyGenerate'), err = $('keysErr');
+        btn.disabled = true; btn.textContent = 'Generating…'; err.style.display = 'none';
+        try {
+            const res = await fetch('/api/keys', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${await token()}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: $('keyName').value.trim() || 'My API key' }),
+            });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(body.error || 'Could not create a key.');
+            $('keyValue').textContent = body.key;
+            $('keyReveal').style.display = 'block';
+            $('keyName').value = '';
+            await loadKeys();
+        } catch (e) {
+            err.textContent = e.message; err.style.display = 'block';
+        } finally {
+            btn.disabled = false; btn.textContent = 'Generate key';
+        }
+    });
+    $('keyCopy').addEventListener('click', async () => {
+        try { await navigator.clipboard.writeText($('keyValue').textContent); $('keyCopy').textContent = 'Copied'; setTimeout(() => $('keyCopy').textContent = 'Copy', 2000); }
+        catch { toast("Couldn't copy. Select the key and copy it manually."); }
+    });
+
+    // ── Feedback ─────────────────────────────────────────────
+    function openFeedback() { $('feedbackModal').classList.add('active'); $('fbOk').style.display = 'none'; $('fbErr').style.display = 'none'; setTimeout(() => $('feedbackText').focus(), 50); }
+    function closeFeedback() { $('feedbackModal').classList.remove('active'); $('feedbackText').value = ''; }
+    $('feedbackOpen').addEventListener('click', openFeedback);
+    $('feedbackOpen2').addEventListener('click', openFeedback);
+    $('fbCancel').addEventListener('click', closeFeedback);
+    $('feedbackModal').addEventListener('click', e => { if (e.target === $('feedbackModal')) closeFeedback(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('feedbackModal').classList.contains('active')) closeFeedback(); });
+    $('feedbackForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = $('fbSend'); btn.disabled = true; btn.textContent = 'Sending…';
+        try {
+            const res = await fetch('https://formspree.io/f/xkogwewa', { method: 'POST', body: new FormData($('feedbackForm')), headers: { 'Accept': 'application/json' } });
+            if (!res.ok) throw new Error();
+            $('fbOk').style.display = 'block';
+            setTimeout(closeFeedback, 1600);
+        } catch { $('fbErr').style.display = 'block'; }
+        finally { btn.disabled = false; btn.textContent = 'Send feedback'; }
+    });
+
+    window.loadCharts = loadCharts;
+</script>
+</body>
+</html>
