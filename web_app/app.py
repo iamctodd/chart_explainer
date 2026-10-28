@@ -9,6 +9,8 @@ import re
 import io
 import hashlib
 import secrets
+import html as html_lib
+import xml.etree.ElementTree as ET
 from PIL import Image
 from supabase import create_client
 import providers
@@ -317,11 +319,26 @@ def parse_improved_chart(raw_text):
     if not svg_match:
         return None, ''
     svg = svg_match.group(0)
+    svg = re.sub(r'<!--.*?-->', '', svg, flags=re.DOTALL)  # models leave coordinate math in comments; can contain invalid '--'
     svg = re.sub(r'<script\b.*?</script\s*>', '', svg, flags=re.DOTALL | re.IGNORECASE)
     svg = re.sub(r'<foreignObject\b.*?</foreignObject\s*>', '', svg, flags=re.DOTALL | re.IGNORECASE)
     svg = re.sub(r'\son[a-z]+\s*=\s*("[^"]*"|\'[^\']*\')', '', svg, flags=re.IGNORECASE)
+    # SVG is strict XML: a bare '&' (e.g. "S&P 500") makes browsers refuse to render the
+    # whole image. Escape any '&' that isn't already the start of a valid entity.
+    svg = re.sub(r'&(?!(?:[A-Za-z][A-Za-z0-9]*|#[0-9]+|#x[0-9A-Fa-f]+);)', '&amp;', svg)
+    # Named HTML entities like &nbsp; / &mdash; aren't defined in XML — swap for characters.
+    svg = re.sub(r'&(?!amp;|lt;|gt;|quot;|apos;|#)([A-Za-z][A-Za-z0-9]*);',
+                 lambda m: html_lib.unescape(m.group(0)) if html_lib.unescape(m.group(0)) != m.group(0) else '&amp;' + m.group(1) + ';',
+                 svg)
     if 'xmlns=' not in svg[:200]:
         svg = svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"', 1)
+    # Final gate: if it still isn't well-formed XML, the browser would show a blank box —
+    # better to report a failure the user can retry.
+    try:
+        ET.fromstring(svg)
+    except ET.ParseError as e:
+        print(f'Improved chart SVG not well-formed: {e}')
+        return None, ''
 
     changes_match = re.search(r'<changes>(.*?)</changes>', raw_text, flags=re.DOTALL | re.IGNORECASE)
     changes = (changes_match.group(1) if changes_match else raw_text[:svg_match.start()]).strip()

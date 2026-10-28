@@ -78,6 +78,8 @@ Respond in EXACTLY this format and nothing else:
 
 SVG rules:
 - One self-contained <svg> with a viewBox (800x500 unless another shape suits the data better). No <script>, no event handlers, no external images, fonts or links.
+- It must be valid XML: write & as &amp; and < as &lt; inside text (e.g. "S&amp;P 500"). Do not use HTML entities like &nbsp; or &mdash; — type the actual character instead.
+- No XML comments. Do any coordinate arithmetic silently and only output the final drawing elements.
 - Solid white background rect first; dark text; font-family="Helvetica, Arial, sans-serif".
 - Include a clear title, labelled axes with units, readable tick labels, and direct labels or a legend.
 - Read data values from the original chart as accurately as you can. If some values are unreadable, approximate them and add a small footnote in the SVG saying values are approximate.
