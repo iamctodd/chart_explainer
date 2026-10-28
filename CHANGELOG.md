@@ -2,6 +2,16 @@
 
 All notable changes to ChartHawk are documented here.
 
+## 2026-10-28
+
+### Added
+- **Signed-in dashboard (`/dashboard`)** — a separate home page after login, modeled on retailer account pages: greeting card with member-since date and stats, side navigation, recent analyses, a searchable/filterable list of all your charts and analyses (star, copy share link), profile editing, API key management, and an Admin dashboard link for admins.
+
+### Changed
+- Signing in from the landing page (email or Google) now goes to `/dashboard` instead of flipping the landing page into the chat view. Signed-in visitors to `/` stay on the landing page, which shows "My dashboard" in the header.
+- "Open analysis" links use `/?chart=<id>`, which opens that chart directly with no landing-page flash; the address bar tracks the chart you're viewing.
+- Replaced "audit" with "analyze"/"analysis" across the app (landing, chat, gallery, share pages, and metadata).
+
 ## 2026-07-16
 
 ### Added
