@@ -300,6 +300,27 @@
         .chat-bubble.assistant p { margin-bottom: 8px; } .chat-bubble.assistant p:last-child { margin-bottom: 0; }
         .chat-bubble.assistant ul, .chat-bubble.assistant ol { margin-left: 16px; margin-bottom: 8px; }
         .chat-bubble.assistant li { margin-bottom: 4px; }
+
+        /* ── Improved-chart (before/after) ── */
+        .improve-btn {
+            display: inline-flex; align-items: center; gap: 8px; margin-top: 18px;
+            background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(242,227,91,0.4);
+            padding: 9px 16px; border-radius: 8px; font-size: 0.88em; font-weight: 600; cursor: pointer; transition: all 0.15s;
+        }
+        .improve-btn:hover:not(:disabled) { background: var(--accent); color: var(--accent-ink); }
+        .improve-btn:disabled { opacity: 0.55; cursor: default; }
+        .improve-btn[hidden] { display: none; }
+        .chat-bubble.assistant:has(.improve-card) { max-width: 100%; width: 100%; }
+        .improve-card h3 { margin-top: 14px !important; }
+        .improve-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .improve-grid figure { margin: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .improve-grid figcaption { font-size: 0.72em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+        .improve-grid figure.after figcaption { color: var(--accent); }
+        .improve-grid img { width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border); background: #fff; display: block; }
+        .improve-grid figure.after img { border-color: rgba(242,227,91,0.5); }
+        .improve-download { display: inline-block; margin-top: 10px; font-size: 0.8em; color: var(--text-muted); text-decoration: none; border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; }
+        .improve-download:hover { color: var(--accent); border-color: var(--accent); }
+        @media (max-width: 640px) { .improve-grid { grid-template-columns: 1fr; } }
         .chat-bubble.assistant strong { color: #F7EE9E; }
         .chat-typing { align-self: flex-start; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; border-bottom-left-radius: 3px; padding: 12px 16px; }
         .typing-dots span { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--text-muted); margin: 0 2px; animation: bounce 1.2s infinite ease-in-out; }
@@ -1649,6 +1670,8 @@
                         chartData.explanation = html; chartData.analysisRaw = accumulatedText;
                         const el = document.getElementById(`analysis-${chartData.id}`);
                         if (el) { el.innerHTML = html; el.className = 'analysis-content'; }
+                        const improveBtn = document.getElementById('improve-btn');
+                        if (improveBtn && activeChartId === chartData.id) improveBtn.hidden = false;
                         await saveChartToSupabase(chartData); // swaps temp ID → UUID
                     } else if (event === 'error') {
                         showError(data.error || 'Analysis failed');
@@ -1735,6 +1758,7 @@
                 <button class="meta-action-btn" id="share-btn-${chart.id}" onclick="handleShareBtn('${chart.id}')">${chart.isPublic ? '🔗 Share' : '🌐 Make Public'}</button>
             </div>
             <div class="${analysisClass}" id="analysis-${chart.id}">${chart.explanation}</div>
+            <button class="improve-btn" id="improve-btn" onclick="improveChart(activeChartId)" ${chart.explanation ? '' : 'hidden'}>✨ Show me an improved version</button>
             <hr class="chat-divider">
             <div class="chat-label">Follow-up</div>
             <div class="chat-thread" id="thread-${chart.id}"></div>
@@ -1804,6 +1828,7 @@
         const div = document.createElement('div');
         div.className = `chat-bubble ${role}`;
         div.innerHTML = htmlContent;
+        hydrateBeforeImages(div, id);
         thread.appendChild(div);
         mainContent.scrollTop = mainContent.scrollHeight;
         return div;
@@ -1920,6 +1945,129 @@
         } finally {
             mainSendBtn.disabled = false;
             mainChatInput.focus();
+        }
+    }
+
+    // ── Improved chart (before / after) ────────────────────────
+    // The stored message HTML deliberately leaves the "Before" <img> without a src
+    // (marked data-before) so we don't duplicate the original chart's base64 into
+    // every saved message — it's filled from the chart record at render time.
+
+    const IMPROVE_REQUEST_TEXT = 'Show me an improved version of this chart';
+
+    function hydrateBeforeImages(container, chartId) {
+        const imgs = container.querySelectorAll('img[data-before]');
+        if (!imgs.length) return;
+        const chart = chartHistory.find(c => c.id === chartId) || chartHistory.find(c => c.id === activeChartId);
+        if (chart) imgs.forEach(img => { img.src = chart.image; });
+    }
+
+    function svgToDataUrl(svg) {
+        const bytes = new TextEncoder().encode(svg);
+        let bin = '';
+        bytes.forEach(b => { bin += String.fromCharCode(b); });
+        return 'data:image/svg+xml;base64,' + btoa(bin);
+    }
+
+    function buildImproveCardHtml(svg, changesHtml) {
+        const url = svgToDataUrl(svg);
+        return `<div class="improve-card">
+            <div class="improve-grid">
+                <figure class="before"><figcaption>Before</figcaption><img data-before alt="Original chart"></figure>
+                <figure class="after"><figcaption>After</figcaption><img src="${url}" alt="Improved chart"></figure>
+            </div>
+            ${changesHtml ? `<h3>What changed</h3>${changesHtml}` : ''}
+            <a class="improve-download" href="${url}" download="improved-chart.svg">⬇ Download improved chart (SVG)</a>
+        </div>`;
+    }
+
+    async function improveChart(id) {
+        if (!id) return;
+        const chart = chartHistory.find(c => c.id === id);
+        if (!chart || !chart.analysisRaw) return;
+        const btn = document.getElementById('improve-btn');
+        chatErrorEl.style.display = 'none';
+
+        const token = await getAuthToken();
+        if (!token) {
+            chatErrorEl.textContent = 'Sign in to generate an improved version of your chart.';
+            chatErrorEl.style.display = 'block';
+            openAuthModal();
+            return;
+        }
+
+        if (window.posthog) posthog.capture('improve_chart_requested', { chart_id: String(id), model: selectedModel });
+        const improveModel = selectedModel;
+        if (btn) { btn.disabled = true; btn.textContent = '✨ Redesigning…'; }
+        mainSendBtn.disabled = true;
+        appendMessageEl(id, 'user', escapeHtml(IMPROVE_REQUEST_TEXT));
+
+        const thread = document.getElementById(`thread-${id}`);
+        const typingEl = document.createElement('div');
+        typingEl.className = 'chat-typing';
+        typingEl.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span> <span style="font-size:0.85em;color:var(--text-muted);margin-left:6px;">Redesigning your chart…</span>';
+        thread.appendChild(typingEl);
+        mainContent.scrollTop = mainContent.scrollHeight;
+        const statusEl = typingEl.lastElementChild;
+
+        let succeeded = false;
+        try {
+            const response = await fetch('/improve_stream', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    provider:             improveModel,
+                    chart_id:             typeof id === 'string' ? id : null,
+                    image:                chart.image,
+                    analysis_raw:         chart.analysisRaw || '',
+                    conversation_history: chart.conversation.map(m => ({ role: m.role, content: m.content })),
+                }),
+            });
+            if (response.status === 401) { chatErrorEl.textContent = 'Session expired. Please sign in again.'; chatErrorEl.style.display = 'block'; await signOut(); return; }
+            if (!response.ok) { const err = await response.json().catch(() => ({ error: 'Request failed' })); throw new Error(err.error || 'Failed to generate improved chart.'); }
+
+            for await (const { event, data } of readSSE(response)) {
+                if (event === 'progress') {
+                    if (statusEl) statusEl.textContent = data.chars < 600 ? 'Planning the redesign…' : 'Drawing the improved chart…';
+                } else if (event === 'result') {
+                    const html = buildImproveCardHtml(data.svg, data.changes_html);
+                    if (PROVIDER_LABELS[improveModel]) {
+                        const badge = document.createElement('div');
+                        badge.className = 'model-badge';
+                        badge.style.alignSelf = 'flex-start';
+                        badge.textContent = PROVIDER_LABELS[improveModel];
+                        typingEl.insertAdjacentElement('beforebegin', badge);
+                    }
+                    const bubble = document.createElement('div');
+                    bubble.className = 'chat-bubble assistant';
+                    bubble.innerHTML = html;
+                    hydrateBeforeImages(bubble, id);
+                    typingEl.replaceWith(bubble);
+                    succeeded = true;
+
+                    // Keep the model's follow-up context light: notes only, never the SVG.
+                    const contentForHistory = `[Generated an improved, redesigned version of the chart.]\n\nWhat changed:\n${data.changes_raw || ''}`;
+                    chart.conversation.push({ role: 'user', content: IMPROVE_REQUEST_TEXT, html: escapeHtml(IMPROVE_REQUEST_TEXT) });
+                    chart.conversation.push({ role: 'assistant', content: contentForHistory, html, model: improveModel });
+                    await saveMessageToSupabase(chart.id, 'user', IMPROVE_REQUEST_TEXT, escapeHtml(IMPROVE_REQUEST_TEXT));
+                    await saveMessageToSupabase(chart.id, 'assistant', contentForHistory, html);
+                    bubble.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else if (event === 'error') {
+                    throw new Error(data.error || 'Failed to generate improved chart.');
+                }
+            }
+            if (!succeeded) throw new Error('The connection closed before the chart was finished. Please try again.');
+        } catch (err) {
+            chatErrorEl.textContent = err.message.startsWith('Failed to fetch') ? 'Network error: ' + err.message : err.message;
+            chatErrorEl.style.display = 'block';
+            // Drop the orphaned "Show me an improved version" bubble so the thread matches what's saved.
+            const lastUser = thread ? [...thread.querySelectorAll('.chat-bubble.user')].pop() : null;
+            if (lastUser) lastUser.remove();
+        } finally {
+            if (typingEl.isConnected) typingEl.remove();
+            mainSendBtn.disabled = false;
+            const b = document.getElementById('improve-btn');
+            if (b) { b.disabled = false; b.textContent = succeeded ? '✨ Generate another version' : '✨ Show me an improved version'; }
         }
     }
 

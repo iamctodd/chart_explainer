@@ -102,6 +102,17 @@
         .msg-bubble.assistant { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-primary); }
         .msg-bubble p { margin: 0 0 6px; }
         .msg-bubble p:last-child { margin-bottom: 0; }
+        .msg-bubble:has(.improve-card) { max-width: 100%; }
+        .improve-card h3 { color: var(--accent); font-size: 1em; margin: 14px 0 6px; }
+        .improve-card ul { margin: 0 0 6px 18px; }
+        .improve-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .improve-grid figure { margin: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .improve-grid figcaption { font-size: 0.75em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+        .improve-grid figure.after figcaption { color: var(--accent); }
+        .improve-grid img { width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border); background: #fff; display: block; }
+        .improve-download { display: inline-block; margin-top: 10px; font-size: 0.85em; color: var(--text-muted); text-decoration: none; border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; }
+        .improve-download:hover { color: var(--accent); border-color: var(--accent); }
+        @media (max-width: 640px) { .improve-grid { grid-template-columns: 1fr; } }
 
         /* Comments */
         .comments-section { margin-top: 40px; }
@@ -323,6 +334,8 @@
         `;
 
         pageBody.innerHTML = html;
+        // Before/after cards store the "Before" image without a src — fill it from the chart.
+        pageBody.querySelectorAll('img[data-before]').forEach(img => { img.src = chart.image_data; });
         enhanceAnalysis();
 
         document.getElementById('copyLinkBtn').addEventListener('click', () => {

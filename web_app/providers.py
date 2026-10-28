@@ -62,6 +62,27 @@ ANALYSIS_PROMPT = """Analyze this chart/graph and provide:
 
 Be clear and helpful, not condescending. If the axes are misleading or there are visual tricks, point them out."""
 
+# Sent as the final user turn (after the original analysis + any follow-ups) when the
+# user asks to see a redesigned version. Every provider is text-out, so the "image" is
+# an SVG the model writes by hand — portable across Anthropic, OpenAI, Gemini and xAI.
+IMPROVE_PROMPT = """Redesign the original chart so it fixes the problems identified in your analysis ("What could be improved", misleading axes, clutter, etc.). Keep the same underlying data and message — you are improving the presentation, not changing the story.
+
+Respond in EXACTLY this format and nothing else:
+
+<changes>
+- 3 to 5 short bullets, each naming one concrete change you made and why it helps
+</changes>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+...the complete redesigned chart...
+</svg>
+
+SVG rules:
+- One self-contained <svg> with a viewBox (800x500 unless another shape suits the data better). No <script>, no event handlers, no external images, fonts or links.
+- Solid white background rect first; dark text; font-family="Helvetica, Arial, sans-serif".
+- Include a clear title, labelled axes with units, readable tick labels, and direct labels or a legend.
+- Read data values from the original chart as accurately as you can. If some values are unreadable, approximate them and add a small footnote in the SVG saying values are approximate.
+- Draw every mark explicitly (rect, line, path, circle, text) — compute coordinates yourself."""
+
 
 def available_providers():
     """Providers whose API key is actually configured — the only ones the UI should offer."""

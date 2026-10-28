@@ -157,6 +157,7 @@
             <th>Name</th>
             <th>Analyses</th>
             <th>Follow-ups</th>
+            <th title="Improved-version redraws">Redesigns</th>
             <th>Tokens (in/out)</th>
             <th>Cost</th>
             <th>Last Used</th>
@@ -165,7 +166,7 @@
           </tr>
         </thead>
         <tbody id="usersTableBody">
-          <tr class="loading"><td colspan="9">Loading…</td></tr>
+          <tr class="loading"><td colspan="10">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -234,14 +235,14 @@
 
   async function loadUsers() {
     const tbody = document.getElementById('usersTableBody');
-    tbody.innerHTML = '<tr class="loading"><td colspan="9">Loading…</td></tr>';
+    tbody.innerHTML = '<tr class="loading"><td colspan="10">Loading…</td></tr>';
     try {
       const res  = await fetch('/admin/api/users', { headers: { Authorization: await authHeader() } });
       const data = await res.json();
       if (data.error) { showError(data.error); return; }
 
       if (!data.users.length) {
-        tbody.innerHTML = '<tr><td colspan="9" style="color:var(--muted)">No users yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="color:var(--muted)">No users yet.</td></tr>';
         return;
       }
 
@@ -251,6 +252,7 @@
           <td>${u.name || '—'}</td>
           <td>${u.analyses}</td>
           <td>${u.followups}</td>
+          <td>${u.improves ?? 0}</td>
           <td>${fmtNum(u.input_tokens)} / ${fmtNum(u.output_tokens)}</td>
           <td class="cost-cell">${fmt$(u.cost_usd)}</td>
           <td>${fmtDate(u.last_used)}</td>
@@ -262,7 +264,7 @@
           </td>
         </tr>
       `).join('');
-    } catch(e) { showError('Failed to load users: ' + e.message); tbody.innerHTML = '<tr><td colspan="9" style="color:var(--danger)">Error loading users.</td></tr>'; }
+    } catch(e) { showError('Failed to load users: ' + e.message); tbody.innerHTML = '<tr><td colspan="10" style="color:var(--danger)">Error loading users.</td></tr>'; }
   }
 
   // ── Gallery summaries backfill ───────────────────────────────────────────

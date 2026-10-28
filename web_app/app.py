@@ -306,6 +306,96 @@ def followup_stream():
     )
 
 
+def parse_improved_chart(raw_text):
+    """Split the model's improve-chart reply into (svg, changes_markdown).
+
+    The SVG is only ever rendered via <img src="data:image/svg+xml..."> (where scripts
+    and external loads are inert), but strip active content anyway as defence in depth.
+    Returns (None, '') when no usable SVG came back.
+    """
+    svg_match = re.search(r'<svg\b.*</svg>', raw_text, flags=re.DOTALL | re.IGNORECASE)
+    if not svg_match:
+        return None, ''
+    svg = svg_match.group(0)
+    svg = re.sub(r'<script\b.*?</script\s*>', '', svg, flags=re.DOTALL | re.IGNORECASE)
+    svg = re.sub(r'<foreignObject\b.*?</foreignObject\s*>', '', svg, flags=re.DOTALL | re.IGNORECASE)
+    svg = re.sub(r'\son[a-z]+\s*=\s*("[^"]*"|\'[^\']*\')', '', svg, flags=re.IGNORECASE)
+    if 'xmlns=' not in svg[:200]:
+        svg = svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"', 1)
+
+    changes_match = re.search(r'<changes>(.*?)</changes>', raw_text, flags=re.DOTALL | re.IGNORECASE)
+    changes = (changes_match.group(1) if changes_match else raw_text[:svg_match.start()]).strip()
+    return svg, changes
+
+
+@app.route('/improve_stream', methods=['POST'])
+@require_auth
+def improve_stream():
+    """Ask the model to redraw the chart with its own suggested fixes applied.
+
+    Streams 'progress' events while the model writes (keeps the connection alive and
+    lets the UI show activity), then one 'result' event with the parsed SVG + notes.
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Invalid request'}), 400
+    try:
+        provider = providers.resolve_provider(data.get('provider'))
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    image_data_url       = data.get('image', '')
+    conversation_history = data.get('conversation_history', [])
+    analysis_raw         = data.get('analysis_raw', '')
+    if not image_data_url: return jsonify({'error': 'No image provided'}), 400
+    if ',' in image_data_url:
+        header, image_base64 = image_data_url.split(',', 1)
+        media_type = header.split(':')[1].split(';')[0] if ':' in header else 'image/png'
+    else:
+        image_base64, media_type = image_data_url, 'image/png'
+
+    turns = providers.build_turns(image_base64, media_type, analysis_raw, conversation_history, providers.IMPROVE_PROMPT)
+
+    def generate():
+        try:
+            accumulated = ''
+            for kind, payload in providers.stream_completion(provider, turns, max_tokens=8000):
+                if kind == 'text':
+                    accumulated += payload
+                    yield sse_event('progress', {'chars': len(accumulated)})
+                elif kind == 'usage':
+                    try:
+                        user_id = getattr(request, 'user_id', None)
+                        if user_id and admin_client:
+                            admin_client.table('usage').insert({
+                                'user_id': user_id,
+                                'chart_id': data.get('chart_id'),
+                                'event': 'improve',
+                                'input_tokens': payload['input_tokens'],
+                                'output_tokens': payload['output_tokens'],
+                                'cost_usd': providers.calculate_cost(provider, payload['input_tokens'], payload['output_tokens'])
+                            }).execute()
+                    except Exception as ue:
+                        print(f'Usage tracking error: {ue}')
+            svg, changes = parse_improved_chart(accumulated)
+            if not svg:
+                yield sse_event('error', {'error': "The model didn't return a usable chart. Try again or switch models."})
+                return
+            yield sse_event('result', {
+                'svg': svg,
+                'changes_raw': changes,
+                'changes_html': markdown.markdown(changes, extensions=['extra', 'nl2br']),
+            })
+            yield sse_event('done', {})
+        except Exception as e:
+            yield sse_event('error', {'error': str(e)})
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'},
+    )
+
+
 # ── Admin routes ────────────────────────────────────────────────────────────
 
 @app.route('/admin')
@@ -357,11 +447,13 @@ def admin_users():
         for row in rows:
             uid = row['user_id']
             if uid not in stats:
-                stats[uid] = {'user_id': uid, 'analyses': 0, 'followups': 0,
+                stats[uid] = {'user_id': uid, 'analyses': 0, 'followups': 0, 'improves': 0,
                               'input_tokens': 0, 'output_tokens': 0, 'cost_usd': 0.0, 'last_used': None}
             s = stats[uid]
             if row['event'] == 'analyze':
                 s['analyses'] += 1
+            elif row['event'] == 'improve':
+                s['improves'] += 1
             else:
                 s['followups'] += 1
             s['input_tokens']  += row['input_tokens']
@@ -394,7 +486,7 @@ def admin_users():
                     'name': (u.user_metadata or {}).get('full_name', ''),
                     'is_admin': (u.user_metadata or {}).get('is_admin', False),
                     'created_at_user': str(u.created_at),
-                    'analyses': 0, 'followups': 0,
+                    'analyses': 0, 'followups': 0, 'improves': 0,
                     'input_tokens': 0, 'output_tokens': 0,
                     'cost_usd': 0.0, 'last_used': None
                 })
