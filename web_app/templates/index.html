@@ -310,6 +310,15 @@
         .improve-btn:hover:not(:disabled) { background: var(--accent); color: var(--accent-ink); }
         .improve-btn:disabled { opacity: 0.55; cursor: default; }
         .improve-btn[hidden] { display: none; }
+        .chat-tools-row { justify-content: space-between; align-items: center; gap: 8px; }
+        .chat-tools-row .model-select { margin-left: auto; }
+        .improve-bar-btn {
+            background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(242,227,91,0.4);
+            padding: 5px 12px; border-radius: 999px; font-size: 0.8em; font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+        }
+        .improve-bar-btn:hover:not(:disabled) { background: var(--accent); color: var(--accent-ink); }
+        .improve-bar-btn:disabled { opacity: 0.55; cursor: default; }
+        .improve-bar-btn[hidden] { display: none; }
         .chat-bubble.assistant:has(.improve-card) { max-width: 100%; width: 100%; }
         .improve-card h3 { margin-top: 14px !important; }
         .improve-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -603,7 +612,8 @@
         </div>
         <div class="main-input-bar">
             <div class="main-input-inner">
-                <div class="model-select-row">
+                <div class="model-select-row chat-tools-row">
+                    <button class="improve-bar-btn" id="improveBarBtn" onclick="improveChart(activeChartId)" title="Redraw this chart with the suggested fixes applied" hidden>✨ Improve chart</button>
                     <select class="model-select" id="chatModelSelect" title="Model used for the next chart or follow-up"></select>
                 </div>
                 <div class="chat-input-area">
@@ -1670,8 +1680,7 @@
                         chartData.explanation = html; chartData.analysisRaw = accumulatedText;
                         const el = document.getElementById(`analysis-${chartData.id}`);
                         if (el) { el.innerHTML = html; el.className = 'analysis-content'; }
-                        const improveBtn = document.getElementById('improve-btn');
-                        if (improveBtn && activeChartId === chartData.id) improveBtn.hidden = false;
+                        syncImproveButtons();
                         await saveChartToSupabase(chartData); // swaps temp ID → UUID
                     } else if (event === 'error') {
                         showError(data.error || 'Analysis failed');
@@ -1764,6 +1773,7 @@
             <div class="chat-thread" id="thread-${chart.id}"></div>
         `;
         chart.conversation.forEach(msg => appendMessageEl(id, msg.role, msg.html || escapeHtml(msg.content), msg.model));
+        syncImproveButtons();
         mainContent.scrollTop = mainContent.scrollHeight;
     }
 
@@ -1954,6 +1964,26 @@
     // every saved message — it's filled from the chart record at render time.
 
     const IMPROVE_REQUEST_TEXT = 'Show me an improved version of this chart';
+    let improveRunning = false;
+
+    // Keeps the under-analysis button and the always-visible bar button in sync.
+    function syncImproveButtons() {
+        const chart = chartHistory.find(c => c.id === activeChartId);
+        const ready = !!(chart && chart.analysisRaw);
+        const hasRedesign = !!(chart && chart.conversation.some(m => m.content === IMPROVE_REQUEST_TEXT));
+        const inline = document.getElementById('improve-btn');
+        const bar    = document.getElementById('improveBarBtn');
+        if (inline) {
+            inline.hidden = !ready;
+            inline.disabled = improveRunning;
+            inline.textContent = improveRunning ? '✨ Redesigning…' : (hasRedesign ? '✨ Generate another version' : '✨ Show me an improved version');
+        }
+        if (bar) {
+            bar.hidden = !ready;
+            bar.disabled = improveRunning;
+            bar.textContent = improveRunning ? '✨ Redesigning…' : (hasRedesign ? '✨ Improve again' : '✨ Improve chart');
+        }
+    }
 
     function hydrateBeforeImages(container, chartId) {
         const imgs = container.querySelectorAll('img[data-before]');
@@ -1985,7 +2015,7 @@
         if (!id) return;
         const chart = chartHistory.find(c => c.id === id);
         if (!chart || !chart.analysisRaw) return;
-        const btn = document.getElementById('improve-btn');
+        if (improveRunning) return;
         chatErrorEl.style.display = 'none';
 
         const token = await getAuthToken();
@@ -1998,7 +2028,7 @@
 
         if (window.posthog) posthog.capture('improve_chart_requested', { chart_id: String(id), model: selectedModel });
         const improveModel = selectedModel;
-        if (btn) { btn.disabled = true; btn.textContent = '✨ Redesigning…'; }
+        improveRunning = true; syncImproveButtons();
         mainSendBtn.disabled = true;
         appendMessageEl(id, 'user', escapeHtml(IMPROVE_REQUEST_TEXT));
 
@@ -2066,8 +2096,7 @@
         } finally {
             if (typingEl.isConnected) typingEl.remove();
             mainSendBtn.disabled = false;
-            const b = document.getElementById('improve-btn');
-            if (b) { b.disabled = false; b.textContent = succeeded ? '✨ Generate another version' : '✨ Show me an improved version'; }
+            improveRunning = false; syncImproveButtons();
         }
     }
 
