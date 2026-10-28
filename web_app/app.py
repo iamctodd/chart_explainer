@@ -341,7 +341,15 @@ def parse_improved_chart(raw_text):
         return None, ''
 
     changes_match = re.search(r'<changes>(.*?)</changes>', raw_text, flags=re.DOTALL | re.IGNORECASE)
-    changes = (changes_match.group(1) if changes_match else raw_text[:svg_match.start()]).strip()
+    sugg_match    = re.search(r'<suggestions>(.*?)</suggestions>', raw_text, flags=re.DOTALL | re.IGNORECASE)
+    if changes_match:
+        changes = changes_match.group(1).strip()
+    else:
+        changes = re.sub(r'<suggestions>.*?</suggestions>', '', raw_text[:svg_match.start()], flags=re.DOTALL | re.IGNORECASE).strip()
+    suggestions = sugg_match.group(1).strip() if sugg_match else ''
+    # Only keep suggestions that actually contain bullets (the model may say "none").
+    if re.search(r'^\s*[-*]\s+\S', suggestions, flags=re.MULTILINE):
+        changes += '\n\n**Ideas beyond this chart (not drawn, would need new data):**\n\n' + suggestions
     return svg, changes
 
 

@@ -65,13 +65,21 @@ Be clear and helpful, not condescending. If the axes are misleading or there are
 # Sent as the final user turn (after the original analysis + any follow-ups) when the
 # user asks to see a redesigned version. Every provider is text-out, so the "image" is
 # an SVG the model writes by hand — portable across Anthropic, OpenAI, Gemini and xAI.
-IMPROVE_PROMPT = """Redesign the original chart so it fixes the problems identified in your analysis ("What could be improved", misleading axes, clutter, etc.). Keep the same underlying data and message — you are improving the presentation, not changing the story.
+IMPROVE_PROMPT = """Redesign the original chart so it fixes the problems identified in your analysis ("What could be improved", misleading axes, clutter, etc.). You are improving the presentation, not changing the story.
+
+Data fidelity rules (these override any design idea):
+- Plot exactly the data shown in the original: the same series, categories, tasks, time periods and data points. Do not add, invent, remove, merge or rename any of them.
+- Do not drop information the original conveys (e.g. dependencies, groupings, annotations, targets). If you simplify how it is shown, it must still be shown in another way.
+- Ideas that would require new or different data (an extra task, a missing year, a comparison series) go in <suggestions>, never into the drawing.
 
 Respond in EXACTLY this format and nothing else:
 
 <changes>
-- 3 to 5 short bullets, each naming one concrete change you made and why it helps
+- 3 to 5 short bullets, each naming one concrete presentation change you made and why it helps
 </changes>
+<suggestions>
+- 0 to 2 optional bullets for content changes the author could consider (data you did not add). Leave empty if none.
+</suggestions>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
 ...the complete redesigned chart...
 </svg>
