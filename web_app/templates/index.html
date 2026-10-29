@@ -700,7 +700,7 @@
         <span class="footer-sep">·</span>
         <a href="/privacy" id="footerPrivacyLink">Privacy Policy</a>
         <span class="footer-sep">·</span>
-        <a href="#" id="footerTosLink">Terms of Service</a>
+        <a href="/terms" id="footerTosLink">Terms of Service</a>
         <nav class="footer-nav">
             <a href="#" id="footerPricingLink">Pricing</a>
             <a href="#" id="footerApiDocsLink">API Docs</a>
@@ -826,19 +826,10 @@
 <!-- ── TERMS OF SERVICE MODAL ─────────────────────────────────────────────── -->
 <div class="modal-overlay" id="tosModal">
     <div class="modal" style="max-width:540px;">
-        <h2>Welcome to Charthawk</h2>
+        <h2>Welcome to ChartHawk</h2>
         <p>Please read and accept these terms before continuing.</p>
         <div class="tos-scroll">
-            <strong>
-            Charthawk lets you upload any chart image and get an AI-powered analysis — detecting misleading design choices, flagging truncated axes, cherry-picked date ranges, and distorted scales, and telling you what the data actually shows.<br><br>
-            <strong>What happens to your uploaded images</strong><br>
-            Images you upload are sent to <a href="https://www.anthropic.com" target="_blank" rel="noopener">Anthropic's Claude API</a> for analysis. They are also stored in your Charthawk account so you can revisit previous analyses. By using Charthawk you agree to <a href="https://www.anthropic.com/legal/usage-policy" target="_blank" rel="noopener">Anthropic's usage policies</a>.<br><br>
-            <strong>Data storage</strong><br>
-            Your charts and conversation history are stored in a database linked to your Google account. Only you can access your data. We use <a href="https://supabase.com/privacy" target="_blank" rel="noopener">Supabase</a> for data storage.<br><br>
-            <strong>Deleting your data</strong><br>
-            You can delete individual charts at any time using the Delete option in the sidebar. To delete your account and all data, use the feedback button and request account deletion. We will remove your data within 30 days.<br><br>
-            <strong>No warranties</strong><br>
-            Charthawk is provided as-is. AI analyses may contain errors. Always apply your own judgment. Charthawk is a tool to support critical thinking, not replace it.
+            {% include "partials/terms_of_service.html" %}
         </div>
         <label class="tos-check-row">
             <input type="checkbox" id="tosCheckbox">
@@ -962,7 +953,7 @@
     });
 
     // ── Constants ──────────────────────────────────────────────
-    const TOS_VERSION = 'v1';
+    const TOS_VERSION = 'v1.1';
     const MAX_HISTORY = 20;
     const AVAILABLE_PROVIDERS = {{ providers | tojson }};
     const DEFAULT_PROVIDER = {{ default_provider | tojson }};
@@ -2631,10 +2622,6 @@
     document.getElementById('privacyModal')?.addEventListener('click', (e) => {
         if (e.target === document.getElementById('privacyModal'))
             document.getElementById('privacyModal').classList.remove('active');
-    });
-    document.getElementById('footerTosLink')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        document.getElementById('tosModal').classList.add('active');
     });
 
     // Footer nav modals
