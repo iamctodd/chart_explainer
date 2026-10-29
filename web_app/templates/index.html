@@ -510,6 +510,101 @@
             .landing-brand span { display: none; }
             .landing-auth-status { right: 16px; }
         }
+
+        /* ── Composer (landing) ── */
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+        .composer { width: 100%; max-width: 680px; background: #19324F; border: 1.5px solid #4A6A94; border-radius: 22px; padding: 14px 12px 10px 18px; margin-bottom: 12px; position: relative; transition: border-color 0.15s, box-shadow 0.15s; text-align: left; }
+        .composer:focus-within, .composer.dragover { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(242,227,91,0.14); }
+        .composer-attachments { display: flex; flex-wrap: wrap; gap: 10px; padding: 4px 0 12px; }
+        .composer-attachments[hidden] { display: none; }
+        .attach-chip { position: relative; display: flex; align-items: center; gap: 10px; height: 64px; padding: 0 14px 0 6px; border-radius: 12px; border: 1px solid #4A6A94; background: var(--bg-body); max-width: 100%; }
+        .attach-chip img { width: 52px; height: 52px; object-fit: cover; border-radius: 8px; background: #fff; flex-shrink: 0; }
+        .attach-chip .attach-meta { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+        .attach-chip .attach-name { font-size: 0.85em; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+        .attach-chip .attach-sub { font-size: 0.75em; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+        .attach-chip .attach-spin { width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .attach-remove { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; border: 1px solid #4A6A94; background: var(--bg-surface); color: var(--text-primary); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+        .attach-remove:hover { border-color: var(--accent); color: var(--accent); }
+        .composer-input { width: 100%; background: transparent; border: none; outline: none; resize: none; color: var(--text-primary); font-family: inherit; font-size: 1em; line-height: 1.5; padding: 2px 0 12px; max-height: 160px; overflow-y: auto; }
+        .composer-input::placeholder { color: #A9B7CA; }
+        .composer-bar { display: flex; align-items: center; gap: 8px; }
+        .composer-bar .spacer { flex: 1; }
+        .icon-btn { width: 38px; height: 38px; border-radius: 50%; border: 1px solid #4A6A94; background: transparent; color: var(--text-primary); display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; flex-shrink: 0; transition: border-color 0.15s, background 0.15s, color 0.15s; }
+        .icon-btn:hover, .icon-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+        .composer-send { width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--accent); color: var(--accent-ink); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: background 0.15s, opacity 0.15s; }
+        .composer-send:hover { background: var(--accent-hover); }
+        .composer-send.idle { background: #2C4A72; color: #A9B7CA; }
+        .composer-link-row { display: flex; gap: 8px; padding: 0 0 12px; }
+        .composer-link-row[hidden] { display: none; }
+        .composer-link-row input { flex: 1; min-width: 0; background: var(--bg-body); border: 1px solid #4A6A94; border-radius: 10px; color: var(--text-primary); padding: 9px 12px; font-family: inherit; font-size: 0.9em; outline: none; }
+        .composer-link-row input:focus { border-color: var(--accent); }
+        .composer-link-row button { border-radius: 10px; padding: 0 14px; font-family: inherit; font-size: 0.85em; font-weight: 600; cursor: pointer; border: 1px solid #4A6A94; background: transparent; color: var(--text-primary); }
+        .composer-link-row button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+        .composer-hint { font-size: 0.8em; color: #A9B7CA; text-align: center; margin: 2px 0 10px; }
+        .composer-hint kbd { font-family: var(--font-ui); font-size: 0.95em; border: 1px solid #4A6A94; border-radius: 4px; padding: 0 5px; }
+        .landing-error { margin-top: 4px; margin-bottom: 8px; }
+
+        /* Shared pop-up menu (+ menu, model picker) */
+        .menu-anchor { position: relative; }
+        .pop-menu { position: absolute; left: 0; top: calc(100% + 8px); z-index: 60; min-width: 260px; background: var(--bg-surface); border: 1px solid var(--border); border-radius: 14px; padding: 6px; box-shadow: 0 14px 40px rgba(0,0,0,0.45); text-align: left; }
+        .pop-menu[hidden] { display: none; }
+        .pop-menu.align-right { left: auto; right: 0; }
+        .pop-menu.open-up { top: auto; bottom: calc(100% + 8px); }
+        .pop-item { width: 100%; display: flex; align-items: center; gap: 12px; padding: 9px 10px; border: 0; background: transparent; border-radius: 9px; font-family: inherit; font-size: 0.88em; color: var(--text-primary); text-align: left; cursor: pointer; }
+        .pop-item:hover, .pop-item:focus-visible { background: var(--bg-card); outline: none; }
+        .pop-item svg { flex-shrink: 0; color: var(--accent); }
+        .pop-item .grow { flex: 1; min-width: 0; }
+        .pop-item .kbd { font-size: 0.8em; color: var(--text-muted); }
+        .pop-item.disabled { color: var(--text-muted); cursor: default; }
+        .pop-item.disabled:hover { background: transparent; }
+        .pop-item.disabled svg { color: var(--text-muted); }
+        .pop-sep { height: 1px; background: var(--border); margin: 6px 8px; }
+        .pill-tag { font-size: 0.72em; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border); white-space: nowrap; }
+        .pill-tag.new { background: var(--accent-dim); color: var(--accent); border-color: rgba(242,227,91,0.35); }
+        .pill-tag.lock { display: inline-flex; align-items: center; gap: 4px; background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+        .pop-item .pill-tag.lock svg { color: var(--accent-ink); }
+
+        /* Model picker */
+        .model-picker-btn { height: 38px; padding: 0 12px 0 6px; border-radius: 999px; border: 1px solid #4A6A94; background: transparent; color: var(--text-primary); display: flex; align-items: center; gap: 8px; font-family: inherit; font-size: 0.85em; cursor: pointer; max-width: 240px; transition: border-color 0.15s; }
+        .model-picker-btn:hover, .model-picker-btn[aria-expanded="true"] { border-color: var(--accent); }
+        .model-picker-btn .mp-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .model-picker-btn svg { flex-shrink: 0; color: var(--text-muted); }
+        .chat-tools-row .model-picker-btn { height: 32px; font-size: 0.8em; border-color: var(--border); }
+        .mono-tile { width: 24px; height: 24px; border-radius: 7px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+        .model-menu { width: 340px; max-width: calc(100vw - 32px); padding: 0; overflow: hidden; }
+        .model-menu-head { padding: 10px 12px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+        .model-menu-head[hidden] { display: none; }
+        .model-search { background: var(--bg-input); border: 1px solid var(--border); border-radius: 9px; color: var(--text-primary); padding: 8px 10px; font-family: inherit; font-size: 0.85em; outline: none; }
+        .model-search:focus { border-color: var(--accent); }
+        .model-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .model-chips button { height: 26px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-family: inherit; font-size: 0.75em; cursor: pointer; }
+        .model-chips button.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+        .model-list { max-height: min(380px, 55vh); overflow-y: auto; padding: 6px; }
+        .model-group-label { padding: 10px 10px 4px; font-size: 0.72em; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+        .model-group-label:first-child { padding-top: 4px; }
+        .model-row[aria-checked="true"] { background: var(--accent-dim); }
+        .model-row .check { color: var(--accent); }
+        .model-menu-foot { padding: 9px 14px; border-top: 1px solid var(--border); font-size: 0.75em; color: var(--text-muted); line-height: 1.45; background: var(--bg-body); }
+        .model-empty { padding: 14px; font-size: 0.85em; color: var(--text-muted); }
+
+        /* Page-wide drop overlay */
+        .drop-overlay { position: fixed; inset: 0; z-index: 3000; background: rgba(15,30,51,0.88); padding: 24px; display: none; }
+        .drop-overlay.visible { display: flex; }
+        .drop-overlay-inner { flex: 1; border: 2px dashed var(--accent); border-radius: 26px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: var(--text-primary); pointer-events: none; text-align: center; padding: 16px; }
+        .drop-overlay-inner .drop-icon { width: 88px; height: 88px; border-radius: 50%; background: var(--navy); display: flex; align-items: center; justify-content: center; }
+        .drop-overlay-inner strong { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.6em, 4vw, 2.2em); }
+        .drop-overlay-inner span { color: #DCE3EC; font-size: 0.95em; }
+        @media (max-width: 640px) {
+            .composer { padding: 12px 10px 10px 14px; border-radius: 18px; }
+            .composer-input { min-height: 3.6em; }
+            /* On phones, menus span the composer's full width instead of hanging off their button. */
+            .composer .menu-anchor, .chat-tools-row .menu-anchor { position: static; }
+            .main-input-inner { position: relative; }
+            .composer .pop-menu, .main-input-inner .pop-menu { left: 0; right: 0; width: auto; min-width: 0; max-width: none; }
+            .main-input-inner .pop-menu.open-up { bottom: calc(100% + 4px); }
+            .model-picker-btn { max-width: 170px; }
+            .attach-chip .attach-name, .attach-chip .attach-sub { max-width: 170px; }
+        }
     </style>
 </head>
 <body>
@@ -535,17 +630,55 @@
     <p class="landing-eyebrow">Free during beta</p>
     <h1 class="landing-headline">What chart do you<br>need to <em>analyze?</em></h1>
     <p class="landing-sub">ChartHawk spots truncated axes, cherry-picked ranges and misleading chart types, then explains what it found in plain English.</p>
-    <div class="model-select-row">
-        <select class="model-select" id="landingModelSelect" title="Model used for this analysis"></select>
-    </div>
-    <div class="landing-upload-box" id="uploadArea">
-        <span class="landing-upload-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
-        <span class="upload-placeholder">Drag a chart or <span>click to upload</span> — PNG, JPG, GIF</span>
-        <button class="landing-send-btn" tabindex="-1" aria-label="Analyze"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg></button>
-    </div>
+    <form class="composer" id="composer" autocomplete="off">
+        <div class="composer-attachments" id="composerAttachments" hidden></div>
+        <div class="composer-link-row" id="composerLinkRow" hidden>
+            <label class="sr-only" for="composerLinkInput">Link to a chart image or page</label>
+            <input type="url" id="composerLinkInput" inputmode="url" placeholder="https://example.com/chart.png">
+            <button type="button" class="primary" id="composerLinkAdd">Add</button>
+            <button type="button" id="composerLinkCancel">Cancel</button>
+        </div>
+        <label class="sr-only" for="composerInput">Ask about a chart</label>
+        <textarea class="composer-input" id="composerInput" rows="1" placeholder="Drop, paste, or link a chart. Add a question if you like…"></textarea>
+        <div class="composer-bar">
+            <div class="menu-anchor">
+                <button type="button" class="icon-btn" id="composerPlusBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="composerAddMenu" aria-label="Add a chart">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+                <div class="pop-menu" id="composerAddMenu" role="menu" hidden>
+                    <button type="button" class="pop-item" role="menuitem" data-add="upload">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>
+                        <span class="grow">Upload from computer</span>
+                    </button>
+                    <button type="button" class="pop-item" role="menuitem" data-add="paste">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M8 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/></svg>
+                        <span class="grow">Paste a screenshot</span>
+                        <span class="kbd" id="pasteShortcut">Ctrl V</span>
+                    </button>
+                    <button type="button" class="pop-item" role="menuitem" data-add="link">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></svg>
+                        <span class="grow">Add from a link</span>
+                    </button>
+                    <div class="pop-sep" role="separator"></div>
+                    <div class="pop-item disabled" role="menuitem" aria-disabled="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z"/></svg>
+                        <span class="grow">Google Drive</span><span class="pill-tag">Soon</span>
+                    </div>
+                    <div class="pop-item disabled" role="menuitem" aria-disabled="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4 4 0 0 1-.5-7.97A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z"/></svg>
+                        <span class="grow">Dropbox</span><span class="pill-tag">Soon</span>
+                    </div>
+                </div>
+            </div>
+            <div class="spacer"></div>
+            <div class="menu-anchor" data-model-picker="landing"></div>
+            <button type="submit" class="composer-send idle" id="composerSendBtn" aria-label="Analyze chart"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg></button>
+        </div>
+    </form>
+    <p class="composer-hint">PNG, JPG, GIF or WebP up to 5 MB. Drop a chart anywhere on this page, or paste one with <kbd id="pasteKbd">Ctrl V</kbd>.</p>
+    <div class="landing-error" id="error" role="alert"></div>
     <div class="landing-chips" aria-label="What ChartHawk checks"><span>Truncated axes</span><span>Cherry-picked ranges</span><span>Misleading chart types</span><span>And more</span></div>
     <div class="landing-loading" id="loading"><div class="spinner"></div><span>Analyzing your chart…</span></div>
-    <div class="landing-error" id="error"></div>
     <!-- Optional sign-in nudge — hidden when already signed in -->
     <div id="signInNudge" class="sign-in-nudge">
         <button id="openAuthModalBtn" class="google-signin-btn-small">Sign in to save history</button>
@@ -554,7 +687,14 @@
     <div id="viewHistoryNudge" style="display:none; margin-top:16px; text-align:center;">
         <a href="/dashboard" class="dashboard-nudge-link">Go to my charts &amp; analyses →</a>
     </div>
-    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+    <input type="file" id="fileInput" accept="image/png,image/jpeg,image/gif,image/webp" style="display:none;">
+    <div class="drop-overlay" id="dropOverlay" aria-hidden="true">
+        <div class="drop-overlay-inner">
+            <div class="drop-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></div>
+            <strong>Drop your chart to analyze it</strong>
+            <span>PNG, JPG, GIF or WebP, up to 5 MB</span>
+        </div>
+    </div>
     <footer class="app-footer">
         © 2026 ChartHawk
         <span class="footer-sep">·</span>
@@ -608,7 +748,7 @@
             <div class="main-input-inner">
                 <div class="model-select-row chat-tools-row">
                     <button class="improve-bar-btn" id="improveBarBtn" onclick="improveChart(activeChartId)" title="Redraw this chart with the suggested fixes applied" hidden>✨ Improve chart</button>
-                    <select class="model-select" id="chatModelSelect" title="Model used for the next chart or follow-up"></select>
+                    <div class="menu-anchor" data-model-picker="chat" style="margin-left:auto;"></div>
                 </div>
                 <div class="chat-input-area">
                     <button class="attach-btn" id="attachBtn" title="Analyze another chart">📎</button>
@@ -858,7 +998,12 @@
     // /dashboard (a separate page) instead of the landing flipping into the chat view.
     // A Google sign-in that returns here (#access_token…) is treated the same way.
     const OAUTH_RETURN   = location.hash.includes('access_token');
-    let redirectAfterLogin = OAUTH_RETURN;
+    // Signing in to unlock a model keeps the person on this page instead of /dashboard.
+    // For Google sign-in that choice has to survive the redirect, so it rides in sessionStorage.
+    let authStayHere = false;
+    let oauthStay = false;
+    try { oauthStay = OAUTH_RETURN && sessionStorage.getItem('authStayHere') === '1'; sessionStorage.removeItem('authStayHere'); } catch (e) {}
+    let redirectAfterLogin = OAUTH_RETURN && !oauthStay;
     // "Open analysis" links from the dashboard arrive as /?chart=<uuid>.
     let deepLinkChartId  = new URLSearchParams(location.search).get('chart');
 
@@ -879,7 +1024,6 @@
     // ── Element refs ───────────────────────────────────────────
     const landingView    = document.getElementById('landingView');
     const chatView       = document.getElementById('chatView');
-    const uploadArea     = document.getElementById('uploadArea');
     const fileInput      = document.getElementById('fileInput');
     const fileInputChat  = document.getElementById('fileInputChat');
     const loadingEl      = document.getElementById('loading');
@@ -893,8 +1037,6 @@
     const newChartBtn    = document.getElementById('newChartBtn');
     const clearHistoryBtn= document.getElementById('clearHistoryBtn');
     const attachBtn      = document.getElementById('attachBtn');
-    const landingModelSelect = document.getElementById('landingModelSelect');
-    const chatModelSelect    = document.getElementById('chatModelSelect');
     const sidebar        = document.getElementById('sidebar');
     const hamburgerBtn   = document.getElementById('hamburgerBtn');
     const drawerBackdrop = document.getElementById('drawerBackdrop');
@@ -966,12 +1108,14 @@
             }
             if (authState === 'signed-out' && appState === 'chat') goToLanding();
         }
+        if (typeof refreshModelPickers === 'function') refreshModelPickers();
     }
 
     // ── Auth modal ─────────────────────────────────────────────
     let authMode = 'signin'; // 'signin' | 'signup'
 
-    function openAuthModal() {
+    function openAuthModal(opts) {
+        authStayHere = !!(opts && opts.stay);
         authMode = 'signin';
         document.getElementById('authModalTitle').textContent = 'Sign in to Charthawk';
         document.getElementById('authSubmitBtn').textContent = 'Sign in';
@@ -988,29 +1132,177 @@
 
     function closeAuthModal() {
         document.getElementById('authModal').classList.remove('active');
+        authStayHere = false;
     }
 
     document.getElementById('openAuthModalBtn')?.addEventListener('click', openAuthModal);
     document.getElementById('landingSignInBtn')?.addEventListener('click', openAuthModal);
     document.getElementById('sidebarSignInBtn')?.addEventListener('click', openAuthModal);
-    // ── Model selector ────────────────────────────────────────
+    // ── Pop-up menus (shared by the + menu and the model pickers) ──
+    const openMenus = new Set();
+
+    function closeMenu(menu) {
+        if (!menu || menu.hidden) return;
+        menu.hidden = true;
+        menu._trigger?.setAttribute('aria-expanded', 'false');
+        openMenus.delete(menu);
+    }
+    function closeAllMenus(except) { [...openMenus].forEach(m => { if (m !== except) closeMenu(m); }); }
+    function openMenu(menu) {
+        closeAllMenus(menu);
+        menu.hidden = false;
+        menu._trigger?.setAttribute('aria-expanded', 'true');
+        openMenus.add(menu);
+        const first = menu.querySelector('[aria-checked="true"]') || menu.querySelector('.model-search') || menu.querySelector('button.pop-item');
+        first?.focus();
+    }
+    function bindMenu(trigger, menu, beforeOpen) {
+        menu._trigger = trigger;
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (menu.hidden) { beforeOpen?.(); openMenu(menu); } else closeMenu(menu);
+        });
+        menu.addEventListener('click', (e) => e.stopPropagation());
+        menu.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') { e.preventDefault(); closeMenu(menu); trigger.focus(); return; }
+            if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+            const items = [...menu.querySelectorAll('button.pop-item')];
+            if (!items.length) return;
+            e.preventDefault();
+            const i = items.indexOf(document.activeElement);
+            const next = e.key === 'ArrowDown' ? (i + 1) % items.length : (i <= 0 ? items.length - 1 : i - 1);
+            items[next].focus();
+        });
+    }
+    document.addEventListener('click', () => closeAllMenus());
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && openMenus.size) closeAllMenus(); });
+
+    // ── Model picker ──────────────────────────────────────────
+    // Models are grouped by company. Signed-out visitors can only use the default model
+    // (the server enforces this too — /analyze and /followup ignore the requested
+    // provider), so the others show a "Sign in" lock that opens the sign-in modal.
+    const COMPANY_TILE = {
+        'Anthropic': { bg: '#F3E3D9', fg: '#7A3418' },
+        'OpenAI':    { bg: '#DDEFE7', fg: '#0E5A3F' },
+        'Google':    { bg: '#DFE8FA', fg: '#1D4A9E' },
+        'xAI':       { bg: '#E4E6EA', fg: '#22262E' },
+    };
+    const COMPANY_ORDER = [...new Set(AVAILABLE_PROVIDERS.map(p => p.company || 'Other'))];
+    // Search and company filters only earn their space once the list gets long.
+    const SHOW_MODEL_FILTERS = AVAILABLE_PROVIDERS.length > 6;
+    const ICON_CHEVRON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+    const ICON_CHECK   = '<svg class="check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>';
+    const ICON_LOCK    = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+
     const storedModel = localStorage.getItem('selectedModel');
     let selectedModel = AVAILABLE_PROVIDERS.some(p => p.id === storedModel)
         ? storedModel
         : (AVAILABLE_PROVIDERS.some(p => p.id === DEFAULT_PROVIDER) ? DEFAULT_PROVIDER : (AVAILABLE_PROVIDERS[0]?.id || DEFAULT_PROVIDER));
 
-    function setSelectedModel(id) {
-        selectedModel = id;
-        localStorage.setItem('selectedModel', id);
-        [landingModelSelect, chatModelSelect].forEach(el => { if (el) el.value = id; });
+    function isModelLocked(id) { return authState !== 'signed-in' && id !== DEFAULT_PROVIDER; }
+    // The model the next request will actually use (signed-out → always the default).
+    function effectiveModel() { return isModelLocked(selectedModel) ? DEFAULT_PROVIDER : selectedModel; }
+
+    function companyTile(company) {
+        const c = COMPANY_TILE[company] || { bg: '#E8EDF3', fg: '#13243B' };
+        return `<span class="mono-tile" style="background:${c.bg};color:${c.fg}" aria-hidden="true">${escapeHtml((company || '?').charAt(0))}</span>`;
     }
 
-    [landingModelSelect, chatModelSelect].forEach(select => {
-        if (!select) return;
-        select.innerHTML = AVAILABLE_PROVIDERS.map(p => `<option value="${p.id}">${escapeHtml(p.label)}</option>`).join('');
-        select.value = selectedModel;
-        select.addEventListener('change', (e) => setSelectedModel(e.target.value));
-    });
+    function setSelectedModel(id) {
+        selectedModel = id;
+        try { localStorage.setItem('selectedModel', id); } catch (e) {}
+        refreshModelPickers();
+    }
+
+    const modelPickers = [];
+
+    function renderPickerButton(p) {
+        const m = AVAILABLE_PROVIDERS.find(x => x.id === effectiveModel()) || AVAILABLE_PROVIDERS[0];
+        if (!m) { p.btn.hidden = true; return; }
+        p.btn.innerHTML = `${companyTile(m.company)}<span class="mp-name">${escapeHtml(m.label)}</span>${ICON_CHEVRON}`;
+        p.btn.setAttribute('aria-label', `Model: ${m.label}. Change model`);
+    }
+
+    function renderPickerMenu(p) {
+        const q = p.query.trim().toLowerCase();
+        const current = effectiveModel();
+        const visible = AVAILABLE_PROVIDERS.filter(m =>
+            (p.company === 'all' || (m.company || 'Other') === p.company) &&
+            (!q || m.label.toLowerCase().includes(q) || (m.company || '').toLowerCase().includes(q)));
+        const groups = COMPANY_ORDER.map(co => ({ co, items: visible.filter(m => (m.company || 'Other') === co) })).filter(g => g.items.length);
+        p.list.innerHTML = groups.length ? groups.map(g => `
+            <div class="model-group-label" role="presentation">${escapeHtml(g.co)}</div>
+            ${g.items.map(m => {
+                const locked = isModelLocked(m.id);
+                const tags = (m.tags || []).map(t => t === 'new' ? '<span class="pill-tag new">New</span>' : t === 'fast' ? '<span class="pill-tag">Fast</span>' : '').join('');
+                return `<button type="button" class="pop-item model-row" role="menuitemradio" aria-checked="${m.id === current}" data-model="${escapeHtml(m.id)}">
+                    ${companyTile(m.company)}
+                    <span class="grow">${escapeHtml(m.label)}</span>
+                    ${tags}
+                    ${locked ? `<span class="pill-tag lock">${ICON_LOCK}Sign in</span>` : ''}
+                    ${m.id === current ? ICON_CHECK : ''}
+                </button>`;
+            }).join('')}`).join('') : '<div class="model-empty">No models match.</div>';
+        if (SHOW_MODEL_FILTERS) {
+            p.chips.innerHTML = ['all', ...COMPANY_ORDER].map(co =>
+                `<button type="button" data-company="${escapeHtml(co)}" class="${co === p.company ? 'on' : ''}">${co === 'all' ? 'All' : escapeHtml(co)}</button>`).join('');
+        }
+        const def = AVAILABLE_PROVIDERS.find(x => x.id === DEFAULT_PROVIDER);
+        p.foot.textContent = authState === 'signed-in'
+            ? 'Switch models at any point in a chat. Each answer keeps the label of the model that wrote it.'
+            : `Sign in to choose any model. Until then, analyses use ${def ? def.label : 'the default model'}.`;
+    }
+
+    function refreshModelPickers() {
+        modelPickers.forEach(p => { renderPickerButton(p); if (!p.menu.hidden) renderPickerMenu(p); });
+    }
+
+    function createModelPicker(mount, { openUp = false } = {}) {
+        const id = `modelMenu-${mount.dataset.modelPicker}`;
+        mount.innerHTML = `
+            <button type="button" class="model-picker-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="${id}"></button>
+            <div class="pop-menu model-menu align-right${openUp ? ' open-up' : ''}" id="${id}" role="menu" hidden>
+                <div class="model-menu-head"${SHOW_MODEL_FILTERS ? '' : ' hidden'}>
+                    <input type="search" class="model-search" placeholder="Search models" aria-label="Search models">
+                    <div class="model-chips" role="group" aria-label="Filter by company"></div>
+                </div>
+                <div class="model-list"></div>
+                <div class="model-menu-foot"></div>
+            </div>`;
+        const p = {
+            btn: mount.querySelector('.model-picker-btn'), menu: mount.querySelector('.pop-menu'),
+            list: mount.querySelector('.model-list'), chips: mount.querySelector('.model-chips'),
+            foot: mount.querySelector('.model-menu-foot'), search: mount.querySelector('.model-search'),
+            company: 'all', query: '',
+        };
+        bindMenu(p.btn, p.menu, () => { p.query = ''; p.company = 'all'; if (p.search) p.search.value = ''; renderPickerMenu(p); });
+        p.search?.addEventListener('input', () => { p.query = p.search.value; renderPickerMenu(p); });
+        p.chips?.addEventListener('click', (e) => {
+            const b = e.target.closest('[data-company]'); if (!b) return;
+            p.company = b.dataset.company; renderPickerMenu(p);
+        });
+        p.list.addEventListener('click', (e) => {
+            const row = e.target.closest('[data-model]'); if (!row) return;
+            const m = AVAILABLE_PROVIDERS.find(x => x.id === row.dataset.model); if (!m) return;
+            closeMenu(p.menu);
+            if (window.posthog) posthog.capture('model_selected', { model: m.id, locked: isModelLocked(m.id), surface: mount.dataset.modelPicker });
+            if (isModelLocked(m.id)) {
+                // Remember the choice so it's active as soon as they're signed in.
+                setSelectedModel(m.id);
+                openAuthModal({ stay: true });
+                document.getElementById('authModalTitle').textContent = `Sign in to use ${m.label}`;
+                return;
+            }
+            setSelectedModel(m.id);
+            p.btn.focus();
+        });
+        modelPickers.push(p);
+        renderPickerButton(p);
+        return p;
+    }
+
+    document.querySelectorAll('[data-model-picker]').forEach(mount =>
+        createModelPicker(mount, { openUp: mount.dataset.modelPicker === 'chat' }));
 
     // ── Sidebar collapse (desktop) ─────────────────────────────
     let sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
@@ -1077,7 +1369,7 @@
         btn.disabled = true; btn.textContent = authMode === 'signup' ? 'Creating…' : 'Signing in…';
         // Signing in from the landing page goes to the dashboard. Signing in mid-chat
         // (e.g. to unlock "Improve chart") keeps the person where they are.
-        redirectAfterLogin = appState === 'landing';
+        redirectAfterLogin = appState === 'landing' && !authStayHere;
         try {
             let result;
             if (authMode === 'signup') {
@@ -1111,7 +1403,9 @@
         // Land straight on the dashboard after Google. If /dashboard isn't in Supabase's
         // redirect allow-list, Supabase falls back to the site URL and OAUTH_RETURN above
         // forwards to the dashboard instead.
-        const target = appState === 'landing' ? `${window.location.origin}/dashboard` : window.location.origin;
+        const stay = authStayHere;
+        if (stay) { try { sessionStorage.setItem('authStayHere', '1'); } catch (e) {} }
+        const target = appState === 'landing' && !stay ? `${window.location.origin}/dashboard` : window.location.origin;
         await sb.auth.signInWithOAuth({
             provider: 'google',
             options: { redirectTo: target },
@@ -1140,6 +1434,7 @@
             if (window.posthog) posthog.identify(user.id, { email: user.email, name: user.user_metadata?.full_name || '' });
             updateAuthUI();
             if (redirectAfterLogin && appState === 'landing' && !deepLinkChartId) { goToDashboard(); return; }
+            if (oauthStay && !deepLinkChartId) { oauthStay = false; clearDeepLink(); }
             await loadHistory();
         } else {
             authState = 'tos-pending';
@@ -1171,6 +1466,7 @@
         authState = 'signed-in';
         updateAuthUI();
         if (redirectAfterLogin && appState === 'landing' && !deepLinkChartId) { goToDashboard(); return; }
+        if (oauthStay && !deepLinkChartId) { oauthStay = false; clearDeepLink(); }
         await loadHistory();
     });
 
@@ -1403,14 +1699,261 @@
 
     // ── Upload events ──────────────────────────────────────────
 
-    uploadArea.addEventListener('click', () => fileInput.click());
-    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
-    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
-    uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault(); uploadArea.classList.remove('dragover');
-        if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+    // ── Landing composer ───────────────────────────────────────
+    // A chart is attached first (upload, paste, drop or link), shown as a removable
+    // chip, then sent with the arrow or Enter. An optional question typed alongside it
+    // is asked as the first follow-up once the analysis finishes.
+    const composer            = document.getElementById('composer');
+    const composerInput       = document.getElementById('composerInput');
+    const composerAttachments = document.getElementById('composerAttachments');
+    const composerSendBtn     = document.getElementById('composerSendBtn');
+    const composerPlusBtn     = document.getElementById('composerPlusBtn');
+    const composerAddMenu     = document.getElementById('composerAddMenu');
+    const composerLinkRow     = document.getElementById('composerLinkRow');
+    const composerLinkInput   = document.getElementById('composerLinkInput');
+    const dropOverlay         = document.getElementById('dropOverlay');
+    const SUPPORTED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+    const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    const PASTE_KEYS = IS_MAC ? '⌘ V' : 'Ctrl V';
+    document.getElementById('pasteShortcut').textContent = PASTE_KEYS;
+    document.getElementById('pasteKbd').textContent = PASTE_KEYS;
+
+    let pendingAttachment = null;   // { file, previewUrl, name, sub } or { loading, token, name, sub }
+    let composerBusy = false;
+
+    function looksLikeUrl(text) {
+        return /^(https?:\/\/|www\.)\S+$/i.test((text || '').trim());
+    }
+    function hostOf(url) {
+        try { return new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`).hostname.replace(/^www\./, ''); }
+        catch { return url; }
+    }
+    function hideComposerError() { errorEl.style.display = 'none'; }
+
+    function updateComposerSend() {
+        const ready = (pendingAttachment && !pendingAttachment.loading) || (!pendingAttachment && looksLikeUrl(composerInput.value));
+        composerSendBtn.classList.toggle('idle', !ready);
+    }
+
+    function renderAttachments() {
+        if (!pendingAttachment) {
+            composerAttachments.hidden = true;
+            composerAttachments.innerHTML = '';
+        } else {
+            const a = pendingAttachment;
+            composerAttachments.hidden = false;
+            composerAttachments.innerHTML = `
+                <div class="attach-chip">
+                    ${a.loading ? '<span class="attach-spin"><span class="spinner"></span></span>' : `<img src="${a.previewUrl}" alt="">`}
+                    <span class="attach-meta">
+                        <span class="attach-name">${escapeHtml(a.name)}</span>
+                        <span class="attach-sub">${escapeHtml(a.sub || '')}</span>
+                    </span>
+                    <button type="button" class="attach-remove" id="attachRemoveBtn" aria-label="Remove ${escapeHtml(a.name)}">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                    </button>
+                </div>`;
+            document.getElementById('attachRemoveBtn').addEventListener('click', () => { clearAttachment(); composerInput.focus(); });
+        }
+        updateComposerSend();
+    }
+
+    function clearAttachment() {
+        if (pendingAttachment?.previewUrl) URL.revokeObjectURL(pendingAttachment.previewUrl);
+        pendingAttachment = null;
+        renderAttachments();
+    }
+
+    function setAttachmentFile(file, sub) {
+        if (!file) return false;
+        if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) { showError("That file type isn't supported. Use a PNG, JPG, GIF or WebP image."); return false; }
+        if (file.size > 5 * 1024 * 1024) { showError('Image must be under 5MB. Please resize and try again.'); return false; }
+        hideComposerError();
+        if (pendingAttachment?.previewUrl) URL.revokeObjectURL(pendingAttachment.previewUrl);
+        const kb = file.size >= 1024 * 1024 ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(file.size / 1024))} KB`;
+        pendingAttachment = { file, previewUrl: URL.createObjectURL(file), name: file.name || 'Chart', sub: sub ? `${sub} · ${kb}` : kb };
+        renderAttachments();
+        composerInput.focus();
+        return true;
+    }
+
+    function pastedFile(blob) {
+        const ext = (blob.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+        const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ').replace(':', '.');
+        return new File([blob], `Screenshot ${stamp}.${ext}`, { type: blob.type });
+    }
+
+    async function attachFromLink(rawUrl) {
+        const url = rawUrl.trim();
+        if (!url) return false;
+        hideComposerError();
+        const token = {};
+        if (pendingAttachment?.previewUrl) URL.revokeObjectURL(pendingAttachment.previewUrl);
+        pendingAttachment = { loading: true, token, name: hostOf(url), sub: 'Getting the image…' };
+        renderAttachments();
+        if (window.posthog) posthog.capture('chart_link_added', { host: hostOf(url) });
+        try {
+            const res = await fetch('/fetch_image', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (pendingAttachment?.token !== token) return false;   // removed or replaced meanwhile
+            if (!res.ok || !data.image) {
+                pendingAttachment = null; renderAttachments();
+                showError(data.error || "We couldn't download that link.");
+                return false;
+            }
+            const blob = await (await fetch(data.image)).blob();
+            return setAttachmentFile(new File([blob], data.filename || 'chart', { type: blob.type }), hostOf(url));
+        } catch (err) {
+            if (pendingAttachment?.token === token) { pendingAttachment = null; renderAttachments(); }
+            showError("We couldn't download that link. Check your connection and try again.");
+            return false;
+        }
+    }
+
+    function showLinkRow() {
+        composerLinkRow.hidden = false;
+        composerLinkInput.value = '';
+        composerLinkInput.focus();
+    }
+    function hideLinkRow() { composerLinkRow.hidden = true; }
+    async function submitLinkRow() {
+        const url = composerLinkInput.value.trim();
+        if (!url) { composerLinkInput.focus(); return; }
+        hideLinkRow();
+        await attachFromLink(url);
+    }
+    document.getElementById('composerLinkAdd').addEventListener('click', submitLinkRow);
+    document.getElementById('composerLinkCancel').addEventListener('click', () => { hideLinkRow(); composerInput.focus(); });
+    composerLinkInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); submitLinkRow(); }
+        if (e.key === 'Escape') { e.preventDefault(); hideLinkRow(); composerInput.focus(); }
     });
-    fileInput.addEventListener('change',     (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
+
+    async function pasteFromClipboard() {
+        try {
+            if (!navigator.clipboard?.read) throw new Error('unsupported');
+            const items = await navigator.clipboard.read();
+            for (const item of items) {
+                const type = item.types.find(t => t.startsWith('image/'));
+                if (type) { setAttachmentFile(pastedFile(await item.getType(type)), 'Pasted screenshot'); return; }
+            }
+            const text = (await navigator.clipboard.readText?.()) || '';
+            if (looksLikeUrl(text)) { await attachFromLink(text); return; }
+            showError(`There's no image on your clipboard. Copy a chart or take a screenshot, then press ${PASTE_KEYS}.`);
+        } catch {
+            // Firefox, or clipboard permission declined — the keyboard shortcut still works.
+            composerInput.focus();
+            showError(`Press ${PASTE_KEYS} to paste your screenshot.`);
+        }
+    }
+
+    bindMenu(composerPlusBtn, composerAddMenu);
+    composerAddMenu.addEventListener('click', (e) => {
+        const item = e.target.closest('[data-add]'); if (!item) return;
+        closeMenu(composerAddMenu);
+        if (item.dataset.add === 'upload') fileInput.click();
+        else if (item.dataset.add === 'paste') pasteFromClipboard();
+        else if (item.dataset.add === 'link') showLinkRow();
+    });
+
+    async function submitComposer() {
+        if (composerBusy) return;
+        hideComposerError();
+        let question = composerInput.value.trim();
+        if (!pendingAttachment && looksLikeUrl(question)) {
+            composerInput.value = ''; autoResize(composerInput);
+            const ok = await attachFromLink(question);
+            if (!ok) return;
+            question = '';
+        }
+        if (!pendingAttachment) {
+            showError('Add a chart first: upload one with +, paste a screenshot, drop an image here, or paste a link.');
+            return;
+        }
+        if (pendingAttachment.loading) return;
+        const file = pendingAttachment.file;
+        composerBusy = true;
+        if (window.posthog) posthog.capture('composer_submitted', { has_question: !!question, model: effectiveModel() });
+        try {
+            const ok = await handleFile(file);
+            if (!ok) return;
+            clearAttachment();
+            composerInput.value = ''; autoResize(composerInput);
+            if (question && activeChartId != null) {
+                mainChatInput.value = question;
+                await sendFollowUp(activeChartId);
+            }
+        } finally {
+            composerBusy = false;
+        }
+    }
+
+    composer.addEventListener('submit', (e) => { e.preventDefault(); submitComposer(); });
+    composerInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); submitComposer(); }
+    });
+    composerInput.addEventListener('input', () => { autoResize(composerInput); updateComposerSend(); });
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) setAttachmentFile(e.target.files[0]);
+        fileInput.value = '';
+    });
+
+    function modalOpen() { return !!document.querySelector('.modal-overlay.active'); }
+    function isTypingField(el) { return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable); }
+
+    // Paste a screenshot (or an image link) anywhere on the landing page.
+    document.addEventListener('paste', (e) => {
+        if (appState !== 'landing' || modalOpen() || !e.clipboardData) return;
+        if (isTypingField(e.target) && e.target !== composerInput) return;
+        const imageItem = [...e.clipboardData.items].find(i => i.kind === 'file' && i.type.startsWith('image/'));
+        if (imageItem) {
+            e.preventDefault();
+            setAttachmentFile(pastedFile(imageItem.getAsFile()), 'Pasted screenshot');
+            return;
+        }
+        const text = e.clipboardData.getData('text').trim();
+        const composerEmpty = !composerInput.value.trim();
+        if (looksLikeUrl(text) && !pendingAttachment && composerEmpty) {
+            e.preventDefault();
+            attachFromLink(text);
+        }
+    });
+
+    // Drop an image anywhere on the landing page (files, or an image dragged from another tab).
+    let dragDepth = 0;
+    function isChartDrag(e) {
+        const types = [...(e.dataTransfer?.types || [])];
+        return types.includes('Files') || types.includes('text/uri-list');
+    }
+    function hideDropOverlay() { dragDepth = 0; dropOverlay.classList.remove('visible'); }
+    window.addEventListener('dragenter', (e) => {
+        if (appState !== 'landing' || modalOpen() || !isChartDrag(e)) return;
+        e.preventDefault();
+        dragDepth++;
+        dropOverlay.classList.add('visible');
+    });
+    window.addEventListener('dragover', (e) => {
+        if (appState !== 'landing' || !isChartDrag(e)) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+    });
+    window.addEventListener('dragleave', (e) => {
+        if (appState !== 'landing') return;
+        dragDepth = Math.max(0, dragDepth - 1);
+        if (dragDepth === 0) hideDropOverlay();
+    });
+    window.addEventListener('dragend', hideDropOverlay);
+    window.addEventListener('drop', (e) => {
+        if (appState !== 'landing') return;
+        e.preventDefault();
+        hideDropOverlay();
+        const file = e.dataTransfer.files?.[0];
+        if (file) { setAttachmentFile(file); return; }
+        const uri = (e.dataTransfer.getData('text/uri-list') || '').split('\n').map(s => s.trim()).find(s => s && !s.startsWith('#'));
+        if (uri && looksLikeUrl(uri)) attachFromLink(uri);
+    });
     attachBtn.addEventListener('click',       () => fileInputChat.click());
     fileInputChat.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFile(e.target.files[0]); });
 
@@ -1449,20 +1992,22 @@
     // Signed-in  → /analyze_stream (streaming SSE + Supabase save)
     // Anonymous  → /analyze        (non-streaming JSON, in-memory)
 
+    // Resolves true once the chart is analyzed and on screen, false otherwise.
     async function handleFile(file) {
-        if (!file.type.startsWith('image/')) { showError('Please upload an image file'); return; }
-        if (file.size > 5 * 1024 * 1024) { showError('Image must be under 5MB. Please resize and try again.'); return; }
+        if (!file.type.startsWith('image/')) { showError('Please upload an image file'); return false; }
+        if (file.size > 5 * 1024 * 1024) { showError('Image must be under 5MB. Please resize and try again.'); return false; }
 
         if (appState === 'landing') { loadingEl.classList.add('visible'); errorEl.style.display = 'none'; }
         mainSendBtn.disabled = true;
 
         const formData = new FormData();
         formData.append('chart', file);
-        formData.append('provider', selectedModel);
-        const analysisModel = selectedModel;
+        formData.append('provider', effectiveModel());
+        const analysisModel = effectiveModel();
 
         let chartData = null;
         let accumulatedText = '';
+        let succeeded = false;
 
         try {
             const token = await getAuthToken();
@@ -1474,8 +2019,8 @@
                     headers: { 'Authorization': `Bearer ${token}` },
                     body: formData,
                 });
-                if (response.status === 401) { showError('Session expired. Please sign in again.'); await signOut(); return; }
-                if (!response.ok) { const err = await response.json().catch(() => ({ error: 'Upload failed' })); showError(err.error || 'Failed to analyze chart'); return; }
+                if (response.status === 401) { showError('Session expired. Please sign in again.'); await signOut(); return false; }
+                if (!response.ok) { const err = await response.json().catch(() => ({ error: 'Upload failed' })); showError(err.error || 'Failed to analyze chart'); return false; }
 
                 for await (const { event, data } of readSSE(response)) {
                     if (event === 'image') {
@@ -1496,6 +2041,7 @@
                         if (el) { el.innerHTML = html; el.className = 'analysis-content'; }
                         syncImproveButtons();
                         await saveChartToSupabase(chartData); // swaps temp ID → UUID
+                        succeeded = true;
                     } else if (event === 'error') {
                         showError(data.error || 'Analysis failed');
                         if (chartData) { chartHistory = chartHistory.filter(c => c.id !== chartData.id); renderSidebar(); }
@@ -1505,7 +2051,7 @@
             } else {
                 // ── Non-streaming path (anonymous) ──────────────────────
                 const response = await fetch('/analyze', { method: 'POST', body: formData });
-                if (!response.ok) { const err = await response.json().catch(() => ({ error: 'Upload failed' })); showError(err.error || 'Failed to analyze chart'); return; }
+                if (!response.ok) { const err = await response.json().catch(() => ({ error: 'Upload failed' })); showError(err.error || 'Failed to analyze chart'); return false; }
                 const result = await response.json();
                 analysisCount++;
                 // Anonymous requests always run on the server's default provider regardless
@@ -1514,6 +2060,7 @@
                 chartHistory.unshift(chartData);
                 loadingEl.classList.remove('visible');
                 switchToChatView(chartData.id);
+                succeeded = true;
             }
 
         } catch (err) {
@@ -1524,6 +2071,7 @@
             mainSendBtn.disabled = false;
             fileInput.value = ''; fileInputChat.value = '';
         }
+        return succeeded;
     }
 
     // ── Switch to chat view ────────────────────────────────────
@@ -1683,7 +2231,7 @@
 
         let accumulatedText = '';
         let streamStarted   = false;
-        const followupModel = selectedModel;
+        const followupModel = effectiveModel();
 
         const payload = {
             question,
@@ -1841,8 +2389,8 @@
             return;
         }
 
-        if (window.posthog) posthog.capture('improve_chart_requested', { chart_id: String(id), model: selectedModel });
-        const improveModel = selectedModel;
+        if (window.posthog) posthog.capture('improve_chart_requested', { chart_id: String(id), model: effectiveModel() });
+        const improveModel = effectiveModel();
         improveRunning = true; syncImproveButtons();
         mainSendBtn.disabled = true;
         appendMessageEl(id, 'user', escapeHtml(IMPROVE_REQUEST_TEXT));
@@ -1932,14 +2480,12 @@
             .replace(/"/g, '&quot;').replace(/\n/g, '<br>');
     }
 
+    let errorTimer = null;
     function showError(msg) {
-        if (appState === 'landing') {
-            errorEl.textContent = msg; errorEl.style.display = 'block';
-            setTimeout(() => { errorEl.style.display = 'none'; }, 5000);
-        } else {
-            chatErrorEl.textContent = msg; chatErrorEl.style.display = 'block';
-            setTimeout(() => { chatErrorEl.style.display = 'none'; }, 5000);
-        }
+        const el = appState === 'landing' ? errorEl : chatErrorEl;
+        el.textContent = msg; el.style.display = 'block';
+        clearTimeout(errorTimer);
+        errorTimer = setTimeout(() => { el.style.display = 'none'; }, 7000);
     }
 
     // ── Sidebar context menu ───────────────────────────────────
