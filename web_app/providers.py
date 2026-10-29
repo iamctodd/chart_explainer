@@ -17,31 +17,38 @@ from google.genai import types as genai_types
 # provider's pricing page if costs in the admin dashboard look off.
 # 'kind' selects which adapter family handles the provider; 'openai_compatible'
 # providers only need a registry entry (+ optional base_url) to be added, no new code.
+# 'label' is the model name shown in the picker and on each answer; 'company' groups
+# models in the picker; optional 'tags' ('fast', 'new') add small badges there.
 
 PROVIDERS = {
     'anthropic': {
-        'label':   'Claude (Anthropic)',
+        'label':   'Claude Sonnet 4.6',
+        'company': 'Anthropic',
         'env_key': 'ANTHROPIC_API_KEY',
         'model':   'claude-sonnet-4-6',
         'pricing': {'input': 3.0, 'output': 15.0},
         'kind':    'anthropic',
     },
     'openai': {
-        'label':   'GPT-4.1 (OpenAI)',
+        'label':   'GPT-4.1',
+        'company': 'OpenAI',
         'env_key': 'OPENAI_API_KEY',
         'model':   'gpt-4.1',
         'pricing': {'input': 2.0, 'output': 8.0},
         'kind':    'openai_compatible',
     },
     'gemini': {
-        'label':   'Gemini (Google)',
+        'label':   'Gemini 3 Flash',
+        'company': 'Google',
+        'tags':    ['fast'],
         'env_key': 'GOOGLE_API_KEY',
         'model':   'gemini-3-flash-preview',
         'pricing': {'input': 0.5, 'output': 3.0},
         'kind':    'gemini',
     },
     'xai': {
-        'label':    'Grok (xAI)',
+        'label':    'Grok 4.5',
+        'company':  'xAI',
         'env_key':  'XAI_API_KEY',
         'model':    'grok-4.5',
         'pricing':  {'input': 2.0, 'output': 6.0},
@@ -98,7 +105,7 @@ SVG rules:
 def available_providers():
     """Providers whose API key is actually configured — the only ones the UI should offer."""
     return [
-        {'id': pid, 'label': cfg['label']}
+        {'id': pid, 'label': cfg['label'], 'company': cfg.get('company', ''), 'tags': cfg.get('tags', [])}
         for pid, cfg in PROVIDERS.items()
         if os.environ.get(cfg['env_key'])
     ]

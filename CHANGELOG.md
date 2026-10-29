@@ -4,7 +4,16 @@ All notable changes to ChartHawk are documented here.
 
 ## 2026-10-29
 
+### Added
+- **New chart composer on the landing page**, in the style of Claude, Gemini and Perplexity. You attach a chart first (it shows as a removable thumbnail) and then send it, optionally with a question that's asked as the first follow-up once the analysis is ready.
+  - A + menu with "Upload from computer", "Paste a screenshot" and "Add from a link". Google Drive and Dropbox are listed as "Soon".
+  - Paste a screenshot anywhere on the page with Ctrl V or ⌘ V.
+  - Drop an image anywhere on the page; a full-page overlay shows where it will go. Images dragged in from another browser tab work too.
+  - Paste or type a link to an image. If the link is a web page, ChartHawk uses the page's preview image, which is usually the chart. The new `/fetch_image` route downloads it on the server and blocks private network addresses.
+- **Model picker grouped by company** (Anthropic, OpenAI, Google, xAI), shown on the landing page and above the chat box. Signed-out visitors see a "Sign in" lock on every model except the default. Choosing a locked model opens sign-in and keeps you on the page, and that model is selected once you're signed in. Search and company filters turn on automatically when there are more than 6 models.
+
 ### Changed
+- Model names on answers now show the model ("Claude Sonnet 4.6", "GPT-4.1") instead of the company ("Claude (Anthropic)").
 - In the chat view, the profile strip and "API Keys" in the sidebar now open the dashboard's Profile and API keys pages instead of pop-ups, so each is edited in one place. The old profile and API-key pop-ups were removed.
 
 ### Fixed

@@ -14,6 +14,7 @@ import xml.etree.ElementTree as ET
 from PIL import Image
 from supabase import create_client
 import providers
+import image_fetch
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5 MB upload limit
@@ -148,6 +149,25 @@ def sse_event(event, data):
 @app.route('/')
 def index():
     return render_template('index.html', posthog_key=POSTHOG_KEY, providers=providers.available_providers(), default_provider=providers.DEFAULT_PROVIDER)
+
+
+@app.route('/fetch_image', methods=['POST'])
+def fetch_image():
+    """Download a chart image from a pasted link so the browser can attach it like an
+    upload. Open to anonymous visitors (no model call happens here); image_fetch
+    blocks private addresses and caps the download at the normal 5 MB upload limit."""
+    data = request.get_json(silent=True) or {}
+    try:
+        image_bytes, media_type, filename = image_fetch.fetch_chart_image(data.get('url', ''))
+    except image_fetch.FetchError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        print(f'fetch_image error: {e}')
+        return jsonify({'error': "We couldn't download that link."}), 400
+    return jsonify({
+        'image': f"data:{media_type};base64,{base64.b64encode(image_bytes).decode('utf-8')}",
+        'filename': filename,
+    })
 
 
 @app.route('/dashboard')
