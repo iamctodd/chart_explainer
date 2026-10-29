@@ -698,7 +698,7 @@
     <footer class="app-footer">
         © 2026 ChartHawk
         <span class="footer-sep">·</span>
-        <a href="#" id="footerPrivacyLink">Privacy Policy</a>
+        <a href="/privacy" id="footerPrivacyLink">Privacy Policy</a>
         <span class="footer-sep">·</span>
         <a href="#" id="footerTosLink">Terms of Service</a>
         <nav class="footer-nav">
@@ -767,24 +767,7 @@
     <div class="modal privacy-modal-inner">
         <h2>Privacy Policy</h2>
         <div class="tos-body">
-            <p><strong>Last updated: March 2026</strong></p>
-
-            <p>Charthawk ("we", "our", "us") is committed to protecting your privacy. This policy explains what data we collect and how we use it.</p>
-
-            <p><strong>What we collect</strong><br>
-            When you create an account we collect your email address and, if you choose, a display name and profile photo. When you upload a chart image it is sent to Anthropic's Claude API for analysis and stored in your Charthawk account so you can revisit it later. We do not sell your data.</p>
-
-            <p><strong>How we use your data</strong><br>
-            Your chart images and analyses are stored solely to provide the history feature. We use your email only to authenticate your account and, if you opt in, to send product updates.</p>
-
-            <p><strong>Third-party services</strong><br>
-            Chart images and questions are processed by <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">Anthropic</a> (AI analysis). Authentication and database storage are handled by <a href="https://supabase.com/privacy" target="_blank" rel="noopener">Supabase</a>. Both operate under their own privacy policies.</p>
-
-            <p><strong>Data retention &amp; deletion</strong><br>
-            You can delete individual chart analyses at any time from the sidebar. To delete your account and all associated data, use the feedback button and request account deletion — we will remove your data within 30 days.</p>
-
-            <p><strong>Contact</strong><br>
-            Questions about this policy? Use the feedback button in the app or email us directly.</p>
+            {% include "partials/privacy_policy.html" %}
         </div>
         <div class="modal-buttons">
             <button type="button" class="modal-btn submit" id="privacyCloseBtn">Close</button>

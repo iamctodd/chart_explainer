@@ -795,6 +795,11 @@ def gallery_page():
     return render_template('gallery.html')
 
 
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+
 @app.route('/share/<chart_id>')
 def share_page(chart_id):
     return render_template('share.html', chart_id=chart_id)
