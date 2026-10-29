@@ -10,7 +10,7 @@ ChartHawk analyzes a chart image and explains, in plain English:
 
 It also points out truncated axes, cherry-picked ranges and misleading chart types, and can redraw the chart with those problems fixed.
 
-🔗 **Live:** [charthawk.info](https://charthawk.info)
+🔗 **Live:** [charthawk.ai](https://charthawk.ai)
 
 ---
 
