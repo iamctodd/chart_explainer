@@ -1,185 +1,172 @@
-# 📊 ChartHawk
+# ChartHawk
 
-**Stop pretending you understand every chart. Get clear explanations in seconds.**
+**See what the data's hiding.**
 
-ChartHawk is a web app that analyzes charts and visualizations using AI, providing plain-English explanations of what the data actually shows, what it doesn't show, and common misinterpretations.
+ChartHawk analyzes a chart image and explains, in plain English:
+- what it shows
+- what it's really saying
+- what it doesn't show
+- how people often misread it
 
-🔗 **Live Demo:** [ChartHawk.info](https://charthawk.info)
+It also points out truncated axes, cherry-picked ranges and misleading chart types, and can redraw the chart with those problems fixed.
 
----
-
-## Why ChartHawk?
-
-We've all been in meetings where someone presents a complex chart and everyone nods along. The data literacy gap is real, and it's embarrassing to admit when you don't understand a visualization.
-
-ChartHawk gives you:
-- **What it shows**: Clear explanation of the data and trends
-- **Key insights**: Main takeaways you should notice
-- **What it doesn't show**: Important limitations and missing context
-- **Common misinterpretations**: How people often misread the chart
+🔗 **Live:** [charthawk.info](https://charthawk.info)
 
 ---
 
 ## Features
 
-✅ **Upload any chart** - PNG, JPG, GIF support  
-✅ **AI-powered analysis** - Uses Claude Sonnet 4.5 for accurate interpretation  
-✅ **Multi-chart history** - Analyze multiple charts in one session  
-✅ **Copy to clipboard** - One-click sharing of analysis  
-✅ **Privacy-focused** - No login required, session-based storage  
-✅ **Fast & simple** - No complicated setup or configuration  
+**Analyzing a chart**
+- **A chat-style composer.** Upload a chart, paste a screenshot (Ctrl V / ⌘ V), drop an image anywhere on the page, or paste a link to an image or to a page that contains a chart. You can add a question, and it's asked once the analysis is ready.
+- **Choice of AI model.** Claude, GPT, Gemini and Grok, grouped by company in a picker. Each answer is labelled with the model that wrote it, and you can switch models partway through a chat. Signed-out visitors use the default model.
+- **Streaming analysis** in five parts: what this shows, what it's really saying, what it does NOT show, common misreadings, and what could be improved.
+- **Follow-up questions** about the same chart.
+- **"Show me an improved version."** The model redraws the chart as an SVG with its suggested fixes applied and shows it next to the original.
+
+**Accounts and sharing**
+- Email or Google sign-in (Supabase), with chart and conversation history saved per user.
+- A dashboard at `/dashboard` with your charts and analyses, your profile and your API keys.
+- Public gallery (`/gallery`), share links (`/share/<id>`) and comments on public charts.
+- Export any analysis to Markdown.
+
+**For developers and admins**
+- REST endpoint `POST /api/v1/analyze`, which takes `sk-hawk-…` API keys you create in the dashboard.
+- A Claude Code skill that calls that endpoint. See [skills/README.md](skills/README.md).
+- An admin dashboard (`/admin`) with usage, cost, and promote/demote controls for users.
 
 ---
 
-## Tech Stack
+## Tech stack
 
-- **Frontend**: Vanilla JavaScript, HTML/CSS
-- **Backend**: Python Flask
-- **AI**: Anthropic Claude API (Sonnet 4.5)
-- **Deployment**: Railway
-- **Feedback**: Formspree
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Python 3.8+
-- Anthropic API key ([get one here](https://console.anthropic.com))
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/iamctodd/charthawk.git
-   cd charthawk/web_app
-   ```
-
-2. **Create virtual environment**
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Set environment variables**
-   ```bash
-   export ANTHROPIC_API_KEY="your-api-key-here"
-   export PORT=5001  # Optional, defaults to 5000
-
-   # Optional — enables additional models in the model selector.
-   # Only providers with a key set will appear in the dropdown.
-   export OPENAI_API_KEY="your-openai-key"   # GPT-4o
-   export GOOGLE_API_KEY="your-google-key"   # Gemini
-   export XAI_API_KEY="your-xai-key"         # Grok
-   ```
-
-5. **Run the app**
-   ```bash
-   python3 app.py
-   ```
-
-6. **Open your browser**
-   ```
-   http://localhost:5001
-   ```
+| Part | What it uses |
+|---|---|
+| Backend | Python, Flask, gunicorn |
+| Frontend | Plain HTML, CSS and JavaScript (`web_app/templates/`) |
+| AI models | Anthropic, OpenAI, Google Gemini and xAI, routed through `providers.py` |
+| Auth and database | Supabase (Postgres with row-level security) |
+| Analytics | PostHog |
+| Feedback form | Formspree |
+| Hosting | Railway |
 
 ---
 
-## Deployment
+## Running it locally
 
-### Railway (Recommended)
+**Requirements:** Python 3.9+ and at least an Anthropic API key ([console.anthropic.com](https://console.anthropic.com)).
 
-1. Fork this repository
-2. Connect your GitHub repo to Railway
-3. Set environment variable: `ANTHROPIC_API_KEY` (optionally also `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `XAI_API_KEY` for additional models)
-4. Set root directory to `web_app`
-5. Deploy!
+```bash
+git clone https://github.com/iamctodd/chart_explainer.git
+cd chart_explainer/web_app
+python3 -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-Railway will automatically detect the Python app and use the provided `railway.json` configuration.
+Set your environment variables:
+
+```bash
+export ANTHROPIC_API_KEY="..."          # required: the default model
+
+# Optional: each key you set adds that company's model to the picker
+export OPENAI_API_KEY="..."
+export GOOGLE_API_KEY="..."
+export XAI_API_KEY="..."
+
+# Optional: point at your own Supabase project (defaults to ChartHawk's)
+export SUPABASE_URL="..."
+export SUPABASE_ANON_KEY="..."
+export SUPABASE_SERVICE_KEY="..."       # service_role key, needed for the admin page, usage tracking and publishing
+
+export POSTHOG_KEY="..."                # optional analytics
+export PORT=5001                        # optional, defaults to 5000
+```
+
+Then start it and open `http://localhost:5001`:
+
+```bash
+python3 app.py
+```
+
+### Adding or changing models
+
+Models are listed in `PROVIDERS` in `web_app/providers.py`. Each entry has:
+- the API model ID
+- the display name (`label`)
+- the `company` it's grouped under in the picker
+- price per million tokens (used for the admin dashboard's cost figures)
+- optional `tags` such as `fast` or `new`
+
+A model only appears in the picker when its API key is set. Any OpenAI-compatible provider needs only a registry entry and a `base_url`, with no new code.
 
 ---
 
-## Project Structure
+## Deploying on Railway
+
+1. Connect this GitHub repository to a Railway project.
+2. Set the root directory to `web_app`.
+3. Add the environment variables above. `ANTHROPIC_API_KEY` and `SUPABASE_SERVICE_KEY` are the important ones.
+4. Deploy. `railway.json` starts the app with `gunicorn app:app --timeout 180`.
+
+Railway redeploys automatically when `main` changes.
+
+---
+
+## Project structure
 
 ```
-charthawk/
-├── web_app/              # Web application
-│   ├── app.py           # Flask backend
+chart_explainer/
+├── web_app/
+│   ├── app.py               # Flask routes: analysis, follow-ups, gallery, admin, API keys
+│   ├── providers.py         # Model registry and adapters for each AI company
+│   ├── image_fetch.py       # Downloads images from pasted links (blocks private networks)
 │   ├── templates/
-│   │   └── index.html   # Frontend UI
-│   ├── requirements.txt # Python dependencies
-│   └── railway.json     # Railway config
-└── slack_app/           # Slack bot (experimental)
-    └── bot.py
+│   │   ├── index.html       # Landing page composer and chat view
+│   │   ├── dashboard.html   # Signed-in dashboard
+│   │   ├── gallery.html     # Public gallery
+│   │   ├── share.html       # Shared analysis page
+│   │   └── admin.html       # Admin dashboard
+│   ├── requirements.txt
+│   └── railway.json
+├── skills/                  # Claude Code skill for the ChartHawk API
+├── slack_app/               # Slack bot (experimental)
+├── tasks/                   # Supabase SQL migrations
+├── example_charts/          # Sample charts for testing
+├── documents/               # Brand style guide and product docs
+├── CHANGELOG.md
+└── ROADMAP.md
 ```
 
 ---
 
-## Usage
+## API
 
-1. **Upload a chart** - Drag and drop or click to upload any chart image
-2. **Get explanation** - AI analyzes and explains the visualization
-3. **Review insights** - Understand what the chart shows and doesn't show
-4. **Copy analysis** - Click the copy button to share the explanation
-5. **Upload more** - Analyze multiple charts in one session
+```bash
+curl -X POST https://charthawk.info/api/v1/analyze \
+  -H "Authorization: Bearer sk-hawk-..." \
+  -F "chart=@my-chart.png"
+```
 
----
-
-## API Costs
-
-ChartHawk uses the Anthropic Claude API. Approximate costs:
-- ~$0.015 per chart analysis (Sonnet 4.5)
-- Free tier credits available for new accounts
-- Monitor usage in [Anthropic Console](https://console.anthropic.com)
+Create an API key in your dashboard under **API keys**.
 
 ---
 
-## Roadmap
+## Roadmap and changes
 
-See [ROADMAP.md](ROADMAP.md) for planned features and improvements.
-
----
+- [ROADMAP.md](ROADMAP.md) lists planned features.
+- [CHANGELOG.md](CHANGELOG.md) lists what changed and when.
 
 ## Contributing
 
-Contributions welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
+Pull requests are welcome. Create a branch, make your change, and open a PR against `main`.
 
 ## Feedback
 
-Found a bug? Have a feature request? 
-
-- Use the "Send Feedback" button in the app
-- Open an issue on GitHub
-- Reach out on [your contact method]
-
----
+Use **Send feedback** in the app, or [open an issue](https://github.com/iamctodd/chart_explainer/issues).
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT. See [LICENSE](LICENSE).
 
 ---
 
-## Acknowledgments
-
-- Built with [Anthropic Claude](https://www.anthropic.com/claude)
-- Deployed on [Railway](https://railway.app)
-- Feedback powered by [Formspree](https://formspree.io)
-
----
-
-**Made by [@iamctodd](https://github.com/iamctodd)** | Built in public 🚀
+Made by [@iamctodd](https://github.com/iamctodd). Built in public.
