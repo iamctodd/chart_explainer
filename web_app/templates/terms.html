@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="The terms for using ChartHawk.">
+    <title>Terms of Service — ChartHawk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect width='120' height='120' rx='26' fill='%231F3A5F'/><path d='M84 36A34 34 0 1 0 84 84' fill='none' stroke='%23F2E35B' stroke-width='16' stroke-linecap='round'/></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy:        #1F3A5F;
+            --bg-base:     #0F1E33;
+            --border:      #2C4A72;
+            --text-primary:#F2F5F9;
+            --text-muted:  #A9B7CA;
+            --accent:      #F2E35B;
+            --accent-ink:  #13243B;
+            --font-display:'Oswald', 'Arial Narrow', sans-serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg-base); color: var(--text-primary); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
+        .header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 32px; background: var(--navy); }
+        .header-brand { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; }
+        .header-brand span { font-family: var(--font-display); font-weight: 500; font-size: 17px; letter-spacing: 0.22em; }
+        .btn-accent { display: inline-flex; align-items: center; min-height: 40px; background: var(--accent); color: var(--accent-ink); padding: 0 18px; border-radius: 999px; font-size: 0.85em; font-weight: 700; text-decoration: none; }
+        .btn-accent:hover { background: #E2D140; }
+        .page-body { max-width: 760px; margin: 0 auto; padding: 40px 16px 80px; }
+        .page-heading { font-family: var(--font-display); font-size: 2.4em; font-weight: 600; margin-bottom: 20px; }
+        .page-body .terms-of-service { font-size: 1em; }
+        .footer { border-top: 1px solid var(--border); padding: 24px 16px; text-align: center; font-size: 0.8em; color: var(--text-muted); }
+        .footer a { color: var(--text-muted); margin: 0 8px; }
+        @media (max-width: 600px) { .header { padding: 12px 16px; } .page-heading { font-size: 1.9em; } }
+    </style>
+</head>
+<body>
+<header class="header">
+    <a href="/" class="header-brand" aria-label="ChartHawk home"><svg width="28" height="28" viewBox="0 0 120 120" fill="none" stroke="#F2E35B" stroke-width="9" stroke-linecap="round" aria-hidden="true"><path d="M89.7 30.3A42 42 0 1 0 89.7 89.7"/><path d="M81.2 38.8A30 30 0 1 0 81.2 81.2"/><path d="M72.7 47.3A18 18 0 1 0 72.7 72.7"/></svg><span>CHARTHAWK</span></a>
+    <a href="/" class="btn-accent">Analyze a chart →</a>
+</header>
+<main class="page-body">
+    <h1 class="page-heading">Terms of Service</h1>
+    {% include "partials/terms_of_service.html" %}
+</main>
+<footer class="footer">© 2026 ChartHawk<a href="/">Home</a><a href="/gallery">Gallery</a><a href="/privacy">Privacy Policy</a></footer>
+</body>
+</html>

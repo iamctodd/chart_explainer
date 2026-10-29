@@ -6,6 +6,8 @@ All notable changes to ChartHawk are documented here.
 
 ### Added
 - **Privacy policy in its own file**, `web_app/templates/partials/privacy_policy.html`. The home page pop-up and a new `/privacy` page both use it, so the policy is edited in one place. The dashboard footer now links to `/privacy`.
+- **Terms of Service in its own file**, `web_app/templates/partials/terms_of_service.html`. The "accept the terms" pop-ups on the home page and the dashboard, and a new `/terms` page, all use it. The footer "Terms of Service" links on the home page, dashboard and privacy page open `/terms`.
+- Terms rewritten to cover all four AI companies and their usage policies, public sharing and comments, acceptable use, API keys, liability and how the terms change. `TOS_VERSION` raised from `v1` to `v1.1`, so everyone is asked to accept the new terms at their next sign-in.
 - **New chart composer on the landing page**, in the style of Claude, Gemini and Perplexity. You attach a chart first (it shows as a removable thumbnail) and then send it, optionally with a question that's asked as the first follow-up once the analysis is ready.
   - A + menu with "Upload from computer", "Paste a screenshot" and "Add from a link". Google Drive and Dropbox are listed as "Soon".
   - Paste a screenshot anywhere on the page with Ctrl V or ⌘ V.

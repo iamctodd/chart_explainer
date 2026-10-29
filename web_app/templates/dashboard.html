@@ -475,7 +475,7 @@
     </div>
 </div>
 
-<footer class="footer">© 2026 ChartHawk<a href="/">Home</a><a href="/gallery">Gallery</a><a href="/privacy">Privacy Policy</a></footer>
+<footer class="footer">© 2026 ChartHawk<a href="/">Home</a><a href="/gallery">Gallery</a><a href="/privacy">Privacy Policy</a><a href="/terms">Terms of Service</a></footer>
 
 <!-- Terms (shown only if this account hasn't accepted the current version yet) -->
 <div class="modal-overlay" id="tosModal" role="dialog" aria-modal="true" aria-labelledby="tosTitle">
@@ -483,15 +483,7 @@
         <h2 id="tosTitle">Welcome to ChartHawk</h2>
         <p>Please read and accept these terms before continuing.</p>
         <div class="tos-scroll">
-            ChartHawk lets you upload any chart image and get an AI-powered analysis that detects misleading design choices, flags truncated axes, cherry-picked date ranges and distorted scales, and tells you what the data actually shows.<br><br>
-            <strong>What happens to your uploaded images</strong><br>
-            Images you upload are sent to an AI model provider for analysis. They are also stored in your ChartHawk account so you can revisit previous analyses. By using ChartHawk you agree to <a href="https://www.anthropic.com/legal/usage-policy" target="_blank" rel="noopener">Anthropic's usage policies</a>.<br><br>
-            <strong>Data storage</strong><br>
-            Your charts and conversation history are stored in a database linked to your account. Only you can access your data unless you make an analysis public. We use <a href="https://supabase.com/privacy" target="_blank" rel="noopener">Supabase</a> for data storage.<br><br>
-            <strong>Deleting your data</strong><br>
-            You can delete individual charts at any time. To delete your account and all data, send us feedback requesting account deletion. We will remove your data within 30 days.<br><br>
-            <strong>No warranties</strong><br>
-            ChartHawk is provided as-is. AI analyses may contain errors. Always apply your own judgment.
+            {% include "partials/terms_of_service.html" %}
         </div>
         <label class="check-row"><input type="checkbox" id="tosCheck"> I have read and agree to these terms.</label>
         <div class="modal-actions">
@@ -526,7 +518,7 @@
     const SUPABASE_URL      = 'https://csjiymeycevxqmlmqcwc.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzaml5bWV5Y2V2eHFtbG1xY3djIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTc1MDUsImV4cCI6MjA4OTY3MzUwNX0.JwUVn-NHrRCmuI8QDe_GEOJfTcT7lcHbh0Fhadrg4h0';
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { flowType: 'implicit' } });
-    const TOS_VERSION = 'v1';
+    const TOS_VERSION = 'v1.1';
     const MAX_CHARTS  = 200;
     const VIEWS = ['overview', 'analyses', 'profile', 'api-keys'];
     const VIEW_LABELS = { overview: 'My Dashboard', analyses: 'My charts & analyses', profile: 'Profile', 'api-keys': 'API keys' };
