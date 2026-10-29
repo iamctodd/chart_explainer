@@ -214,6 +214,8 @@
             font-size: 0.82em; cursor: pointer; text-align: left; border-radius: 6px; transition: color 0.15s, background 0.15s;
         }
         .sidebar-footer-btn:hover { color: var(--text-primary); background: var(--bg-card); }
+        a.sidebar-footer-btn { display: block; text-decoration: none; }
+        .user-profile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         .sidebar-footer-btn.danger:hover { color: var(--danger); }
 
         /* User profile strip */
@@ -230,35 +232,6 @@
         }
         .sign-out-btn:hover { color: var(--danger); }
 
-        /* Profile modal */
-        .profile-modal-inner { max-width: 420px; }
-        .profile-avatar-section { display: flex; justify-content: center; margin-bottom: 20px; }
-        .profile-avatar-wrap {
-            position: relative; width: 80px; height: 80px; cursor: pointer; border-radius: 50%;
-            overflow: hidden; border: 2px solid var(--border); flex-shrink: 0;
-            transition: border-color 0.2s;
-        }
-        .profile-avatar-wrap:hover { border-color: var(--accent); }
-        .profile-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .profile-avatar-placeholder {
-            width: 100%; height: 100%; background: var(--bg-input);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 2em; color: var(--text-muted);
-        }
-        .profile-avatar-overlay {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.55);
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; transition: opacity 0.2s; font-size: 0.72em;
-            color: white; font-weight: 600; letter-spacing: 0.03em;
-        }
-        .profile-avatar-wrap:hover .profile-avatar-overlay { opacity: 1; }
-        .profile-section-title {
-            font-size: 0.78em; font-weight: 600; text-transform: uppercase;
-            letter-spacing: 0.07em; color: var(--text-muted); margin: 18px 0 10px;
-            padding-top: 14px; border-top: 1px solid var(--border);
-        }
-        .profile-error  { color: var(--danger); font-size: 0.85em; margin-bottom: 10px; display: none; }
-        .profile-success { color: var(--success); font-size: 0.85em; margin-bottom: 10px; display: none; }
         /* Make user-profile strip look clickable */
         .user-profile { cursor: pointer; border-radius: 8px; transition: background 0.15s; }
         .user-profile:hover { background: var(--bg-card); }
@@ -613,13 +586,13 @@
         <div class="sidebar-history" id="sidebarHistory"></div>
         <div class="sidebar-footer">
             <button class="sidebar-signin-btn" id="sidebarSignInBtn">Sign in to save history</button>
-            <div class="user-profile" id="userProfile">
+            <div class="user-profile" id="userProfile" role="link" tabindex="0" title="Your profile" aria-label="Your profile">
                 <img class="user-avatar" id="userAvatar" src="" alt="">
                 <span class="user-name" id="userName"></span>
                 <button class="sign-out-btn" id="signOutBtn">Sign out</button>
             </div>
             <a href="/admin" target="_blank" id="adminLink" style="display:none;" class="sidebar-footer-btn">⚙️ Admin dashboard</a>
-            <button class="sidebar-footer-btn" id="apiKeysBtn" style="display:none;">🔑 API Keys</button>
+            <a href="/dashboard#api-keys" class="sidebar-footer-btn" id="apiKeysBtn" style="display:none;">🔑 API Keys</a>
             <button class="sidebar-footer-btn danger" id="clearHistoryBtn">🗑 Clear history</button>
             <button class="sidebar-footer-btn" id="feedbackBtn">💬 Send feedback</button>
         </div>
@@ -679,65 +652,6 @@
     </div>
 </div>
 
-<!-- ── PROFILE MODAL ─────────────────────────────────────────────────────── -->
-<div class="modal-overlay" id="profileModal">
-    <div class="modal profile-modal-inner">
-        <h2>Edit Profile</h2>
-        <p id="profileSubtitle">Update your name or avatar.</p>
-
-        <!-- Avatar -->
-        <div class="profile-avatar-section">
-            <div class="profile-avatar-wrap" id="profileAvatarWrap" title="Click to change photo">
-                <div id="profileAvatarInner"></div>
-                <div class="profile-avatar-overlay">Change photo</div>
-            </div>
-            <input type="file" id="profileAvatarInput" accept="image/*" style="display:none;">
-        </div>
-
-        <!-- Email (read-only) -->
-        <div class="auth-field" id="profileEmailField">
-            <label>Email</label>
-            <input type="email" id="profileEmailDisplay" readonly
-                style="opacity:0.55; cursor:default;"
-                tabindex="-1">
-        </div>
-        <div id="profileProviderBadge" style="display:none; margin: -6px 0 14px; font-size:0.8em; color:var(--text-muted);">
-            🔒 Signed in with Google — password managed by Google
-        </div>
-
-        <!-- Name -->
-        <div class="auth-field">
-            <label for="profileName">Display name</label>
-            <input type="text" id="profileName" placeholder="Your name" autocomplete="name">
-        </div>
-
-        <!-- Password (email users only) -->
-        <div id="profilePasswordSection" style="display:none;">
-            <div class="profile-section-title">Change password</div>
-            <div class="auth-field">
-                <label for="profileCurrentPw">Current password</label>
-                <input type="password" id="profileCurrentPw" placeholder="Enter current password" autocomplete="current-password">
-            </div>
-            <div class="auth-field">
-                <label for="profileNewPw">New password</label>
-                <input type="password" id="profileNewPw" placeholder="At least 6 characters" autocomplete="new-password">
-            </div>
-            <div class="auth-field">
-                <label for="profileConfirmPw">Confirm new password</label>
-                <input type="password" id="profileConfirmPw" placeholder="Repeat new password" autocomplete="new-password">
-            </div>
-        </div>
-
-        <div class="profile-error"   id="profileError"></div>
-        <div class="profile-success" id="profileSuccess"></div>
-
-        <div class="modal-buttons">
-            <button type="button" class="modal-btn cancel" id="profileCancelBtn">Cancel</button>
-            <button type="button" class="modal-btn submit" id="profileSaveBtn">Save changes</button>
-        </div>
-    </div>
-</div>
-
 <!-- ── AUTH MODAL ─────────────────────────────────────────────────────────── -->
 <div class="modal-overlay" id="authModal">
     <div class="modal auth-modal-inner">
@@ -765,30 +679,6 @@
         </div>
         <div style="margin-top:14px; text-align:center;">
             <a href="#" id="authCloseBtn" style="font-size:0.8em; color:var(--text-muted);">Cancel</a>
-        </div>
-    </div>
-</div>
-
-<!-- ── API KEYS MODAL ────────────────────────────────────────────────────────── -->
-<div class="modal-overlay" id="apiKeysModal">
-    <div class="modal" style="max-width:560px;">
-        <h2>🔑 API Keys</h2>
-        <p>Use these to call Charthawk from scripts or Claude Code skills. A key is shown once — save it somewhere safe.</p>
-        <div id="apiKeysList" style="margin-bottom:18px;"></div>
-        <div id="apiKeyReveal" style="display:none; background:var(--bg-input); border:1px solid var(--accent); border-radius:8px; padding:14px; margin-bottom:18px;">
-            <div style="font-size:0.75em; color:var(--accent); font-weight:700; margin-bottom:8px;">⚠ Copy this key now — it won't be shown again</div>
-            <div style="display:flex; gap:8px; align-items:center;">
-                <code id="apiKeyValue" style="flex:1; font-size:0.82em; word-break:break-all; color:var(--text-primary); background:none; border:none;"></code>
-                <button class="modal-btn submit" id="copyApiKeyBtn" style="white-space:nowrap; padding:6px 14px; font-size:0.8em;">Copy</button>
-            </div>
-        </div>
-        <div style="display:flex; gap:8px; margin-bottom:6px;">
-            <input type="text" class="auth-field-input" id="apiKeyName" placeholder="Key name (e.g. Claude Code skill)" style="flex:1; background:var(--bg-input); border:1px solid var(--border); border-radius:8px; color:var(--text-primary); padding:9px 12px; font-size:0.9em; outline:none;">
-            <button class="modal-btn submit" id="generateApiKeyBtn" style="white-space:nowrap;">Generate key</button>
-        </div>
-        <div class="profile-error" id="apiKeysError" style="display:none;"></div>
-        <div class="modal-buttons" style="margin-top:18px;">
-            <button class="modal-btn cancel" id="apiKeysCancelBtn">Close</button>
         </div>
     </div>
 </div>
@@ -1030,6 +920,7 @@
             // Sidebar
             userProfile.style.display = 'flex';
             userAvatar.src = currentUser.user_metadata?.avatar_url || '';
+            userAvatar.style.display = currentUser.user_metadata?.avatar_url ? '' : 'none';
             userNameEl.textContent = currentUser.user_metadata?.full_name || currentUser.email || '';
             if (sidebarSignIn) sidebarSignIn.style.display = 'none';
             // Landing nudge
@@ -1149,164 +1040,17 @@
         applySidebarCollapse();
     });
 
-    // ── Profile modal ───────────────────────────────────────────
-
-    function openProfileModal() {
-        if (!currentUser) return;
-        const errEl = document.getElementById('profileError');
-        const okEl  = document.getElementById('profileSuccess');
-        errEl.style.display = 'none'; okEl.style.display = 'none';
-
-        // Populate name
-        document.getElementById('profileName').value =
-            currentUser.user_metadata?.full_name || '';
-
-        // Populate avatar preview
-        renderProfileAvatar(currentUser.user_metadata?.avatar_url || '');
-
-        // Email
-        document.getElementById('profileEmailDisplay').value = currentUser.email || '';
-
-        // Dynamic subtitle + password section visibility
-        const provider = currentUser.app_metadata?.provider || '';
-        const isEmail  = provider === 'email';
-        document.getElementById('profileSubtitle').textContent =
-            isEmail ? 'Update your name, avatar, or password.' : 'Update your name or avatar.';
-        document.getElementById('profilePasswordSection').style.display = isEmail ? '' : 'none';
-        document.getElementById('profileProviderBadge').style.display   = isEmail ? 'none' : '';
-
-        // Clear password fields
-        ['profileCurrentPw','profileNewPw','profileConfirmPw'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = '';
-        });
-
-        document.getElementById('profileModal').classList.add('active');
-        setTimeout(() => document.getElementById('profileName').focus(), 80);
+    // ── Profile & API keys live on the dashboard ────────────────
+    // The sidebar's profile strip and "API keys" link go to /dashboard#profile and
+    // /dashboard#api-keys, so there's one place to edit each.
+    function goToProfile(e) {
+        if (e && e.target.closest('#signOutBtn')) return;   // Sign out sits inside the strip
+        window.location.href = '/dashboard#profile';
     }
-
-    function renderProfileAvatar(url) {
-        const wrap = document.getElementById('profileAvatarInner');
-        if (url) {
-            wrap.innerHTML = `<img src="${url}" alt="Avatar">`;
-        } else {
-            wrap.innerHTML = `<div class="profile-avatar-placeholder">👤</div>`;
-        }
-    }
-
-    document.getElementById('profileCancelBtn').addEventListener('click', () => {
-        document.getElementById('profileModal').classList.remove('active');
+    userProfile.addEventListener('click', goToProfile);
+    userProfile.addEventListener('keydown', (e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && e.target === userProfile) { e.preventDefault(); goToProfile(e); }
     });
-
-    // Clicking avatar opens file picker
-    document.getElementById('profileAvatarWrap').addEventListener('click', () => {
-        document.getElementById('profileAvatarInput').click();
-    });
-
-    // Avatar file selected → resize to 64×64 JPEG on canvas
-    document.getElementById('profileAvatarInput').addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const dataUrl = await resizeAvatar(file);
-        renderProfileAvatar(dataUrl);
-        document.getElementById('profileAvatarInput').dataset.pendingUrl = dataUrl;
-        e.target.value = '';
-    });
-
-    async function resizeAvatar(file) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 64; canvas.height = 64;
-                    const ctx = canvas.getContext('2d');
-                    const size = Math.min(img.width, img.height);
-                    const sx   = (img.width  - size) / 2;
-                    const sy   = (img.height - size) / 2;
-                    ctx.drawImage(img, sx, sy, size, size, 0, 0, 64, 64);
-                    resolve(canvas.toDataURL('image/jpeg', 0.85));
-                };
-                img.src = ev.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    document.getElementById('profileSaveBtn').addEventListener('click', async () => {
-        const errEl  = document.getElementById('profileError');
-        const okEl   = document.getElementById('profileSuccess');
-        const saveBtn = document.getElementById('profileSaveBtn');
-        errEl.style.display = 'none'; okEl.style.display = 'none';
-
-        const newName    = document.getElementById('profileName').value.trim();
-        const avatarInput = document.getElementById('profileAvatarInput');
-        const pendingAvatar = avatarInput.dataset.pendingUrl || null;
-        const currentPw  = document.getElementById('profileCurrentPw').value;
-        const newPw      = document.getElementById('profileNewPw').value;
-        const confirmPw  = document.getElementById('profileConfirmPw').value;
-        const isEmailUser = (currentUser.app_metadata?.provider || '') === 'email';
-
-        // Validate password fields if any are filled
-        if (isEmailUser && (currentPw || newPw || confirmPw)) {
-            if (!currentPw) { errEl.textContent = 'Enter your current password.'; errEl.style.display = 'block'; return; }
-            if (newPw.length < 6) { errEl.textContent = 'New password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
-            if (newPw !== confirmPw) { errEl.textContent = 'New passwords do not match.'; errEl.style.display = 'block'; return; }
-        }
-
-        saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
-
-        try {
-            // 1. Verify current password if changing password
-            if (isEmailUser && currentPw && newPw) {
-                const { error: authErr } = await sb.auth.signInWithPassword({
-                    email: currentUser.email, password: currentPw,
-                });
-                if (authErr) { errEl.textContent = 'Current password is incorrect.'; errEl.style.display = 'block'; return; }
-            }
-
-            // 2. Build metadata update
-            const metaUpdate = {};
-            if (newName) metaUpdate.full_name = newName;
-            if (pendingAvatar) metaUpdate.avatar_url = pendingAvatar;
-
-            const updatePayload = {};
-            if (Object.keys(metaUpdate).length > 0) updatePayload.data = metaUpdate;
-            if (isEmailUser && newPw) updatePayload.password = newPw;
-
-            if (Object.keys(updatePayload).length === 0) {
-                okEl.textContent = 'No changes to save.'; okEl.style.display = 'block'; return;
-            }
-
-            const { data, error } = await sb.auth.updateUser(updatePayload);
-            if (error) throw error;
-
-            // 3. Update local state + UI
-            currentUser = data.user;
-            delete avatarInput.dataset.pendingUrl;
-
-            if (newPw) {
-                ['profileCurrentPw','profileNewPw','profileConfirmPw'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.value = '';
-                });
-            }
-
-            updateAuthUI();
-            okEl.textContent = 'Profile updated!'; okEl.style.display = 'block';
-            setTimeout(() => { okEl.style.display = 'none'; }, 3000);
-
-        } catch (err) {
-            errEl.textContent = err.message || 'Could not save changes.';
-            errEl.style.display = 'block';
-        } finally {
-            saveBtn.disabled = false; saveBtn.textContent = 'Save changes';
-        }
-    });
-
-    // Open profile modal when clicking user profile strip in sidebar
-    userProfile.addEventListener('click', openProfileModal);
 
     document.getElementById('authCloseBtn').addEventListener('click', (e) => { e.preventDefault(); closeAuthModal(); });
 
@@ -2331,107 +2075,6 @@
             if (btn) btn.textContent = '✗ Failed';
         });
     }
-
-    // ── API Keys modal ─────────────────────────────────────────
-
-    const apiKeysModal     = document.getElementById('apiKeysModal');
-    const apiKeysCancelBtn = document.getElementById('apiKeysCancelBtn');
-    const generateApiKeyBtn= document.getElementById('generateApiKeyBtn');
-    const copyApiKeyBtn    = document.getElementById('copyApiKeyBtn');
-    const apiKeysList      = document.getElementById('apiKeysList');
-    const apiKeyReveal     = document.getElementById('apiKeyReveal');
-    const apiKeyValue      = document.getElementById('apiKeyValue');
-    const apiKeyName       = document.getElementById('apiKeyName');
-    const apiKeysError     = document.getElementById('apiKeysError');
-
-    document.getElementById('apiKeysBtn')?.addEventListener('click', openApiKeysModal);
-    apiKeysCancelBtn?.addEventListener('click', () => apiKeysModal.classList.remove('active'));
-
-    async function openApiKeysModal() {
-        apiKeysModal.classList.add('active');
-        apiKeyReveal.style.display = 'none';
-        apiKeyName.value = '';
-        apiKeysError.style.display = 'none';
-        await refreshApiKeysList();
-    }
-
-    async function refreshApiKeysList() {
-        apiKeysList.innerHTML = '<div style="color:var(--text-muted);font-size:0.85em;">Loading…</div>';
-        try {
-            const token = getStoredAccessToken();
-            const res   = await fetch('/api/keys', { headers: { 'Authorization': `Bearer ${token}` } });
-            if (!res.ok) throw new Error();
-            const { keys } = await res.json();
-            if (!keys.length) {
-                apiKeysList.innerHTML = '<div style="color:var(--text-muted);font-size:0.85em;margin-bottom:4px;">No keys yet. Generate one below.</div>';
-                return;
-            }
-            apiKeysList.innerHTML = keys.map(k => `
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
-                    <div>
-                        <div style="font-size:0.88em;font-weight:600;color:var(--text-primary);">${escapeHtml(k.name)}</div>
-                        <div style="font-size:0.78em;color:var(--text-muted);font-family:monospace;">${escapeHtml(k.key_prefix)}</div>
-                        <div style="font-size:0.75em;color:var(--text-muted);">
-                            Created ${new Date(k.created_at).toLocaleDateString()}
-                            ${k.last_used_at ? ' · Last used ' + new Date(k.last_used_at).toLocaleDateString() : ' · Never used'}
-                        </div>
-                    </div>
-                    <button class="modal-btn cancel" style="padding:5px 12px;font-size:0.78em;color:var(--danger);border-color:var(--danger);" onclick="revokeApiKey('${k.id}')">Revoke</button>
-                </div>
-            `).join('');
-        } catch {
-            apiKeysList.innerHTML = '<div style="color:var(--danger);font-size:0.85em;">Failed to load keys.</div>';
-        }
-    }
-
-    generateApiKeyBtn?.addEventListener('click', async () => {
-        const name = apiKeyName.value.trim() || 'My API key';
-        generateApiKeyBtn.disabled = true;
-        generateApiKeyBtn.textContent = 'Generating…';
-        apiKeysError.style.display = 'none';
-        apiKeyReveal.style.display = 'none';
-        try {
-            const token = getStoredAccessToken();
-            const res   = await fetch('/api/keys', {
-                method:  'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ name }),
-            });
-            if (!res.ok) throw new Error((await res.json()).error || 'Failed');
-            const { key } = await res.json();
-            apiKeyValue.textContent = key;
-            apiKeyReveal.style.display = 'block';
-            apiKeyName.value = '';
-            await refreshApiKeysList();
-        } catch (err) {
-            apiKeysError.textContent = err.message;
-            apiKeysError.style.display = 'block';
-        } finally {
-            generateApiKeyBtn.disabled = false;
-            generateApiKeyBtn.textContent = 'Generate key';
-        }
-    });
-
-    copyApiKeyBtn?.addEventListener('click', () => {
-        navigator.clipboard.writeText(apiKeyValue.textContent).then(() => {
-            copyApiKeyBtn.textContent = '✓ Copied!';
-            setTimeout(() => { copyApiKeyBtn.textContent = 'Copy'; }, 2000);
-        });
-    });
-
-    async function revokeApiKey(id) {
-        if (!confirm('Revoke this key? Any scripts using it will stop working.')) return;
-        try {
-            const token = getStoredAccessToken();
-            await fetch(`/api/keys/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-            apiKeyReveal.style.display = 'none';
-            await refreshApiKeysList();
-        } catch {
-            alert('Failed to revoke key.');
-        }
-    }
-
-    window.revokeApiKey = revokeApiKey;
 
     // ── Feedback modal ─────────────────────────────────────────
 

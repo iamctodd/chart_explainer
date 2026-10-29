@@ -2,6 +2,14 @@
 
 All notable changes to ChartHawk are documented here.
 
+## 2026-10-29
+
+### Changed
+- In the chat view, the profile strip and "API Keys" in the sidebar now open the dashboard's Profile and API keys pages instead of pop-ups, so each is edited in one place. The old profile and API-key pop-ups were removed.
+
+### Fixed
+- The sidebar no longer shows a broken image when an account has no profile photo.
+
 ## 2026-10-28
 
 ### Added
